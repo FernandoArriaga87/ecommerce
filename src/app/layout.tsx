@@ -1,10 +1,19 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/navbar";
 import { CartProvider } from "@/lib/cart-context";
 
-const inter = Inter({ subsets: ["latin"] });
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  padding: "unset",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
   title: "DeportivoStore | Playeras Originales",
@@ -18,19 +27,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className="h-full">
-      <body className={`${inter.className} min-h-full flex flex-col bg-white text-black`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-[100dvh] flex flex-col bg-[#FAFAFA] text-[#111111] font-sans selection:bg-black selection:text-white`}>
         <CartProvider>
-          <div className="bg-[#f0f0f0] text-xs font-bold text-center py-2 text-black w-full tracking-wide">
-            ENVÍO GRATIS EN PEDIDOS SUPERIORES A $1499 MXN <span className="underline cursor-pointer ml-1">VER DETALLES</span>
+          <div className="bg-[#111111] text-[10px] font-bold text-center py-2 text-white w-full tracking-[0.2em] uppercase">
+            ENVÍO GRATIS EN PEDIDOS SUPERIORES A $1499 MXN <span className="underline cursor-pointer ml-1 opacity-70 hover:opacity-100 transition-opacity">VER DETALLES</span>
           </div>
           <Navbar />
           <main className="flex-1 w-full flex flex-col">
             {children}
           </main>
-          <footer className="bg-black text-white py-12 mt-auto">
-            <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-              <p>&copy; {new Date().getFullYear()} DeportivoStore. Todos los derechos reservados.</p>
-              <p className="mt-2 text-xs">Aceptamos Mercado Pago, Aplazo y Stripe.</p>
+          <footer className="bg-[#0A0A0A] text-white/50 py-24 mt-auto border-t border-white/[0.05]">
+            <div className="container mx-auto px-6 text-center text-sm font-medium tracking-tight">
+              <p className="text-white/80">&copy; {new Date().getFullYear()} DeportivoStore. Todos los derechos reservados.</p>
+              <p className="mt-4 text-xs opacity-40">Aceptamos Mercado Pago, Aplazo y Stripe.</p>
             </div>
           </footer>
         </CartProvider>
@@ -38,3 +47,4 @@ export default function RootLayout({
     </html>
   );
 }
+

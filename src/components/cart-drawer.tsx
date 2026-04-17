@@ -2,12 +2,13 @@
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, Package } from "lucide-react";
+import { ShoppingBag, Trash, Plus, Minus, ArrowRight, Package, ShoppingCart } from "@phosphor-icons/react";
 import Image from "next/image";
 import { formatPrice } from "@/lib/data";
 import { useCart } from "@/lib/cart-context";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export function CartDrawer() {
   const { items, removeItem, updateQuantity, totalItems, subtotal, isOpen, setIsOpen } = useCart();
@@ -44,7 +45,7 @@ export function CartDrawer() {
         window.location.href = data.url;
       } else if (res.status === 401) {
         setIsOpen(false);
-        router.push("/login?returnUrl=/checkout"); // Fallback if they want to review
+        router.push("/login?returnUrl=/checkout");
       } else if (data.code === "PROFILE_INCOMPLETE") {
         setIsOpen(false);
         router.push("/complete-profile?returnUrl=/checkout");
@@ -69,26 +70,28 @@ export function CartDrawer() {
       <Button
         variant="ghost"
         size="icon"
-        className="relative text-white hover:text-gray-300 transition-colors"
+        className="relative text-[#111111] hover:bg-[#111111]/5 transition-all p-2 rounded-full h-auto w-auto"
         onClick={() => setIsOpen(true)}
       >
-        <ShoppingCart className="h-5 w-5" />
+        <ShoppingBag weight="bold" size={24} />
         {totalItems > 0 && (
-          <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center bg-white text-[10px] font-black text-black rounded-full animate-in zoom-in duration-200">
+          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center bg-[#111111] text-[9px] font-black text-white rounded-full">
             {totalItems}
           </span>
         )}
       </Button>
 
-      <SheetContent className="flex w-full flex-col sm:max-w-md p-0 gap-0 border-l-0 shadow-2xl">
+      <SheetContent className="flex w-full flex-col sm:max-w-md p-0 gap-0 border-l border-[#111111]/5 shadow-2xl bg-[#FAFAFA]">
         {/* Header */}
-        <div className="bg-black text-white px-6 py-5">
+        <div className="bg-white border-b border-[#111111]/5 px-8 py-6">
           <SheetHeader>
-            <SheetTitle className="text-lg font-black uppercase tracking-widest text-white flex items-center gap-3">
-              <ShoppingCart className="h-5 w-5" />
-              Tu Carrito
+            <SheetTitle className="text-xl font-black uppercase tracking-tighter text-[#111111] flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <ShoppingBag weight="fill" className="text-[#111111]" size={24} />
+                Tu Carrito
+              </div>
               {totalItems > 0 && (
-                <span className="text-xs font-bold bg-white text-black px-2 py-0.5 ml-auto">
+                <span className="text-[10px] font-bold bg-[#111111]/5 text-[#111111]/40 px-3 py-1 rounded-full tracking-widest">
                   {totalItems} {totalItems === 1 ? "ARTÍCULO" : "ARTÍCULOS"}
                 </span>
               )}
@@ -98,152 +101,178 @@ export function CartDrawer() {
 
         {/* Free shipping progress */}
         {totalItems > 0 && (
-          <div className="px-6 py-3 bg-zinc-50 border-b border-zinc-100">
-            {remaining > 0 ? (
-              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">
-                Faltan <span className="text-black">{formatPrice(remaining)}</span> para envío gratis
-              </p>
-            ) : (
-              <p className="text-[10px] font-bold uppercase tracking-widest text-green-600 mb-2 flex items-center gap-1">
-                <Package className="w-3 h-3" /> ¡Envío gratis desbloqueado!
-              </p>
-            )}
-            <div className="w-full h-1.5 bg-gray-200 overflow-hidden">
-              <div
-                className="h-full bg-black transition-all duration-500 ease-out"
-                style={{ width: `${shippingProgress}%` }}
+          <div className="px-8 py-4 bg-white">
+            <div className="flex justify-between items-center mb-3">
+              {remaining > 0 ? (
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#111111]/40">
+                  Faltan <span className="text-[#111111]">{formatPrice(remaining)}</span> para <span className="text-[#111111]">Envío Gratis</span>
+                </p>
+              ) : (
+                <p className="text-[10px] font-bold uppercase tracking-widest text-green-600 flex items-center gap-2">
+                  <Package weight="bold" size={14} /> ¡Envío gratis activado!
+                </p>
+              )}
+              <span className="text-[10px] font-black text-[#111111]/20">{Math.round(shippingProgress)}%</span>
+            </div>
+            <div className="w-full h-1 bg-[#111111]/5 rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${shippingProgress}%` }}
+                className="h-full bg-[#111111] rounded-full"
+                transition={{ duration: 1, ease: "circOut" }}
               />
             </div>
           </div>
         )}
 
         {/* Body */}
-        {items.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-6 text-center px-8">
-            <div className="w-24 h-24 rounded-full bg-zinc-100 flex items-center justify-center">
-              <ShoppingCart className="h-10 w-10 text-gray-300" />
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          {items.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center gap-8 text-center px-12">
+              <div className="w-32 h-32 rounded-[2.5rem] bg-[#111111]/5 flex items-center justify-center relative">
+                <ShoppingBag weight="light" className="text-[#111111]/10" size={64} />
+                <div className="absolute inset-0 flex items-center justify-center scale-150 rotate-12 opacity-5">
+                   <ShoppingCart size={100} weight="fill" />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <p className="text-xl font-black uppercase tracking-tight text-[#111111]">
+                  Está muy vacío aquí
+                </p>
+                <p className="text-sm text-[#111111]/40 font-medium leading-relaxed">
+                  Tu próximo jersey favorito está esperando. Explora nuestra nueva colección.
+                </p>
+              </div>
+              <Button
+                onClick={() => setIsOpen(false)}
+                className="rounded-full bg-[#111111] text-white hover:bg-[#222222] uppercase font-black tracking-widest text-[10px] h-14 px-12 shadow-xl shadow-black/10"
+              >
+                Ir a la Tienda
+              </Button>
             </div>
-            <div>
-              <p className="text-sm font-black uppercase tracking-widest text-gray-800 mb-1">
-                Tu carrito está vacío
-              </p>
-              <p className="text-xs text-gray-400 font-medium">
-                Explora el catálogo y encuentra tu playera ideal.
-              </p>
-            </div>
-            <Button
-              onClick={() => setIsOpen(false)}
-              className="rounded-none bg-black text-white hover:bg-gray-800 uppercase font-black tracking-widest text-xs h-12 px-10"
-            >
-              Seguir Comprando
-            </Button>
-          </div>
-        ) : (
-          <>
-            {/* Items list */}
-            <div className="flex-1 overflow-y-auto">
-              <div className="flex flex-col divide-y divide-zinc-100">
+          ) : (
+            <div className="flex flex-col p-8 gap-8">
+              <AnimatePresence>
                 {items.map((item, index) => (
-                  <div
+                  <motion.div
                     key={`${item.productId}-${item.size}`}
-                    className="flex gap-4 p-6 hover:bg-zinc-50/50 transition-colors group"
-                    style={{ animationDelay: `${index * 50}ms` }}
+                    layout
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ type: "spring" as const, stiffness: 300, damping: 30, delay: index * 0.05 }}
+                    className="flex gap-6 group"
                   >
                     {/* Image */}
-                    <div className="relative h-28 w-24 overflow-hidden bg-zinc-100 shrink-0 border border-black/5">
+                    <div className="relative h-32 w-28 overflow-hidden bg-[#F3F3F3] rounded-3xl shrink-0 border border-[#111111]/5">
                       <Image
                         src={item.image}
                         alt={item.name}
                         fill
-                        className="object-cover"
+                        className="object-cover group-hover:scale-110 transition-transform duration-700"
                       />
                     </div>
 
                     {/* Info */}
-                    <div className="flex flex-1 flex-col justify-between min-w-0">
+                    <div className="flex flex-1 flex-col justify-between py-1">
                       <div>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-0.5">
-                          {item.team}
-                        </p>
-                        <h3 className="font-black text-sm leading-tight uppercase truncate">
-                          {item.name}
-                        </h3>
-                        <div className="flex items-center gap-2 mt-1.5">
-                          <span className="text-[10px] font-bold uppercase tracking-widest bg-zinc-100 px-2 py-0.5 text-gray-600">
-                            Talla {item.size}
+                        <div className="flex justify-between items-start gap-2">
+                          <div>
+                            <p className="text-[10px] text-[#111111]/30 font-bold uppercase tracking-widest mb-1">
+                              {item.team}
+                            </p>
+                            <h3 className="font-bold text-base leading-tight text-[#111111] group-hover:text-[#111111]/60 transition-colors">
+                              {item.name}
+                            </h3>
+                          </div>
+                          <button
+                            onClick={() => removeItem(item.productId, item.size)}
+                            className="p-2 hover:bg-red-50 text-[#111111]/10 hover:text-red-500 rounded-full transition-all"
+                          >
+                            <Trash weight="bold" size={18} />
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-3 mt-3">
+                          <span className="text-[9px] font-black uppercase tracking-widest bg-[#111111] text-white px-3 py-1 rounded-full">
+                            {item.size}
                           </span>
                         </div>
                       </div>
 
-                      <div className="flex items-end justify-between mt-3">
+                      <div className="flex items-center justify-between mt-4">
                         {/* Quantity controls */}
-                        <div className="flex items-center border border-gray-200 h-8">
+                        <div className="flex items-center bg-[#111111]/5 rounded-full p-1 h-10">
                           <button
                             onClick={() => updateQuantity(item.productId, item.size, -1)}
-                            className="w-8 h-full flex items-center justify-center hover:bg-zinc-100 transition-colors"
+                            className="w-8 h-8 flex items-center justify-center hover:bg-white rounded-full transition-all text-[#111111]"
                           >
-                            <Minus className="h-3 w-3" />
+                            <Minus weight="bold" size={12} />
                           </button>
-                          <span className="w-8 h-full flex items-center justify-center text-xs font-black border-x border-gray-200">
+                          <span className="w-8 flex items-center justify-center text-[11px] font-black text-[#111111]">
                             {item.quantity}
                           </span>
                           <button
                             onClick={() => updateQuantity(item.productId, item.size, 1)}
-                            className="w-8 h-full flex items-center justify-center hover:bg-zinc-100 transition-colors"
+                            className="w-8 h-8 flex items-center justify-center hover:bg-white rounded-full transition-all text-[#111111]"
                           >
-                            <Plus className="h-3 w-3" />
+                            <Plus weight="bold" size={12} />
                           </button>
                         </div>
 
-                        {/* Price + delete */}
-                        <div className="flex items-center gap-3">
-                          <span className="font-black text-sm">{formatPrice(item.price * item.quantity)}</span>
-                          <button
-                            onClick={() => removeItem(item.productId, item.size)}
-                            className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
+                        <span className="font-black text-lg tracking-tighter text-[#111111]">
+                          {formatPrice(item.price * item.quantity)}
+                        </span>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
+              </AnimatePresence>
             </div>
+          )}
+        </div>
 
-            {/* Footer / Checkout */}
-            <div className="border-t-2 border-black bg-white">
-              <div className="px-6 py-5 space-y-4">
-                <div className="flex justify-between items-baseline">
-                  <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Subtotal</span>
-                  <span className="text-xl font-black">{formatPrice(subtotal)}</span>
-                </div>
-                <p className="text-[10px] text-gray-400 font-medium text-center tracking-wide">
-                  Impuestos y envío se calculan al finalizar la compra.
-                </p>
-                <Button
-                  className="w-full bg-black text-white hover:bg-gray-900 rounded-none h-14 uppercase font-black tracking-widest text-xs transition-all hover:translate-y-[-1px] hover:shadow-lg active:translate-y-0 flex items-center justify-center gap-2"
-                  size="lg"
-                  onClick={handleCheckout}
-                  disabled={loading}
-                >
-                  {loading ? "Procesando..." : "Finalizar Compra"}
-                  {!loading && <ArrowRight className="h-4 w-4" />}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-black rounded-none h-11 uppercase font-bold tracking-widest text-[10px]"
-                  size="lg"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Seguir Comprando
-                </Button>
+        {/* Footer / Checkout */}
+        {items.length > 0 && (
+          <div className="bg-white border-t border-[#111111]/5 px-8 py-8 space-y-6">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center text-[#111111]/40">
+                <span className="text-[10px] font-bold uppercase tracking-widest">Subtotal</span>
+                <span className="font-bold text-sm tracking-tight">{formatPrice(subtotal)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-black uppercase tracking-tighter text-[#111111]">Total estimado</span>
+                <span className="text-3xl font-black text-[#111111] tracking-tighter">{formatPrice(subtotal)}</span>
               </div>
             </div>
-          </>
+            
+            <div className="space-y-3">
+              <Button
+                className="w-full bg-[#111111] text-white hover:bg-[#222222] rounded-full h-16 uppercase font-black tracking-widest text-[10px] transition-all shadow-2xl shadow-black/20 flex items-center justify-center gap-3 group overflow-hidden relative"
+                onClick={handleCheckout}
+                disabled={loading}
+              >
+                <div className="flex items-center gap-3 group-hover:translate-x-1 transition-transform">
+                  {loading ? "PROCESANDO..." : "FINALIZAR PEDIDO"}
+                  {!loading && <ArrowRight weight="bold" size={18} />}
+                </div>
+              </Button>
+              
+              <Button
+                variant="ghost"
+                className="w-full text-[#111111]/40 hover:text-[#111111] hover:bg-transparent rounded-full h-10 uppercase font-bold tracking-[0.2em] text-[10px]"
+                onClick={() => setIsOpen(false)}
+              >
+                Seguir Comprando
+              </Button>
+            </div>
+            
+            <p className="text-[9px] text-[#111111]/20 font-bold text-center uppercase tracking-widest leading-relaxed">
+              Pago seguro encriptado • Envío rastreado • Devoluciones fáciles
+            </p>
+          </div>
         )}
       </SheetContent>
     </Sheet>
   );
 }
+

@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
-// Force ts reload
 import { CartDrawer } from "./cart-drawer";
-import { Search, User } from "lucide-react";
+import { MagnifyingGlass, User, Football } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
-
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { motion } from "framer-motion";
 
 export function Navbar() {
   const [user, setUser] = useState<any>(null);
@@ -29,38 +28,52 @@ export function Navbar() {
       subscription.unsubscribe();
     };
   }, []);
+
   return (
-    <header className="sticky top-0 z-50 w-full bg-[#18181b] text-white">
-      <div className="px-6 h-16 flex items-center justify-between">
+    <header className="sticky top-0 z-[60] w-full bg-[#FAFAFA]/80 backdrop-blur-xl border-b border-[#111111]/5">
+      <div className="px-6 md:px-12 h-20 flex items-center justify-between">
         {/* Left side: Logo & Nav Links */}
-        <div className="flex items-center gap-10">
-          <Link href="/" className="flex items-center gap-2">
-            {/* Minimalist icon instead of complex shape */}
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 text-white"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" x2="4" y1="22" y2="15"></line></svg>
-            <span className="font-extrabold text-xl tracking-tight hidden md:inline-block">
+        <div className="flex items-center gap-12">
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="bg-[#111111] p-2 rounded-xl text-white group-hover:rotate-12 transition-transform duration-500">
+              <Football weight="fill" size={24} />
+            </div>
+            <span className="font-black text-xl tracking-tighter text-[#111111]">
               DEPORTIVOSTORE
             </span>
           </Link>
-          <nav className="hidden lg:flex gap-6 text-[13px] font-bold uppercase tracking-wider">
-            <Link href="/" className="hover:text-gray-300 transition-colors">Liga MX</Link>
-            <Link href="/" className="hover:text-gray-300 transition-colors">Europeos</Link>
-            <Link href="/" className="hover:text-gray-300 transition-colors">Selecciones</Link>
-            <Link href="/" className="hover:text-gray-300 transition-colors">Retro</Link>
-            <Link href="/" className="hover:text-gray-300 transition-colors">Ofertas</Link>
+          <nav className="hidden lg:flex gap-8 text-[11px] font-bold uppercase tracking-[0.2em] text-[#111111]/50">
+            {["Liga MX", "Europeos", "Selecciones", "Retro", "Ofertas"].map((item) => (
+              <Link 
+                key={item} 
+                href="/" 
+                className="hover:text-[#111111] transition-colors relative group"
+              >
+                {item}
+                <span className="absolute -bottom-1 left-0 w-0 h-[1.5px] bg-[#111111] transition-all duration-300 group-hover:w-full" />
+              </Link>
+            ))}
           </nav>
         </div>
         
         {/* Right side: Actions */}
         <div className="flex items-center gap-6">
-          <Button variant="outline" className="hidden md:flex h-9 bg-transparent border-gray-600 text-white hover:bg-white/10 hover:text-white rounded-none px-4 gap-2 text-xs font-bold tracking-wider">
-            <Search className="h-4 w-4" />
-            BUSCAR
-          </Button>
+          <div className="hidden md:flex items-center bg-[#111111]/5 px-4 h-11 rounded-full border border-[#111111]/5 focus-within:bg-white focus-within:border-[#111111]/10 transition-all group">
+            <MagnifyingGlass size={18} className="text-[#111111]/30 group-focus-within:text-[#111111]" />
+            <input 
+              type="text" 
+              placeholder="BUSCAR EQUIPO..." 
+              className="bg-transparent border-none outline-none text-[10px] font-bold tracking-widest px-3 w-32 focus:w-48 transition-all placeholder:text-[#111111]/20 text-[#111111]"
+            />
+          </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <CartDrawer />
-            <Link href="/profile" className="text-white hover:text-gray-300 transition-colors">
-              <User className="h-5 w-5" />
+            <Link 
+              href="/profile" 
+              className="p-3 hover:bg-[#111111]/5 rounded-full transition-colors text-[#111111]"
+            >
+              <User size={22} weight="bold" />
             </Link>
           </div>
         </div>
@@ -68,3 +81,4 @@ export function Navbar() {
     </header>
   );
 }
+
