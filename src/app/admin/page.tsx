@@ -5,11 +5,12 @@ export default async function AdminDashboardPage() {
   // Fetch real data from Prisma
   const [userCount, orderCount, totalSales, recentOrders] = await Promise.all([
     prisma.user.count(),
-    prisma.order.count({ where: { status: { in: ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'] } } }),
+    prisma.order.count({ where: { status: { in: ['PAID', 'SHIPPED', 'DELIVERED'] as any } } }),
     prisma.order.aggregate({
-      where: { status: { in: ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'] } },
+      where: { status: { in: ['PAID', 'SHIPPED', 'DELIVERED'] as any } },
       _sum: { total: true }
     }),
+
     prisma.order.findMany({
       take: 5,
       orderBy: { createdAt: 'desc' },
@@ -19,7 +20,7 @@ export default async function AdminDashboardPage() {
     })
   ]);
 
-  const salesAmount = Number(totalSales._sum.total || 0);
+  const salesAmount = Number(totalSales?._sum?.total || 0);
 
   return (
     <div className="w-full">

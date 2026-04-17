@@ -22,12 +22,12 @@ enum UserStatus {
 
 enum OrderStatus {
   PENDING
-  CONFIRMED
-  PROCESSING
+  PAID
   SHIPPED
   DELIVERED
   CANCELLED
 }
+
 
 enum PaymentMethod {
   STRIPE
@@ -48,6 +48,7 @@ model User {
 
   addresses Address[]
   orders    Order[]
+  cart      Cart?
 }
 
 model Category {
@@ -102,6 +103,7 @@ model Variant {
   sku       String    @unique
 
   orderItems OrderItem[]
+  cartItems  CartItem[]
 }
 
 model Address {
@@ -147,3 +149,21 @@ model OrderItem {
   quantity  Int
   total     Decimal  @db.Decimal(10, 2)
 }
+
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   Variant  @relation(fields: [variantId], references: [id])
+  quantity  Int
+}
+

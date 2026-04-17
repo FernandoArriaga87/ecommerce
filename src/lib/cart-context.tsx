@@ -50,14 +50,43 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // Hydrate from localStorage on mount
   useEffect(() => {
-    setItems(loadCart());
+    const saved = loadCart();
+    setItems(saved);
     setHydrated(true);
   }, []);
+
+  // Sync with backend if logged in
+  useEffect(() => {
+    if (!hydrated) return;
+
+    const { createClient } = require("@/lib/supabase/client");
+    const supabase = createClient();
+
+    const sync = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        try {
+          await fetch("/api/cart/sync", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ localItems: items }),
+          });
+        } catch (e) {
+          console.error("Cart sync failed", e);
+        }
+      }
+    };
+
+    // Debounce or just sync on length change
+    const timeout = setTimeout(sync, 1000);
+    return () => clearTimeout(timeout);
+  }, [items, hydrated]);
 
   // Persist every change
   useEffect(() => {
     if (hydrated) saveCart(items);
   }, [items, hydrated]);
+
 
   const addItem = useCallback((newItem: Omit<CartItem, "quantity">) => {
     setItems((prev) => {

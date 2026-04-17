@@ -50,11 +50,12 @@ export default async function OrdersPage() {
               
               <div className="flex flex-col gap-2">
                 <span className="inline-block px-3 py-1 bg-black text-white text-[10px] font-black uppercase tracking-widest w-fit">
-                  {order.status === "PENDING" ? "Pendiente" : 
-                   order.status === "CONFIRMED" ? "Confirmado" : 
-                   order.status === "PROCESSING" ? "Procesando" : 
-                   order.status === "SHIPPED" ? "Enviado" : 
-                   order.status === "DELIVERED" ? "Entregado" : "Cancelado"}
+                  {(order.status as any) === "PENDING" ? "Pendiente" : 
+                   (order.status as any) === "PAID" ? "Pagado" : 
+                   (order.status as any) === "SHIPPED" ? "Enviado" : 
+                   (order.status as any) === "DELIVERED" ? "Entregado" : "Cancelado"}
+
+
                 </span>
                 <p className="font-black text-lg">
                   {formatPrice(Number(order.total))}

@@ -1,65 +1,55 @@
-import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
-import Stripe from "stripe";
+import { headers } from "next/headers";
+import { NextResponse } from "next/server";
 
-// This is the endpoint Stripe will call when events happen
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   const body = await req.text();
-  const signature = req.headers.get("stripe-signature") as string;
+  const signature = (await headers()).get("Stripe-Signature") as string;
 
-  let event: Stripe.Event;
+  let event;
 
   try {
-    // If you have a webhook secret, verify the signature
-    // For now, in test mode, we might skip full verification if STRIPE_WEBHOOK_SECRET is not set
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-    
-    if (webhookSecret && signature) {
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-    } else {
-      // Fallback for testing without webhook secret verification (NOT RECOMMENDED for production)
-      event = JSON.parse(body);
-    }
+    event = stripe.webhooks.constructEvent(
+      body,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET!
+    );
   } catch (err: any) {
-    console.error(`Webhook Error: ${err.message}`);
+    console.error(`Webhook signature verification failed.`, err.message);
     return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
   }
 
-  // Handle the event
-  switch (event.type) {
-    case "checkout.session.completed":
-      const session = event.data.object as Stripe.Checkout.Session;
-      const orderId = session.metadata?.orderId;
+  const session = event.data.object as any;
 
-      if (orderId) {
-        console.log(`Payment confirmed for order: ${orderId}`);
-        
-        // Update order status to CONFIRMED
-        await prisma.order.update({
-          where: { id: orderId },
-          data: { 
-            status: "CONFIRMED", 
-            externalId: session.id, // Better to store the session id
-          },
-        });
+  if (event.type === "checkout.session.completed") {
+    const orderId = session.metadata?.orderId;
+
+    if (orderId) {
+      await prisma.order.update({
+        where: { id: orderId },
+        data: {
+          status: "PAID",
+          externalId: session.id,
+        },
+      });
+
+      // Update variant stock - simplified logic
+      const orderItems = await prisma.orderItem.findMany({
+        where: { orderId },
+        include: { variant: true }
+      });
+
+      for (const item of orderItems) {
+        if (item.variant.stock >= item.quantity) {
+          await prisma.variant.update({
+            where: { id: item.variantId },
+            data: { stock: { decrement: item.quantity } }
+          });
+        }
       }
-      break;
-    
-    case "checkout.session.async_payment_failed":
-      // Handle failed payment
-      break;
-
-    default:
-      console.log(`Unhandled event type ${event.type}`);
+    }
   }
 
   return NextResponse.json({ received: true });
 }
-
-// NextJS route config to handle raw body
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
