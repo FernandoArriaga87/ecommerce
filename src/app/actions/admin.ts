@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
+import { resend, SEND_FROM } from "@/lib/resend";
+import OrderShippedEmail from "@/components/emails/OrderShippedEmail";
 
 export async function createProductAction(prevState: any, formData: FormData) {
   const name = formData.get("name") as string;
@@ -182,4 +184,40 @@ export async function updateProductAction(prevState: any, formData: FormData) {
 
   revalidatePath("/", "layout");
   redirect("/admin/products");
+}
+
+export async function updateOrderStatusAction(orderId: string, newStatus: "PENDING" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED") {
+  try {
+    const supabase = await createClient();
+    
+    const order = await prisma.order.update({
+      where: { id: orderId },
+      data: { status: newStatus },
+      include: { user: true }
+    });
+
+    // Si se marca como enviado y tenemos resend configurado
+    if (newStatus === "SHIPPED" && resend && order.user?.email) {
+      try {
+        await resend.emails.send({
+          from: SEND_FROM,
+          to: order.user.email,
+          subject: `📦 Tu pedido ${order.orderNumber} va en camino!`,
+          react: OrderShippedEmail({ 
+            orderNumber: order.orderNumber, 
+            customerName: order.user.name.split(" ")[0] || "Cliente"
+          }),
+        });
+        console.log(`Correo de envío despachado para la orden: ${order.orderNumber}`);
+      } catch (emailError) {
+        console.error("Error enviando correo de pedido enviado:", emailError);
+      }
+    }
+
+    revalidatePath("/", "layout");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error actualizando estado del pedido:", error);
+    return { error: "No se pudo actualizar el estado del pedido." };
+  }
 }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logoutAction } from "@/app/actions/auth";
 
-export default function SidebarNav() {
+export default function SidebarNav({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname();
 
   const links = [
@@ -13,6 +13,10 @@ export default function SidebarNav() {
     { href: "/profile/addresses", label: "Direcciones" },
     { href: "/profile/settings", label: "Configuración" },
   ];
+
+  if (isAdmin) {
+    links.push({ href: "/admin", label: "Panel de Administración" });
+  }
 
   return (
     <nav className="flex flex-col gap-4 font-bold text-sm tracking-widest uppercase">

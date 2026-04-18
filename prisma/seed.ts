@@ -3,106 +3,179 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 async function main() {
-  console.log("Iniciando Seed...")
+  console.log('Start seeding...')
 
-  // Limpiar primero
+  // Limpiar base de datos de productos, equipos, categorías y dependencias
   await prisma.orderItem.deleteMany()
   await prisma.order.deleteMany()
+  await prisma.cartItem.deleteMany()
+  await prisma.cart.deleteMany()
   await prisma.variant.deleteMany()
   await prisma.product.deleteMany()
   await prisma.team.deleteMany()
   await prisma.category.deleteMany()
-  await prisma.user.deleteMany()
 
-  // 1. User
-  const admin = await prisma.user.create({
+  console.log('Datos anteriores eliminados.')
+
+  // Crear Categoría
+  const ligaMx = await prisma.category.create({
     data: {
-      email: "admin@deportivostore.com",
-      password: "ENCRYPTED_MOCK", // no real auth just for db reference
-      name: "Super Admin",
-      role: "ADMIN"
-    }
+      name: 'Liga MX',
+      slug: 'liga-mx',
+    },
   })
 
-  // 2. Categories
-  const catLigaMx = await prisma.category.create({ data: { name: "Liga MX", slug: "liga-mx" } });
-  const catEurope = await prisma.category.create({ data: { name: "Europeos", slug: "europeos" } });
-  const catNational = await prisma.category.create({ data: { name: "Selecciones", slug: "selecciones" } });
+  console.log('Categoría creada: Liga MX')
 
-  // 3. Teams
-  const realMadrid = await prisma.team.create({ data: { name: "Madrid", slug: "madrid" } });
-  const barca = await prisma.team.create({ data: { name: "Barcelona", slug: "barcelona" } });
-  const manBlue = await prisma.team.create({ data: { name: "Manchester Blue", slug: "manchester-blue" } });
-  const juventus = await prisma.team.create({ data: { name: "Juventus", slug: "juventus" } });
-  const arsenal = await prisma.team.create({ data: { name: "Arsenal", slug: "arsenal" } });
-  const nacional = await prisma.team.create({ data: { name: "Selección Nacional", slug: "nacional" } });
+  // Crear Equipos
+  const teamsData = [
+    { name: 'Tigres UANL', slug: 'tigres' },
+    { name: 'Rayados de Monterrey', slug: 'rayados' },
+    { name: 'Club América', slug: 'america' },
+    { name: 'Chivas de Guadalajara', slug: 'chivas' },
+    { name: 'Cruz Azul', slug: 'cruz-azul' },
+    { name: 'Pumas UNAM', slug: 'pumas' },
+    { name: 'Deportivo Toluca', slug: 'toluca' },
+    { name: 'Pachuca', slug: 'pachuca' },
+  ]
 
-  // 4. Products & Variants
-  const p1 = await prisma.product.create({
-    data: {
-      name: "Jersey Madrid Local 24/25",
-      slug: "jersey-madrid-local-24-25",
+  const teams: Record<string, any> = {}
+  for (const t of teamsData) {
+    teams[t.slug] = await prisma.team.create({ data: t })
+  }
+
+  console.log(`Equipos creados: ${teamsData.length}`)
+
+  // Crear Productos
+  const productsData = [
+    {
+      name: 'Jersey Tigres UANL Local 24/25',
+      slug: 'jersey-tigres-local-2425',
       price: 1899,
-      images: ["https://images.unsplash.com/photo-1577223625816-7546f13df25d?q=80&w=800&auto=format&fit=crop"],
-      isFeatured: true, // "Más vendido"
-      categoryId: catEurope.id,
-      teamId: realMadrid.id,
-      variants: {
-        create: [
-          { sku: "RM-LOC-2425-S", size: "S", color: "Blanco", stock: 5 },
-          { sku: "RM-LOC-2425-M", size: "M", color: "Blanco", stock: 12 },
-          { sku: "RM-LOC-2425-L", size: "L", color: "Blanco", stock: 0 },
-          { sku: "RM-LOC-2425-XL", size: "XL", color: "Blanco", stock: 3 },
-        ]
-      }
-    }
-  });
-
-  const p2 = await prisma.product.create({
-    data: {
-      name: "Jersey Manchester Blue Visitante",
-      slug: "jersey-manchester-blue-visitante",
-      price: 1799,
-      images: ["https://images.unsplash.com/photo-1544452179-883a992bc0c2?q=80&w=800&auto=format&fit=crop"],
-      isNew: true, // "Nuevo"
-      categoryId: catEurope.id,
-      teamId: manBlue.id,
-      variants: {
-        create: [
-          { sku: "MB-VIS-2425-S", size: "S", color: "Azul-Negro", stock: 0 },
-          { sku: "MB-VIS-2425-M", size: "M", color: "Azul-Negro", stock: 8 },
-          { sku: "MB-VIS-2425-L", size: "L", color: "Azul-Negro", stock: 4 },
-        ]
-      }
-    }
-  });
-
-  const p3 = await prisma.product.create({
-    data: {
-      name: "Playera Selección Nacional Local",
-      slug: "playera-seleccion-nacional-local",
+      images: ['https://images.unsplash.com/photo-1577223625816-7546f13df25d?q=80&w=800&auto=format&fit=crop'],
+      isNew: true,
+      isFeatured: true,
+      categoryId: ligaMx.id,
+      teamId: teams['tigres'].id,
+      colors: ['Amarillo', 'Azul'],
+    },
+    {
+      name: 'Jersey Rayados Local 24/25',
+      slug: 'jersey-rayados-local-2425',
+      price: 1899,
+      images: ['https://images.unsplash.com/photo-1544452179-883a992bc0c2?q=80&w=800&auto=format&fit=crop'],
+      isNew: true,
+      isFeatured: false,
+      categoryId: ligaMx.id,
+      teamId: teams['rayados'].id,
+      colors: ['Azul', 'Blanco'],
+    },
+    {
+      name: 'Playera Club América Local 24/25',
+      slug: 'playera-america-local-2425',
       price: 1999,
-      images: ["https://images.unsplash.com/photo-1552554769-cf2be34be108?q=80&w=800&auto=format&fit=crop"],
-      categoryId: catNational.id,
-      teamId: nacional.id,
-      variants: {
-        create: [
-          { sku: "NAC-LOC-2425-S", size: "S", color: "Verde", stock: 10 },
-          { sku: "NAC-LOC-2425-M", size: "M", color: "Verde", stock: 0 },
-          { sku: "NAC-LOC-2425-L", size: "L", color: "Verde", stock: 14 },
-        ]
+      images: ['https://images.unsplash.com/photo-1552554769-cf2be34be108?q=80&w=800&auto=format&fit=crop'],
+      isNew: false,
+      isFeatured: true,
+      categoryId: ligaMx.id,
+      teamId: teams['america'].id,
+      colors: ['Amarillo'],
+    },
+    {
+      name: 'Jersey Chivas Local 24/25',
+      slug: 'jersey-chivas-local-2425',
+      price: 1799,
+      images: ['https://images.unsplash.com/photo-1582046897931-1507ae8001be?q=80&w=800&auto=format&fit=crop'],
+      isNew: true,
+      isFeatured: true,
+      categoryId: ligaMx.id,
+      teamId: teams['chivas'].id,
+      colors: ['Rojo', 'Blanco'],
+    },
+    {
+      name: 'Jersey Cruz Azul Local 23/24',
+      slug: 'jersey-cruz-azul-local-2324',
+      price: 1699,
+      images: ['https://images.unsplash.com/photo-1518063319789-7217e6706b04?q=80&w=800&auto=format&fit=crop'],
+      isNew: false,
+      isFeatured: false,
+      categoryId: ligaMx.id,
+      teamId: teams['cruz-azul'].id,
+      colors: ['Azul'],
+    },
+    {
+      name: 'Playera Pumas UNAM Visita 24/25',
+      slug: 'playera-pumas-visita-2425',
+      price: 1899,
+      images: ['https://images.unsplash.com/photo-1521508934575-b91c8ba6b907?q=80&w=800&auto=format&fit=crop'],
+      isNew: true,
+      isFeatured: false,
+      categoryId: ligaMx.id,
+      teamId: teams['pumas'].id,
+      colors: ['Oro'],
+    },
+    {
+      name: 'Jersey Toluca Local 24/25',
+      slug: 'jersey-toluca-local-2425',
+      price: 1599,
+      images: ['https://images.unsplash.com/photo-1577223625816-7546f13df25d?q=80&w=800&auto=format&fit=crop'],
+      isNew: true,
+      isFeatured: false,
+      categoryId: ligaMx.id,
+      teamId: teams['toluca'].id,
+      colors: ['Rojo'],
+    },
+    {
+      name: 'Jersey Pachuca Tercera Equipación',
+      slug: 'jersey-pachuca-tercera',
+      price: 1499,
+      images: ['https://images.unsplash.com/photo-1544452179-883a992bc0c2?q=80&w=800&auto=format&fit=crop'],
+      isNew: false,
+      isFeatured: false,
+      categoryId: ligaMx.id,
+      teamId: teams['pachuca'].id,
+      colors: ['Negro'],
+    },
+  ]
+
+  const sizes = ['S', 'M', 'L', 'XL']
+
+  for (const pData of productsData) {
+    const { colors, ...productInput } = pData
+    const product = await prisma.product.create({
+      data: productInput
+    })
+
+    let variantCount = 0;
+    for (const color of colors) {
+      for (const size of sizes) {
+        // Asignar un stock aleatorio entre 0 y 20 para ver alertas en el dashboard
+        const stock = Math.floor(Math.random() * 21); 
+        
+        await prisma.variant.create({
+          data: {
+            productId: product.id,
+            color,
+            size,
+            stock,
+            sku: `${product.slug.toUpperCase()}-${size}-${color.substring(0,3).toUpperCase()}-${Math.floor(Math.random() * 1000)}`
+          }
+        })
+        variantCount++;
       }
     }
-  });
+    console.log(`Producto creado: ${product.name} con ${variantCount} variantes.`)
+  }
 
-  console.log("Mock data inserted successfully!")
+  console.log('¡Seeding completado con éxito!')
 }
 
 main()
-  .catch((e) => {
-    console.error(e)
-    process.exit(1)
-  })
-  .finally(async () => {
+  .then(async () => {
     await prisma.$disconnect()
+  })
+  .catch(async (e) => {
+    console.error(e)
+    await prisma.$disconnect()
+    process.exit(1)
   })

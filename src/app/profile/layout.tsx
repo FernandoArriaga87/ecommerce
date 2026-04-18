@@ -30,7 +30,7 @@ export default async function ProfileLayout({ children }: { children: ReactNode 
           <p className="text-xs text-gray-500 mt-1 uppercase font-bold tracking-widest">{user.name}</p>
         </div>
         
-        <SidebarNav />
+        <SidebarNav isAdmin={user.role === "ADMIN" || user.role === "MODERATOR"} />
       </aside>
       
       {/* Profile Main Content */}
