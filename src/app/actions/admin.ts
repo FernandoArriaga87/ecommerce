@@ -14,9 +14,15 @@ export async function createProductAction(prevState: any, formData: FormData) {
   const imageFiles = formData.getAll("imageFiles") as File[];
   const isFeatured = formData.get("isFeatured") === "on";
   const isNew = formData.get("isNew") === "on";
+  const variantsJson = formData.get("variantsJson") as string;
 
-  if (!name || !slug || !price || !teamId || !categoryId || imageFiles.length === 0 || imageFiles[0].size === 0) {
-    return { error: "Todos los campos principales y al menos una imagen son obligatorios." };
+  if (!name || !slug || !price || !teamId || !categoryId || !variantsJson) {
+    return { error: "Todos los campos principales son obligatorios." };
+  }
+
+  const variants = JSON.parse(variantsJson);
+  if (variants.length === 0) {
+    return { error: "Debes agregar al menos una variante (talla/stock)." };
   }
 
   const imageUrls: string[] = [];
@@ -30,7 +36,7 @@ export async function createProductAction(prevState: any, formData: FormData) {
       const fileExt = imageFile.name.split('.').pop();
       const fileName = `${Date.now()}-${slug}-${Math.round(Math.random()*1000)}.${fileExt}`;
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('products')
         .upload(fileName, imageFile, {
           cacheControl: '3600',
@@ -39,7 +45,7 @@ export async function createProductAction(prevState: any, formData: FormData) {
 
       if (uploadError) {
         console.error(uploadError);
-        return { error: "Fallo al subir imágenes. Asegúrate de configurar Supabase Storage." };
+        return { error: "Fallo al subir imágenes." };
       }
 
       const { data } = supabase.storage.from('products').getPublicUrl(fileName);
@@ -48,25 +54,40 @@ export async function createProductAction(prevState: any, formData: FormData) {
 
   } catch (err) {
     console.error("Storage upload err:", err);
-    return { error: "Crash al conectarse al Storage." };
+    return { error: "Error de conexión con el almacenamiento." };
   }
 
   try {
-    await prisma.product.create({
-      data: {
-        name,
-        slug,
-        price: Number(price),
-        teamId,
-        categoryId,
-        images: imageUrls,
-        isFeatured,
-        isNew,
+    await prisma.$transaction(async (tx) => {
+      const product = await tx.product.create({
+        data: {
+          name,
+          slug,
+          price: Number(price),
+          teamId,
+          categoryId,
+          images: imageUrls,
+          isFeatured,
+          isNew,
+        }
+      });
+
+      // Crear las variantes
+      for (const v of variants) {
+        await tx.variant.create({
+          data: {
+            productId: product.id,
+            color: v.color,
+            size: v.size,
+            stock: v.stock,
+            sku: `${slug.toUpperCase()}-${v.size.toUpperCase()}-${v.color.toUpperCase().slice(0, 3)}-${Math.round(Math.random()*1000)}`
+          }
+        });
       }
     });
   } catch (error: any) {
     console.error("Prisma error:", error);
-    return { error: `Casi lo logramos. Fallo en Base de datos: ${error.message}` };
+    return { error: `Error en Base de datos: ${error.message}` };
   }
 
   revalidatePath("/", "layout");
@@ -75,7 +96,6 @@ export async function createProductAction(prevState: any, formData: FormData) {
 
 export async function deleteProductAction(productId: string) {
   try {
-    const supabase = await createClient(); // Para verificar sesión o rol
     await prisma.variant.deleteMany({ where: { productId } });
     await prisma.product.delete({ where: { id: productId } });
     revalidatePath("/", "layout");
@@ -94,56 +114,70 @@ export async function updateProductAction(prevState: any, formData: FormData) {
   const categoryId = formData.get("categoryId") as string;
   const isFeatured = formData.get("isFeatured") === "on";
   const isNew = formData.get("isNew") === "on";
+  const variantsJson = formData.get("variantsJson") as string;
   
   const imageFiles = formData.getAll("imageFiles") as File[];
   const existingImageUrl = formData.get("existingImageUrl") as string;
 
-  if (!id || !name || !slug || !price || !teamId || !categoryId) {
+  if (!id || !name || !slug || !price || !teamId || !categoryId || !variantsJson) {
     return { error: "Todos los campos obligatorios deben estar llenos." };
   }
 
-  let finalImageUrls: string[] = existingImageUrl ? [existingImageUrl] : []; // Mantenemos la primera imagen fallback por compatibilidad
+  const variants = JSON.parse(variantsJson);
+
+  let finalImageUrls: string[] = existingImageUrl ? [existingImageUrl] : [];
 
   try {
     const supabase = await createClient();
     
-    // Si se subió al menos un archivo real, reemplazamos el array
     if (imageFiles.length > 0 && imageFiles[0].size > 0) {
-      finalImageUrls = []; // Reseteamos para poner las nuevas
-      
+      finalImageUrls = [];
       for (const imageFile of imageFiles) {
         if (imageFile.size === 0) continue;
         const fileExt = imageFile.name.split('.').pop();
         const fileName = `${Date.now()}-${slug}-${Math.round(Math.random()*1000)}.${fileExt}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('products')
-          .upload(fileName, imageFile, { upsert: false });
-
-        if (uploadError) {
-          return { error: "Fallo al subir nuevas imágenes." };
-        }
+        const { error: uploadError } = await supabase.storage.from('products').upload(fileName, imageFile);
+        if (uploadError) return { error: "Fallo al subir nuevas imágenes." };
         const { data } = supabase.storage.from('products').getPublicUrl(fileName);
         finalImageUrls.push(data.publicUrl);
       }
     }
 
-    await prisma.product.update({
-      where: { id },
-      data: {
-        name,
-        slug,
-        price: Number(price),
-        teamId,
-        categoryId,
-        images: finalImageUrls,
-        isFeatured,
-        isNew,
+    await prisma.$transaction(async (tx) => {
+      await tx.product.update({
+        where: { id },
+        data: {
+          name,
+          slug,
+          price: Number(price),
+          teamId,
+          categoryId,
+          images: finalImageUrls,
+          isFeatured,
+          isNew,
+        }
+      });
+
+      // Para actualizar variantes, una estrategia simple es borrar y recrear 
+      // (solo si no hay órdenes asociadas aún, de lo contrario habría que hacer upsert/delete selectivo)
+      // Por ahora para este MVP, haremos un borrado de las que no tengan stock 0 y recreación
+      await tx.variant.deleteMany({ where: { productId: id } });
+      
+      for (const v of variants) {
+        await tx.variant.create({
+          data: {
+            productId: id,
+            color: v.color,
+            size: v.size,
+            stock: v.stock,
+            sku: `${slug.toUpperCase()}-${v.size.toUpperCase()}-${v.color.toUpperCase().slice(0, 3)}-${Math.round(Math.random()*1000)}`
+          }
+        });
       }
     });
   } catch (error) {
     console.error("Update error:", error);
-    return { error: "Crash al actualizar producto." };
+    return { error: "Error al actualizar producto y variantes." };
   }
 
   revalidatePath("/", "layout");

@@ -165,5 +165,6 @@ model CartItem {
   variantId String
   variant   Variant  @relation(fields: [variantId], references: [id])
   quantity  Int
-}
 
+  @@unique([cartId, variantId])
+}

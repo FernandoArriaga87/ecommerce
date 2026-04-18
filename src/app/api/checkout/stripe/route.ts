@@ -1,38 +1,82 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
+import { checkoutSchema } from "@/lib/validations/checkout";
+import { Decimal } from "@prisma/client/runtime/library";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    console.log("Checkout Body:", JSON.stringify(body, null, 2));
-    const { name, email, phone, address, city, state, zipCode, items, shipping, subtotal, total } = body;
-
-    if (!items || items.length === 0) {
-      console.error("Empty cart");
-      return NextResponse.json({ error: "El carrito está vacío" }, { status: 400 });
+    
+    // 1. Validar el cuerpo de la petición con Zod
+    const validation = checkoutSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json({ 
+        error: "Datos inválidos", 
+        details: validation.error.flatten().fieldErrors 
+      }, { status: 400 });
     }
 
-    // 1. Create or get user
+    const { name, email, phone, address, city, state, zipCode, items } = validation.data;
+
+    // 2. Obtener productos y variantes de la DB para calcular precios reales
+    // Buscamos todas las variantes involucradas
+    const dbItems = await Promise.all(
+      items.map(async (item) => {
+        const variant = await prisma.variant.findFirst({
+          where: { 
+            productId: item.productId, 
+            size: item.size 
+          },
+          include: { 
+            product: true 
+          }
+        });
+
+        if (!variant) {
+          throw new Error(`Producto o talla no disponible: ${item.productId} - ${item.size}`);
+        }
+
+        if (variant.stock < item.quantity) {
+          throw new Error(`Stock insuficiente para ${variant.product.name} (Talla: ${item.size})`);
+        }
+
+        return {
+          variant,
+          quantity: item.quantity,
+          price: variant.product.price
+        };
+      })
+    );
+
+    // 3. Calcular totales en el servidor
+    const subtotal = dbItems.reduce((acc, item) => {
+      return acc.add(new Decimal(item.price.toString()).mul(item.quantity));
+    }, new Decimal(0));
+
+    const shipping = new Decimal(150); // Tarifa fija de envío por ahora
+    const total = subtotal.add(shipping);
+
+    // 4. Buscar o crear usuario (Guest logic mejorada)
     let user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       user = await prisma.user.create({
         data: {
           email,
           name,
-          phone: phone || null,
-          password: "guest", // Placeholder for guest
+          phone,
+          password: "GUEST_USER_" + Math.random().toString(36).slice(-8), 
         },
       });
     }
 
-    // 2. Create address
+    // 5. Crear dirección
     const addr = await prisma.address.create({
       data: {
         userId: user.id,
-        label: "Envío",
+        label: "Envío Checkout",
         name,
-        phone: phone || "",
+        phone,
         address,
         city,
         state,
@@ -40,7 +84,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // 3. Create Order in DB (Status: PENDING)
+    // 6. Crear la orden con estatus PENDING
     const orderNumber = `DS-${Date.now().toString(36).toUpperCase()}`;
     const order = await prisma.order.create({
       data: {
@@ -53,68 +97,47 @@ export async function POST(req: NextRequest) {
         paymentMethod: "STRIPE",
         status: "PENDING",
         items: {
-          create: await Promise.all(
-            items.map(async (item: any) => {
-              let variant = await prisma.variant.findFirst({
-                where: { productId: item.productId, size: item.size },
-              });
-
-              if (!variant) {
-                variant = await prisma.variant.create({
-                  data: {
-                    productId: item.productId,
-                    size: item.size,
-                    color: "Default",
-                    stock: 0,
-                    sku: `AUTO-${item.productId.slice(0, 8)}-${item.size}`,
-                  },
-                });
-              }
-
-              return {
-                variantId: variant.id,
-                price: item.price,
-                quantity: item.quantity,
-                total: item.price * item.quantity,
-              };
-            })
-          ),
+          create: dbItems.map((item) => ({
+            variantId: item.variant.id,
+            price: item.price,
+            quantity: item.quantity,
+            total: new Decimal(item.price.toString()).mul(item.quantity)
+          })),
         },
       },
     });
 
-    // 4. Create Stripe Line Items
-    const line_items = items.map((item: any) => ({
+    // 7. Preparar line_items para Stripe
+    const line_items = dbItems.map((item) => ({
       price_data: {
         currency: "mxn",
         product_data: {
-          name: item.name,
-          images: item.image ? [item.image] : [],
+          name: item.variant.product.name,
+          images: item.variant.product.images.length > 0 ? [item.variant.product.images[0]] : [],
           metadata: {
-            productId: item.productId,
-            size: item.size,
+            productId: item.variant.productId,
+            variantId: item.variant.id,
+            size: item.variant.size,
           },
         },
-        unit_amount: Math.round(item.price * 100), // Stripe expects cents
+        unit_amount: Math.round(Number(item.price) * 100),
       },
       quantity: item.quantity,
     }));
 
-    // Add shipping as a line item if applicable
-    if (shipping > 0) {
-      line_items.push({
-        price_data: {
-          currency: "mxn",
-          product_data: {
-            name: "Envío",
-          },
-          unit_amount: Math.round(shipping * 100),
+    // Agregar envío
+    line_items.push({
+      price_data: {
+        currency: "mxn",
+        product_data: {
+          name: "Costo de Envío",
         },
-        quantity: 1,
-      });
-    }
+        unit_amount: Math.round(Number(shipping) * 100),
+      },
+      quantity: 1,
+    });
 
-    // 5. Create Stripe Checkout Session
+    // 8. Crear sesión de Stripe
     const origin = req.headers.get("origin");
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -129,10 +152,12 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    console.log("Stripe Session Created:", session.id);
     return NextResponse.json({ url: session.url });
+
   } catch (error: any) {
-    console.error("CRITICAL Stripe Checkout Error:", error);
-    return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+    console.error("Stripe Checkout Error:", error);
+    return NextResponse.json({ 
+      error: error.message || "Ocurrió un error al procesar el pago" 
+    }, { status: 500 });
   }
 }

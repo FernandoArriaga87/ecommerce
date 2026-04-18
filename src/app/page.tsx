@@ -1,13 +1,16 @@
-import { formatPrice } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
 import { ClientHome } from "../components/client-home";
+import { Suspense } from "react";
+import { ProductGridSkeleton } from "@/components/product-skeleton";
 
-
-export default async function Home() {
+async function ProductsList() {
   const dbProducts = await prisma.product.findMany({
+    where: { isActive: true },
     include: {
       team: true
-    }
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 8
   });
 
   const products = dbProducts.map(p => ({
@@ -21,4 +24,12 @@ export default async function Home() {
   }));
 
   return <ClientHome products={products} />;
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<ProductGridSkeleton />}>
+      <ProductsList />
+    </Suspense>
+  );
 }

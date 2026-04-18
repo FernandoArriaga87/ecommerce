@@ -1,14 +1,43 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { createProductAction, updateProductAction } from "@/app/actions/admin";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Plus, Trash } from "@phosphor-icons/react";
+
+interface VariantInput {
+  color: string;
+  size: string;
+  stock: number;
+}
 
 export function ProductFormClient({ categories, teams, product }: { categories: any[]; teams: any[]; product?: any }) {
   const isEditing = !!product;
   const targetAction = isEditing ? updateProductAction : createProductAction;
   const [state, formAction, pending] = useActionState(targetAction as any, { error: "" });
+
+  const [variants, setVariants] = useState<VariantInput[]>(
+    product?.variants.map((v: any) => ({
+      color: v.color,
+      size: v.size,
+      stock: v.stock
+    })) || [{ color: "Única", size: "M", stock: 10 }]
+  );
+
+  const addVariant = () => {
+    setVariants([...variants, { color: "Única", size: "M", stock: 10 }]);
+  };
+
+  const removeVariant = (index: number) => {
+    setVariants(variants.filter((_, i) => i !== index));
+  };
+
+  const updateVariant = (index: number, field: keyof VariantInput, value: string | number) => {
+    const newVariants = [...variants];
+    newVariants[index] = { ...newVariants[index], [field]: value };
+    setVariants(newVariants);
+  };
 
   return (
     <form action={formAction} className="bg-white border border-gray-200 p-8 flex flex-col gap-6">
@@ -20,6 +49,9 @@ export function ProductFormClient({ categories, teams, product }: { categories: 
 
       {isEditing && <input type="hidden" name="id" value={product.id} />}
       {isEditing && <input type="hidden" name="existingImageUrl" value={product.images[0] || ""} />}
+      
+      {/* Pasar variantes como JSON */}
+      <input type="hidden" name="variantsJson" value={JSON.stringify(variants)} />
 
       {/* Basic Info */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -51,6 +83,38 @@ export function ProductFormClient({ categories, teams, product }: { categories: 
             <option value="">Selecciona Categoría...</option>
             {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
+        </div>
+      </div>
+
+      {/* Variantes Management */}
+      <div className="flex flex-col gap-4 border border-zinc-100 p-4 bg-zinc-50/50">
+        <div className="flex justify-between items-center">
+          <label className="text-xs font-black uppercase tracking-widest text-black">Inventario y Variantes (Tallas/Stock)</label>
+          <Button type="button" onClick={addVariant} variant="outline" className="h-8 rounded-none border-black text-[10px] font-black uppercase px-3 gap-2">
+            <Plus size={14} weight="bold" /> Agregar Variante
+          </Button>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          {variants.map((variant, index) => (
+            <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end bg-white p-3 border border-gray-200">
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-bold uppercase text-gray-400">Color</span>
+                <Input value={variant.color} onChange={(e) => updateVariant(index, 'color', e.target.value)} placeholder="Ej. Local" className="h-9 rounded-none text-xs border-gray-200" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-bold uppercase text-gray-400">Talla</span>
+                <Input value={variant.size} onChange={(e) => updateVariant(index, 'size', e.target.value)} placeholder="S, M, L..." className="h-9 rounded-none text-xs border-gray-200" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-bold uppercase text-gray-400">Stock</span>
+                <Input type="number" value={variant.stock} onChange={(e) => updateVariant(index, 'stock', parseInt(e.target.value))} placeholder="0" className="h-9 rounded-none text-xs border-gray-200" />
+              </div>
+              <Button type="button" onClick={() => removeVariant(index)} disabled={variants.length === 1} variant="ghost" className="h-9 rounded-none text-red-500 hover:text-red-700 hover:bg-red-50 gap-2 text-[10px] font-black uppercase">
+                <Trash size={14} /> Eliminar
+              </Button>
+            </div>
+          ))}
         </div>
       </div>
 
