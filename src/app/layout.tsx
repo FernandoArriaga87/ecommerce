@@ -39,7 +39,7 @@ export default function RootLayout({
           <footer className="bg-[#0A0A0A] text-white/50 py-24 mt-auto border-t border-white/[0.05]">
             <div className="container mx-auto px-6 text-center text-sm font-medium tracking-tight">
               <p className="text-white/80">&copy; {new Date().getFullYear()} DeportivoStore. Todos los derechos reservados.</p>
-              <p className="mt-4 text-xs opacity-40">Aceptamos Mercado Pago, Aplazo y Stripe.</p>
+              <p className="mt-4 text-xs opacity-40">Pagos seguros procesados a través de Stripe.</p>
             </div>
           </footer>
         </CartProvider>

@@ -43,13 +43,19 @@ export function Navbar() {
             </span>
           </Link>
           <nav className="hidden lg:flex gap-8 text-[11px] font-bold uppercase tracking-[0.2em] text-[#111111]/50">
-            {["Liga MX", "Europeos", "Selecciones", "Retro", "Ofertas"].map((item) => (
+            {[
+              { name: "Liga MX", slug: "liga-mx" },
+              { name: "Europeos", slug: "europeos" },
+              { name: "Selecciones", slug: "selecciones" },
+              { name: "Retro", slug: "retro" },
+              { name: "Ofertas", slug: "ofertas" }
+            ].map((item) => (
               <Link 
-                key={item} 
-                href="/" 
+                key={item.name} 
+                href={`/?category=${item.slug}`} 
                 className="hover:text-[#111111] transition-colors relative group"
               >
-                {item}
+                {item.name}
                 <span className="absolute -bottom-1 left-0 w-0 h-[1.5px] bg-[#111111] transition-all duration-300 group-hover:w-full" />
               </Link>
             ))}

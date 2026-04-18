@@ -31,8 +31,6 @@ enum OrderStatus {
 
 enum PaymentMethod {
   STRIPE
-  MERCADO_PAGO
-  APLAZO
 }
 
 model User {

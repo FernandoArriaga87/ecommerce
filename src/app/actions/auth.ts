@@ -47,6 +47,8 @@ export async function registerAction(prevState: any, formData: FormData) {
     },
   });
 
+  const returnUrl = formData.get("returnUrl") as string || "/profile";
+
   if (authError) {
     return { error: authError.message };
   }
@@ -55,7 +57,7 @@ export async function registerAction(prevState: any, formData: FormData) {
   // para garantizar consistencia incluso si falla la respuesta aquí.
 
   revalidatePath("/", "layout");
-  redirect("/complete-profile?returnUrl=/profile");
+  redirect(`/complete-profile?returnUrl=${encodeURIComponent(returnUrl)}`);
 }
 
 export async function logoutAction() {

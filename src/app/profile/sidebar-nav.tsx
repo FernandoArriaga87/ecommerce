@@ -9,7 +9,7 @@ export default function SidebarNav() {
 
   const links = [
     { href: "/profile", label: "Resumen" },
-    { href: "/profile/orders", label: "Mis Pedidos" },
+    { href: "/orders", label: "Mis Pedidos" },
     { href: "/profile/addresses", label: "Direcciones" },
     { href: "/profile/settings", label: "Configuración" },
   ];
