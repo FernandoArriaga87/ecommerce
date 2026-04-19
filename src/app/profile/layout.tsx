@@ -7,14 +7,14 @@ import SidebarNav from "./sidebar-nav";
 
 export default async function ProfileLayout({ children }: { children: ReactNode }) {
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user: authUser } } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!authUser) {
     redirect("/login");
   }
 
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id }
+    where: { id: authUser.id }
   });
 
   if (!user) {

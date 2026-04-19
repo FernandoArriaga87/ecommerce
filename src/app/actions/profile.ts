@@ -34,14 +34,14 @@ export async function completeProfileAction(prevState: ProfileFormState, formDat
   const fullAddress = `${calle} #${numeroExt}${numeroInt ? ` Int. ${numeroInt}` : ""}, Col. ${colonia}${referencias ? ` (Ref: ${referencias})` : ""}`;
 
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user: authUser } } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!authUser) {
     return { error: "No autorizado." };
   }
 
   try {
-    const userId = session.user.id;
+    const userId = authUser.id;
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
         return { error: "No se encontro el usuario en la base de datos oficial" };
@@ -108,14 +108,14 @@ export async function updateProfileSettingsAction(prevState: ProfileFormState, f
   }
 
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user: authUser } } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!authUser) {
     return { error: "No autorizado." };
   }
 
   try {
-    const userId = session.user.id;
+    const userId = authUser.id;
 
     await prisma.user.update({
       where: { id: userId },

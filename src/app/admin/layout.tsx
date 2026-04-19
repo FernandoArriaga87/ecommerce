@@ -1,7 +1,26 @@
 import Link from "next/link";
 import { ReactNode } from "react";
+import { createClient } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
 
-export default function AdminLayout({ children }: { children: ReactNode }) {
+export default async function AdminLayout({ children }: { children: ReactNode }) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const dbUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { role: true }
+  });
+
+  if (!dbUser || (dbUser.role !== "ADMIN" && dbUser.role !== "MODERATOR")) {
+    redirect("/");
+  }
+
   return (
     <div className="flex flex-col md:flex-row min-h-screen w-full bg-zinc-50 text-black">
       {/* Sidebar sidebar */}

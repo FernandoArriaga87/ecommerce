@@ -21,7 +21,6 @@ const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
 const RATE_LIMIT_CONFIG = {
   // Sensitive routes get stricter limits
-  auth: { windowMs: 60_000, maxRequests: 10 },      // 10 req/min for login/register
   checkout: { windowMs: 60_000, maxRequests: 5 },    // 5 req/min for checkout
   api: { windowMs: 60_000, maxRequests: 30 },        // 30 req/min for general API
 };
@@ -79,17 +78,6 @@ export async function middleware(request: NextRequest) {
         { error: "Demasiadas solicitudes. Intenta de nuevo en un momento." },
         { status: 429 }
       );
-    }
-  }
-
-  if (pathname === "/login" || pathname === "/register") {
-    if (request.method === "POST" || pathname.startsWith("/api/")) {
-      if (!checkRateLimit(ip, "auth")) {
-        return NextResponse.json(
-          { error: "Demasiados intentos. Espera un momento." },
-          { status: 429 }
-        );
-      }
     }
   }
 

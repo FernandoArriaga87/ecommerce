@@ -23,29 +23,29 @@ export async function updateAddressAction(formData: FormData) {
   }
 
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user: authUser } } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!authUser) {
     return { error: "No autorizado" };
   }
 
   try {
     if (isDefault) {
       await prisma.address.updateMany({
-        where: { userId: session.user.id },
+        where: { userId: authUser.id },
         data: { isDefault: false }
       });
     }
 
     if (addressId) {
       await prisma.address.update({
-        where: { id: addressId, userId: session.user.id },
+        where: { id: addressId, userId: authUser.id },
         data: { name, phone, address, city, state, zipCode, isDefault }
       });
     } else {
       await prisma.address.create({
         data: {
-          userId: session.user.id,
+          userId: authUser.id,
           label: "Domicilio",
           name, phone, address, city, state, zipCode, isDefault
         }
@@ -64,15 +64,15 @@ export async function deleteAddressAction(formData: FormData) {
   const addressId = formData.get("addressId") as string;
 
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user: authUser } } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!authUser) {
     return { error: "No autorizado" };
   }
 
   try {
     await prisma.address.delete({
-      where: { id: addressId, userId: session.user.id }
+      where: { id: addressId, userId: authUser.id }
     });
 
     revalidatePath("/profile/addresses");

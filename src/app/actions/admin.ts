@@ -7,7 +7,20 @@ import { createClient } from "@/lib/supabase/server";
 import { resend, SEND_FROM } from "@/lib/resend";
 import OrderShippedEmail from "@/components/emails/OrderShippedEmail";
 
+async function verifyAdmin() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+  const dbUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { role: true }
+  });
+  return dbUser && (dbUser.role === 'ADMIN' || dbUser.role === 'MODERATOR');
+}
+
 export async function createProductAction(prevState: any, formData: FormData) {
+  if (!(await verifyAdmin())) return { error: "Acceso denegado." };
+
   const name = formData.get("name") as string;
   const slug = formData.get("slug") as string;
   const price = formData.get("price") as string;
@@ -97,6 +110,8 @@ export async function createProductAction(prevState: any, formData: FormData) {
 }
 
 export async function deleteProductAction(productId: string) {
+  if (!(await verifyAdmin())) throw new Error("Acceso denegado.");
+
   try {
     await prisma.variant.deleteMany({ where: { productId } });
     await prisma.product.delete({ where: { id: productId } });
@@ -108,6 +123,8 @@ export async function deleteProductAction(productId: string) {
 }
 
 export async function updateProductAction(prevState: any, formData: FormData) {
+  if (!(await verifyAdmin())) return { error: "Acceso denegado." };
+
   const id = formData.get("id") as string;
   const name = formData.get("name") as string;
   const slug = formData.get("slug") as string;
@@ -187,6 +204,8 @@ export async function updateProductAction(prevState: any, formData: FormData) {
 }
 
 export async function updateOrderStatusAction(orderId: string, newStatus: "PENDING" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED") {
+  if (!(await verifyAdmin())) return { error: "Acceso denegado." };
+
   try {
     const supabase = await createClient();
     
