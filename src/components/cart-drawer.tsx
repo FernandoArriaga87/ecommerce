@@ -14,10 +14,12 @@ export function CartDrawer() {
   const { items, removeItem, updateQuantity, totalItems, subtotal, isOpen, setIsOpen } = useCart();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [stockErrors, setStockErrors] = useState<string[]>([]);
 
   const handleCheckout = async () => {
     try {
       setLoading(true);
+      setStockErrors([]);
       const shipping = subtotal >= 1499 ? 0 : 149;
       const total = subtotal + shipping;
 
@@ -49,6 +51,8 @@ export function CartDrawer() {
       } else if (data.code === "PROFILE_INCOMPLETE") {
         setIsOpen(false);
         router.push("/complete-profile?returnUrl=/checkout");
+      } else if (data.code === "STOCK_ERROR" && data.stockErrors) {
+        setStockErrors(data.stockErrors);
       } else {
         alert(data.error || "Hubo un error al iniciar el pago.");
       }
@@ -244,7 +248,27 @@ export function CartDrawer() {
                 <span className="text-3xl font-black text-[#111111] tracking-tighter">{formatPrice(subtotal)}</span>
               </div>
             </div>
-            
+
+            {/* Stock error banner */}
+            <AnimatePresence>
+              {stockErrors.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="bg-red-50 border border-red-200 rounded-2xl p-4 space-y-2"
+                >
+                  <p className="text-[10px] font-black uppercase tracking-widest text-red-600 flex items-center gap-2">
+                    ⚠ Stock insuficiente
+                  </p>
+                  {stockErrors.map((err, i) => (
+                    <p key={i} className="text-xs text-red-600/80 font-medium leading-snug">
+                      {err}
+                    </p>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
             <div className="space-y-3">
               <Button
                 className="w-full bg-[#111111] text-white hover:bg-[#222222] rounded-full h-16 uppercase font-black tracking-widest text-[10px] transition-all shadow-2xl shadow-black/20 flex items-center justify-center gap-3 group overflow-hidden relative"

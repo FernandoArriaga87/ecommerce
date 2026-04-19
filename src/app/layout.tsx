@@ -6,7 +6,6 @@ import { CartProvider } from "@/lib/cart-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
-  padding: "unset",
   subsets: ["latin"],
 });
 

@@ -32,6 +32,11 @@ export async function POST(req: Request) {
 
   try {
     switch (event.type) {
+      // ─────────────────────────────────────────────
+      // PAYMENT SUCCEEDED
+      // Stock was already reserved at checkout time.
+      // We only need to flip status → PAID.
+      // ─────────────────────────────────────────────
       case "checkout.session.completed": {
         const order = await prisma.order.findUnique({
           where: { id: orderId },
@@ -42,26 +47,15 @@ export async function POST(req: Request) {
         });
 
         if (order && order.status === "PENDING") {
-          await prisma.$transaction(async (tx) => {
-            await tx.order.update({
-              where: { id: orderId },
-              data: {
-                status: "PAID",
-                externalId: session.id,
-              },
-            });
-
-            for (const item of order.items) {
-              await tx.variant.update({
-                where: { id: item.variantId },
-                data: {
-                  stock: { decrement: item.quantity }
-                }
-              });
-            }
+          await prisma.order.update({
+            where: { id: orderId },
+            data: {
+              status: "PAID",
+              externalId: session.id,
+            },
           });
           
-          console.log(`Orden ${orderId} marcada como PAGADA y stock descontado.`);
+          console.log(`Orden ${orderId} marcada como PAGADA. (Stock ya reservado al crear la orden)`);
 
           // Enviar correo de confirmación de pago
           if (resend && order.user?.email) {
@@ -85,22 +79,41 @@ export async function POST(req: Request) {
         break;
       }
 
+      // ─────────────────────────────────────────────
+      // PAYMENT FAILED / SESSION EXPIRED
+      // Stock was reserved at checkout → must be 
+      // restored so other customers can purchase.
+      // ─────────────────────────────────────────────
       case "checkout.session.async_payment_failed":
       case "checkout.session.expired": {
         const order = await prisma.order.findUnique({
-          where: { id: orderId }
+          where: { id: orderId },
+          include: { items: true }
         });
 
         if (order && order.status === "PENDING") {
-          await prisma.order.update({
-            where: { id: orderId },
-            data: {
-              status: "CANCELLED",
-              externalId: session.id,
-            },
+          await prisma.$transaction(async (tx) => {
+            // 1. Mark order as CANCELLED
+            await tx.order.update({
+              where: { id: orderId },
+              data: {
+                status: "CANCELLED",
+                externalId: session.id,
+              },
+            });
+
+            // 2. Restore reserved stock for each item
+            for (const item of order.items) {
+              await tx.variant.update({
+                where: { id: item.variantId },
+                data: {
+                  stock: { increment: item.quantity }
+                }
+              });
+            }
           });
           
-          console.log(`Orden ${orderId} CANCELADA por fallo o expiración en Stripe.`);
+          console.log(`Orden ${orderId} CANCELADA. Stock restaurado para ${order.items.length} variante(s).`);
         }
         break;
       }

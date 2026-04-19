@@ -30,7 +30,6 @@ export async function POST(req: Request) {
           id,
           email,
           name,
-          password: "SYNCED_FROM_AUTH",
         },
       });
 
