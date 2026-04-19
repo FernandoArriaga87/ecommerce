@@ -12,26 +12,47 @@ import { createClient } from "@/lib/supabase/client";
 
 const supabase = createClient();
 
+interface UserProfile {
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+}
+
 export default function CheckoutPage() {
   const { items, subtotal, clearCart, totalItems } = useCart();
   const [step, setStep] = useState<"form" | "success">("form");
   const [loading, setLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [orderNumber, setOrderNumber] = useState("");
+  const [stockErrors, setStockErrors] = useState<string[]>([]);
 
   useEffect(() => {
-    async function getSession() {
+    async function initialize() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         setUser(session?.user ?? null);
+
+        // If authenticated, fetch profile + address from DB
+        if (session?.user) {
+          const res = await fetch("/api/profile");
+          if (res.ok) {
+            const data = await res.json();
+            setProfile(data);
+          }
+        }
       } catch (error) {
-        console.error("Auth session check error:", error);
+        console.error("Auth/profile check error:", error);
       } finally {
         setCheckingAuth(false);
       }
     }
-    getSession();
+    initialize();
   }, []);
 
   const shipping = subtotal >= 1499 ? 0 : 149;
@@ -40,6 +61,7 @@ export default function CheckoutPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
+    setStockErrors([]);
 
     const formData = new FormData(e.currentTarget);
     const body = {
@@ -73,8 +95,9 @@ export default function CheckoutPage() {
       const data = await res.json();
 
       if (data.url) {
-        // Redirect to Stripe Checkout
         window.location.href = data.url;
+      } else if (data.code === "STOCK_ERROR" && data.stockErrors) {
+        setStockErrors(data.stockErrors);
       } else {
         alert(data.error || "Error al iniciar el pago con Stripe.");
       }
@@ -168,6 +191,18 @@ export default function CheckoutPage() {
         <div className="lg:col-span-7">
           <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tight mb-8">Finalizar Compra</h1>
 
+          {/* Stock error banner */}
+          {stockErrors.length > 0 && (
+            <div className="bg-red-50 border border-red-200 p-4 mb-6 space-y-2">
+              <p className="text-[10px] font-black uppercase tracking-widest text-red-600">
+                ⚠ Stock insuficiente
+              </p>
+              {stockErrors.map((err, i) => (
+                <p key={i} className="text-xs text-red-600/80 font-medium leading-snug">{err}</p>
+              ))}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Contact */}
             <div>
@@ -177,15 +212,35 @@ export default function CheckoutPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Nombre Completo</label>
-                  <Input name="name" required defaultValue={user?.user_metadata?.name || user?.user_metadata?.full_name || ""} placeholder="Juan Pérez" className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black" />
+                  <Input
+                    name="name"
+                    required
+                    defaultValue={profile?.name || user?.user_metadata?.name || user?.user_metadata?.full_name || ""}
+                    placeholder="Juan Pérez"
+                    className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black"
+                  />
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Correo Electrónico</label>
-                  <Input name="email" type="email" required defaultValue={user?.email || ""} placeholder="juan@email.com" className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black" />
+                  <Input
+                    name="email"
+                    type="email"
+                    required
+                    defaultValue={profile?.email || user?.email || ""}
+                    placeholder="juan@email.com"
+                    className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black"
+                  />
                 </div>
                 <div className="flex flex-col gap-1.5 md:col-span-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Teléfono</label>
-                  <Input name="phone" type="tel" required placeholder="+52 555 123 4567" className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black" />
+                  <Input
+                    name="phone"
+                    type="tel"
+                    required
+                    defaultValue={profile?.phone || ""}
+                    placeholder="+52 555 123 4567"
+                    className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black"
+                  />
                 </div>
               </div>
             </div>
@@ -198,20 +253,44 @@ export default function CheckoutPage() {
               <div className="grid grid-cols-1 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Dirección Completa</label>
-                  <Input name="address" required placeholder="Calle, Número, Colonia" className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black" />
+                  <Input
+                    name="address"
+                    required
+                    defaultValue={profile?.address || ""}
+                    placeholder="Calle, Número, Colonia"
+                    className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black"
+                  />
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Ciudad</label>
-                    <Input name="city" required placeholder="CDMX" className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black" />
+                    <Input
+                      name="city"
+                      required
+                      defaultValue={profile?.city || ""}
+                      placeholder="CDMX"
+                      className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black"
+                    />
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Estado</label>
-                    <Input name="state" required placeholder="Estado" className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black" />
+                    <Input
+                      name="state"
+                      required
+                      defaultValue={profile?.state || ""}
+                      placeholder="Estado"
+                      className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black"
+                    />
                   </div>
                   <div className="flex flex-col gap-1.5 col-span-2 md:col-span-1">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Código Postal</label>
-                    <Input name="zipCode" required placeholder="01000" className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black" />
+                    <Input
+                      name="zipCode"
+                      required
+                      defaultValue={profile?.zipCode || ""}
+                      placeholder="01000"
+                      className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black"
+                    />
                   </div>
                 </div>
               </div>

@@ -80,7 +80,7 @@ export async function completeProfileAction(prevState: ProfileFormState, formDat
         data: {
           userId,
           label: "Domicilio Principal",
-          name: user.name,
+          name: fullName,
           phone,
           address: fullAddress,
           city,

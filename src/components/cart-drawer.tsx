@@ -50,7 +50,7 @@ export function CartDrawer() {
         router.push("/login?returnUrl=/checkout");
       } else if (data.code === "PROFILE_INCOMPLETE") {
         setIsOpen(false);
-        router.push("/complete-profile?returnUrl=/checkout");
+        router.push("/complete-profile?returnUrl=/");
       } else if (data.code === "STOCK_ERROR" && data.stockErrors) {
         setStockErrors(data.stockErrors);
       } else {

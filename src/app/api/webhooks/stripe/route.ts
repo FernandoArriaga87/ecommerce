@@ -35,13 +35,19 @@ export async function POST(req: Request) {
       // ─────────────────────────────────────────────
       // PAYMENT SUCCEEDED
       // Stock was already reserved at checkout time.
-      // We only need to flip status → PAID.
+      // We only need to flip status → PAID + send email.
       // ─────────────────────────────────────────────
       case "checkout.session.completed": {
         const order = await prisma.order.findUnique({
           where: { id: orderId },
           include: { 
-            items: true,
+            items: {
+              include: {
+                variant: {
+                  include: { product: true }
+                }
+              }
+            },
             user: true
           }
         });
@@ -55,22 +61,32 @@ export async function POST(req: Request) {
             },
           });
           
-          console.log(`Orden ${orderId} marcada como PAGADA. (Stock ya reservado al crear la orden)`);
+          console.log(`✅ Orden ${orderId} marcada como PAGADA. (Stock ya reservado al crear la orden)`);
 
-          // Enviar correo de confirmación de pago
+          // Enviar correo de confirmación de pago con detalles del pedido
           if (resend && order.user?.email) {
             try {
+              const emailItems = order.items.map((item) => ({
+                name: item.variant.product.name,
+                size: item.variant.size,
+                quantity: item.quantity,
+                price: formatPrice(Number(item.price)),
+              }));
+
               await resend.emails.send({
                 from: SEND_FROM,
                 to: order.user.email,
-                subject: `Pago Confirmado - Pedido ${order.orderNumber}`,
+                subject: `✅ Pago Confirmado — Pedido ${order.orderNumber}`,
                 react: OrderPaidEmail({ 
                   orderNumber: order.orderNumber, 
                   customerName: order.user.name.split(" ")[0] || "Cliente", 
-                  total: formatPrice(Number(order.total))
+                  total: formatPrice(Number(order.total)),
+                  subtotal: formatPrice(Number(order.subtotal)),
+                  shipping: Number(order.shipping) === 0 ? "Gratis" : formatPrice(Number(order.shipping)),
+                  items: emailItems,
                 }),
               });
-              console.log(`Correo de pago enviado para orden: ${order.orderNumber}`);
+              console.log(`📧 Correo de pago enviado para orden: ${order.orderNumber}`);
             } catch (emailError) {
               console.error("Error enviando correo de pago:", emailError);
             }
@@ -113,7 +129,7 @@ export async function POST(req: Request) {
             }
           });
           
-          console.log(`Orden ${orderId} CANCELADA. Stock restaurado para ${order.items.length} variante(s).`);
+          console.log(`❌ Orden ${orderId} CANCELADA. Stock restaurado para ${order.items.length} variante(s).`);
         }
         break;
       }

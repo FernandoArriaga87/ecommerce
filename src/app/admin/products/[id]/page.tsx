@@ -9,7 +9,10 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   
   const categories = await prisma.category.findMany({ orderBy: { name: 'asc' } });
   const teams = await prisma.team.findMany({ orderBy: { name: 'asc' } });
-  const product = await prisma.product.findUnique({ where: { id } });
+  const product = await prisma.product.findUnique({
+    where: { id },
+    include: { variants: true },
+  });
 
   if (!product) {
     notFound();
