@@ -199,7 +199,7 @@ export async function updateOrderStatusAction(orderId: string, newStatus: "PENDI
     // Si se marca como enviado y tenemos resend configurado
     if (newStatus === "SHIPPED" && resend && order.user?.email) {
       try {
-        await resend.emails.send({
+        const { data, error: sendError } = await resend.emails.send({
           from: SEND_FROM,
           to: order.user.email,
           subject: `📦 Tu pedido ${order.orderNumber} va en camino!`,
@@ -208,9 +208,10 @@ export async function updateOrderStatusAction(orderId: string, newStatus: "PENDI
             customerName: order.user.name.split(" ")[0] || "Cliente"
           }),
         });
-        console.log(`Correo de envío despachado para la orden: ${order.orderNumber}`);
+        if (sendError) console.error("Error API Resend (envío en admin action):", sendError);
+        else console.log(`Correo de envío despachado con éxito para la orden: ${order.orderNumber}`, data);
       } catch (emailError) {
-        console.error("Error enviando correo de pedido enviado:", emailError);
+        console.error("Excepción enviando correo de pedido enviado:", emailError);
       }
     }
 

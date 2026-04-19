@@ -77,7 +77,7 @@ export async function PATCH(
 
       try {
         if (status === "SHIPPED") {
-          await resend.emails.send({
+          const { data, error: sendError } = await resend.emails.send({
             from: SEND_FROM,
             to: order.user.email,
             subject: `📦 ¡Tu pedido ${order.orderNumber} va en camino!`,
@@ -86,11 +86,12 @@ export async function PATCH(
               customerName,
             }),
           });
-          console.log(`📧 Email de envío enviado para orden: ${order.orderNumber}`);
+          if (sendError) console.error("Error API Resend (envío):", sendError);
+          else console.log(`📧 Email de envío enviado con éxito para orden: ${order.orderNumber}`, data);
         }
 
         if (status === "DELIVERED") {
-          await resend.emails.send({
+          const { data, error: sendError } = await resend.emails.send({
             from: SEND_FROM,
             to: order.user.email,
             subject: `🎉 ¡Tu pedido ${order.orderNumber} ha sido entregado!`,
@@ -99,10 +100,11 @@ export async function PATCH(
               customerName,
             }),
           });
-          console.log(`📧 Email de entrega enviado para orden: ${order.orderNumber}`);
+          if (sendError) console.error("Error API Resend (entrega):", sendError);
+          else console.log(`📧 Email de entrega enviado con éxito para orden: ${order.orderNumber}`, data);
         }
       } catch (emailError) {
-        console.error("Error enviando email de estado:", emailError);
+        console.error("Excepción enviando email de estado:", emailError);
         // No fallamos la request si el email falla
       }
     }

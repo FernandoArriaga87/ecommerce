@@ -5,4 +5,4 @@ export const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND
 
 // Dominio de remitente — usa onboarding@resend.dev para testing (solo envía a tu correo de Resend)
 // En producción cambia a tu dominio verificado: 'DeportivoStore <pedidos@tudominio.com>'
-export const SEND_FROM = 'DeportivoStore <onboarding@resend.dev>';
+export const SEND_FROM = process.env.RESEND_FROM_EMAIL || 'DeportivoStore <onboarding@resend.dev>';

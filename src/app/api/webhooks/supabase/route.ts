@@ -36,15 +36,20 @@ export async function POST(req: Request) {
       // 2. Enviar correo de bienvenida vía Resend
       if (resend) {
         try {
-          await resend.emails.send({
+          const { data, error: sendError } = await resend.emails.send({
             from: SEND_FROM,
             to: email,
             subject: "¡Bienvenido a DeportivoStore!",
             react: WelcomeEmail({ userFirstname: name.split(" ")[0] }),
           });
-          console.log(`Correo de bienvenida enviado a: ${email}`);
+          
+          if (sendError) {
+            console.error("Error API Resend (correo de bienvenida):", sendError);
+          } else {
+            console.log(`Correo de bienvenida enviado con éxito a: ${email}`, data);
+          }
         } catch (emailError) {
-          console.error("Fallo al enviar correo de bienvenida:", emailError);
+          console.error("Excepción enviando correo de bienvenida:", emailError);
           // No detenemos el proceso si el correo falla, la sincronización ya fue exitosa.
         }
       }

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { motion } from "framer-motion";
+import { logoutAction } from "@/app/actions/auth";
 
 export function Navbar() {
   const [user, setUser] = useState<any>(null);
@@ -75,12 +76,45 @@ export function Navbar() {
           
           <div className="flex items-center gap-3">
             <CartDrawer />
-            <Link 
-              href="/profile" 
-              className="p-3 hover:bg-[#111111]/5 rounded-full transition-colors text-[#111111]"
-            >
-              <User size={22} weight="bold" />
-            </Link>
+            <div className="relative group">
+              <Link 
+                href="/profile" 
+                className="p-3 hover:bg-[#111111]/5 rounded-full transition-colors text-[#111111] flex items-center"
+              >
+                <User size={22} weight="bold" />
+              </Link>
+
+              {/* Dropdown Menu (Desktop Hover) */}
+              <div className="absolute right-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 w-56 z-50">
+                <div className="bg-white border border-[#111111]/10 rounded-2xl shadow-xl flex flex-col p-2 gap-1 relative overflow-hidden">
+                  {user ? (
+                    <>
+                      <Link href="/profile" className="px-4 py-3 hover:bg-[#111111]/5 rounded-xl text-xs font-bold uppercase tracking-widest text-[#111111] transition-colors">
+                        Resumen
+                      </Link>
+                      <Link href="/orders" className="px-4 py-3 hover:bg-[#111111]/5 rounded-xl text-xs font-bold uppercase tracking-widest text-[#111111] transition-colors">
+                        Mis Pedidos
+                      </Link>
+                      <Link href="/profile/addresses" className="px-4 py-3 hover:bg-[#111111]/5 rounded-xl text-xs font-bold uppercase tracking-widest text-[#111111] transition-colors">
+                        Direcciones
+                      </Link>
+                      <Link href="/profile/settings" className="px-4 py-3 hover:bg-[#111111]/5 rounded-xl text-xs font-bold uppercase tracking-widest text-[#111111] transition-colors">
+                        Configuración
+                      </Link>
+                      <form action={logoutAction} className="w-full mt-2 pt-2 border-t border-[#111111]/10">
+                        <button type="submit" className="w-full text-left px-4 py-3 hover:bg-red-50 rounded-xl text-xs font-bold uppercase tracking-widest text-red-500 transition-colors">
+                          Cerrar Sesión
+                        </button>
+                      </form>
+                    </>
+                  ) : (
+                    <Link href="/login" className="px-4 py-3 hover:bg-[#111111]/5 rounded-xl text-xs font-bold uppercase tracking-widest text-[#111111] transition-colors text-center">
+                      Iniciar Sesión
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

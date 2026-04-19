@@ -73,7 +73,7 @@ export async function POST(req: Request) {
                 price: formatPrice(Number(item.price)),
               }));
 
-              await resend.emails.send({
+              const { data, error: sendError } = await resend.emails.send({
                 from: SEND_FROM,
                 to: order.user.email,
                 subject: `✅ Pago Confirmado — Pedido ${order.orderNumber}`,
@@ -86,9 +86,14 @@ export async function POST(req: Request) {
                   items: emailItems,
                 }),
               });
-              console.log(`📧 Correo de pago enviado para orden: ${order.orderNumber}`);
+
+              if (sendError) {
+                console.error("Error desde API de Resend enviando correo de pago:", sendError);
+              } else {
+                console.log(`📧 Correo de pago enviado con éxito para orden: ${order.orderNumber}`, data);
+              }
             } catch (emailError) {
-              console.error("Error enviando correo de pago:", emailError);
+              console.error("Excepción enviando correo de pago:", emailError);
             }
           }
         }
