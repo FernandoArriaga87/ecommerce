@@ -7,7 +7,7 @@ import OrderDeliveredEmail from "@/components/emails/OrderDeliveredEmail";
 
 // PATCH /api/orders/[id]/status
 // Body: { status: "SHIPPED" | "DELIVERED" }
-// Protected: requires ADMIN or MODERATOR role
+// Protected: requires ADMIN role
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -30,7 +30,7 @@ export async function PATCH(
       select: { role: true },
     });
 
-    if (!dbUser || (dbUser.role !== "ADMIN" && dbUser.role !== "MODERATOR")) {
+    if (!dbUser || dbUser.role !== "ADMIN") {
       return NextResponse.json({ error: "Acceso denegado: se requiere rol de administrador" }, { status: 403 });
     }
 

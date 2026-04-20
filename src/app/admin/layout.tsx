@@ -17,7 +17,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     select: { role: true }
   });
 
-  if (!dbUser || (dbUser.role !== "ADMIN" && dbUser.role !== "MODERATOR")) {
+  if (!dbUser || dbUser.role !== "ADMIN") {
     redirect("/");
   }
 

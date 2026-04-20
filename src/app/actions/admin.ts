@@ -15,7 +15,7 @@ async function verifyAdmin() {
     where: { id: user.id },
     select: { role: true }
   });
-  return dbUser && (dbUser.role === 'ADMIN' || dbUser.role === 'MODERATOR');
+  return dbUser && dbUser.role === 'ADMIN';
 }
 
 export async function createProductAction(prevState: any, formData: FormData) {
@@ -113,12 +113,14 @@ export async function deleteProductAction(productId: string) {
   if (!(await verifyAdmin())) throw new Error("Acceso denegado.");
 
   try {
-    await prisma.variant.deleteMany({ where: { productId } });
-    await prisma.product.delete({ where: { id: productId } });
+    await prisma.product.update({ 
+      where: { id: productId },
+      data: { isDeleted: true }
+    });
     revalidatePath("/", "layout");
   } catch (err) {
     console.error("Error al eliminar:", err);
-    throw new Error("No se pudo eliminar el producto");
+    throw new Error("No se pudo archivar el producto");
   }
 }
 

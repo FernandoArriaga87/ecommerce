@@ -31,6 +31,24 @@ export async function POST(req: Request) {
   }
 
   try {
+    // Check if event was already processed
+    const existingEvent = await prisma.webhookEvent.findUnique({
+      where: { id: event.id }
+    });
+
+    if (existingEvent) {
+      console.log(`Evento ${event.id} ya fue procesado. Ignorando.`);
+      return NextResponse.json({ received: true });
+    }
+
+    // Save event to prevent future duplicate processing
+    await prisma.webhookEvent.create({
+      data: {
+        id: event.id,
+        type: event.type
+      }
+    });
+
     switch (event.type) {
       // ─────────────────────────────────────────────
       // PAYMENT SUCCEEDED

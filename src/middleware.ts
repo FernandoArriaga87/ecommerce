@@ -10,7 +10,7 @@ const PROTECTED_ROUTES = [
   "/complete-profile",
 ];
 
-// Routes that require ADMIN or MODERATOR role (checked after auth)
+// Routes that require ADMIN role (checked after auth)
 const ADMIN_ROUTES = ["/admin"];
 
 // Routes that should redirect TO home if user IS authenticated
@@ -123,6 +123,23 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // Admin routes strict role check
+  if (user && isAdmin) {
+    // We query the User table using Supabase REST API (Edge compatible)
+    // Note: Prisma created the table as "User" (case sensitive in Postgres usually via Prisma)
+    const { data: dbUser } = await supabase
+      .from('User')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (!dbUser || dbUser.role !== 'ADMIN') {
+      const homeUrl = request.nextUrl.clone();
+      homeUrl.pathname = "/";
+      return NextResponse.redirect(homeUrl);
+    }
+  }
+
   // If authenticated trying to access login/register → redirect to profile
   if (user && isAuthRoute) {
     const profileUrl = request.nextUrl.clone();
@@ -130,10 +147,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(profileUrl);
   }
 
-  // Admin routes require checking role in the DB (via Prisma)
-  // Note: We can't use Prisma in edge middleware, so we protect admin at the
-  // page/API level. The middleware ensures authentication at minimum.
-  // The admin layout/pages should additionally check user.role === "ADMIN".
+  // Admin layouts also verify the role, but the middleware acts as the primary barrier
+  // to ensure CUSTOMER users never even load the chunks for the admin components.
 
   return response;
 }

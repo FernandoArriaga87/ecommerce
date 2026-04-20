@@ -14,7 +14,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
     include: { variants: true },
   });
 
-  if (!product) {
+  if (!product || product.isDeleted) {
     notFound();
   }
 

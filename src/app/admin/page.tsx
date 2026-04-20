@@ -35,9 +35,9 @@ export default async function AdminDashboardPage() {
         items: true
       }
     }),
-    prisma.product.count({ where: { isActive: true } }),
+    prisma.product.count({ where: { isActive: true, isDeleted: false } }),
     prisma.variant.findMany({
-      where: { stock: { lt: 5 } }, // Alertas de inventario menor a 5 unidades
+      where: { stock: { lt: 5 }, product: { isDeleted: false } }, // Alertas de inventario menor a 5 unidades
       take: 5,
       include: { product: { select: { name: true, images: true } } },
       orderBy: { stock: 'asc' }

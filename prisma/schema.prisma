@@ -78,6 +78,7 @@ model Product {
   isNew       Boolean   @default(false)
   isFeatured  Boolean   @default(false)
   isActive    Boolean   @default(true)
+  isDeleted   Boolean   @default(false)
   
   categoryId  String
   category    Category  @relation(fields: [categoryId], references: [id])
@@ -164,4 +165,10 @@ model CartItem {
   quantity  Int
 
   @@unique([cartId, variantId])
+}
+
+model WebhookEvent {
+  id        String   @id
+  type      String
+  createdAt DateTime @default(now())
 }

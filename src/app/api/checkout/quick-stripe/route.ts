@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
 
       for (const item of items) {
         const variant = await tx.variant.findFirst({
-          where: { productId: item.productId, size: item.size },
+          where: { productId: item.productId, size: item.size, product: { isDeleted: false } },
           include: { product: true },
         });
 

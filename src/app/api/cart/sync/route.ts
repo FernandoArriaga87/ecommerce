@@ -33,7 +33,8 @@ export async function POST(req: Request) {
       const variant = await prisma.variant.findFirst({
         where: {
           productId: item.productId,
-          size: item.size
+          size: item.size,
+          product: { isDeleted: false }
         }
       });
 

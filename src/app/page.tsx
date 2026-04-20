@@ -5,7 +5,7 @@ import { ProductGridSkeleton } from "@/components/product-skeleton";
 
 async function ProductsList() {
   const dbProducts = await prisma.product.findMany({
-    where: { isActive: true },
+    where: { isActive: true, isDeleted: false },
     include: {
       team: true
     },

@@ -14,7 +14,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     }
   });
 
-  if (!dbProduct) {
+  if (!dbProduct || dbProduct.isDeleted) {
     notFound();
   }
 
