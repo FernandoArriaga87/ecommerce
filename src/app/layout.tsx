@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/navbar";
 import { CartProvider } from "@/lib/cart-context";
+import { WishlistProvider } from "@/lib/wishlist-context";
 import { CookieBanner } from "@/components/cookie-banner";
 
 const geistSans = Geist({
@@ -79,6 +80,7 @@ export default function RootLayout({
     <html lang="es" className="h-full">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-[100dvh] flex flex-col bg-[#FAFAFA] text-[#111111] font-sans selection:bg-black selection:text-white`}>
         <CartProvider>
+         <WishlistProvider>
           <div className="bg-[#111111] text-[10px] font-bold text-center py-2 text-white w-full tracking-[0.2em] uppercase">
             ENVÍO GRATIS EN PEDIDOS SUPERIORES A $1499 MXN{" "}
             <Link href="/envios" className="underline ml-1 opacity-70 hover:opacity-100 transition-opacity">
@@ -97,6 +99,7 @@ export default function RootLayout({
                   <ul className="space-y-3 text-sm">
                     <li><Link href="/" className="hover:text-white transition-colors">Catálogo</Link></li>
                     <li><Link href="/?search=" className="hover:text-white transition-colors">Buscar</Link></li>
+                    <li><Link href="/wishlist" className="hover:text-white transition-colors">Favoritos</Link></li>
                     <li><Link href="/orders" className="hover:text-white transition-colors">Mis pedidos</Link></li>
                   </ul>
                 </div>
@@ -134,6 +137,7 @@ export default function RootLayout({
             </div>
           </footer>
           <CookieBanner />
+         </WishlistProvider>
         </CartProvider>
       </body>
     </html>

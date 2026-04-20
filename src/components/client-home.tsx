@@ -3,11 +3,13 @@
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { ShoppingCart, ArrowRight, Play, TrendUp, Sparkle, Globe } from "@phosphor-icons/react";
+import { ShoppingCart, ArrowRight, Play, TrendUp, Sparkle, Globe, CaretLeft, CaretRight } from "@phosphor-icons/react";
 import { formatPrice } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { WishlistHeart } from "@/components/wishlist-heart";
 
 interface Product {
   id: string;
@@ -19,13 +21,56 @@ interface Product {
   slug: string;
 }
 
-export function ClientHome({ products, initialCategory = "all" }: { products: Product[], initialCategory?: string }) {
+type SortKey = "newest" | "price-asc" | "price-desc";
+
+const SORT_LABELS: Record<SortKey, string> = {
+  "newest": "Más recientes",
+  "price-asc": "Precio: menor a mayor",
+  "price-desc": "Precio: mayor a menor",
+};
+
+function buildHref(params: {
+  category?: string;
+  sort?: SortKey;
+  search?: string;
+  page?: number;
+}) {
+  const sp = new URLSearchParams();
+  if (params.category && params.category !== "all") sp.set("category", params.category);
+  if (params.sort && params.sort !== "newest") sp.set("sort", params.sort);
+  if (params.search) sp.set("search", params.search);
+  if (params.page && params.page > 1) sp.set("page", String(params.page));
+  const q = sp.toString();
+  return q ? `/?${q}` : "/";
+}
+
+export function ClientHome({
+  products,
+  initialCategory = "all",
+  currentPage = 1,
+  totalPages = 1,
+  totalCount = 0,
+  currentSort = "newest",
+  currentSearch,
+}: {
+  products: Product[];
+  initialCategory?: string;
+  currentPage?: number;
+  totalPages?: number;
+  totalCount?: number;
+  currentSort?: SortKey;
+  currentSearch?: string;
+}) {
+  const router = useRouter();
   const [activeCategory, setActiveCategory] = useState(initialCategory);
 
-  // Sync state if initialCategory changes (e.g. via browser navigation)
   useEffect(() => {
     setActiveCategory(initialCategory);
   }, [initialCategory]);
+
+  const handleSortChange = (sort: SortKey) => {
+    router.push(buildHref({ category: activeCategory, sort, search: currentSearch, page: 1 }));
+  };
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -178,79 +223,193 @@ export function ClientHome({ products, initialCategory = "all" }: { products: Pr
             </p>
           </motion.div>
 
-          <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
-            {["all", "liga-mx", "europeos", "selecciones", "retro", "ofertas"].map((cat) => (
-              <Link
-                key={cat}
-                href={`/?category=${cat}`}
-                className={`px-8 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 border ${activeCategory === cat
-                  ? "bg-[#111111] border-[#111111] text-white shadow-xl shadow-black/10"
-                  : "bg-transparent border-[#111111]/10 text-[#111111]/40 hover:border-[#111111]/30 hover:text-[#111111]"
-                  }`}
+          <div className="flex flex-col gap-4 md:items-end">
+            <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
+              {["all", "liga-mx", "europeos", "selecciones", "retro", "ofertas"].map((cat) => (
+                <Link
+                  key={cat}
+                  href={buildHref({ category: cat, sort: currentSort, search: currentSearch, page: 1 })}
+                  className={`px-8 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 border ${activeCategory === cat
+                    ? "bg-[#111111] border-[#111111] text-white shadow-xl shadow-black/10"
+                    : "bg-transparent border-[#111111]/10 text-[#111111]/40 hover:border-[#111111]/30 hover:text-[#111111]"
+                    }`}
+                >
+                  {cat.replace("-", " ")}
+                </Link>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <label htmlFor="sort" className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#111111]/40">
+                Ordenar
+              </label>
+              <select
+                id="sort"
+                value={currentSort}
+                onChange={(e) => handleSortChange(e.target.value as SortKey)}
+                className="bg-white border border-[#111111]/10 rounded-full px-4 py-2 text-[11px] font-bold uppercase tracking-widest text-[#111111] focus:outline-none focus:border-[#111111]/30 cursor-pointer"
               >
-                {cat.replace("-", " ")}
-              </Link>
-            ))}
+                {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
+                  <option key={key} value={key}>{SORT_LABELS[key]}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
-        {/* Bento-Inspired Product Grid */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10"
-        >
-          {products.map((product) => (
-            <motion.div key={product.id} variants={itemVariants}>
-              <Link href={`/producto/${product.id}`} className="group block">
-                <div className="relative aspect-[4/5] bg-[#F3F3F3] rounded-[2.5rem] overflow-hidden mb-6 transition-all duration-500 group-hover:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.12)]">
-                  {product.badge && (
-                    <div className="absolute top-6 left-6 z-10">
-                      <span className="bg-white/80 backdrop-blur-md text-[#111111] text-[9px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-full shadow-sm">
-                        {product.badge}
-                      </span>
+        {currentSearch && (
+          <div className="mb-8 flex items-center gap-3 text-[11px] font-bold uppercase tracking-widest text-[#111111]/60">
+            <span>Resultados para</span>
+            <span className="bg-[#111111] text-white px-4 py-1.5 rounded-full">&ldquo;{currentSearch}&rdquo;</span>
+            <Link
+              href={buildHref({ category: activeCategory, sort: currentSort, page: 1 })}
+              className="text-[#111111]/40 hover:text-[#111111] underline"
+            >
+              Limpiar
+            </Link>
+          </div>
+        )}
+
+        {products.length === 0 ? (
+          <div className="py-24 text-center border border-dashed border-[#111111]/10 rounded-[2rem]">
+            <p className="text-2xl font-black uppercase tracking-tight text-[#111111] mb-3">
+              Sin resultados
+            </p>
+            <p className="text-sm text-[#111111]/50 max-w-md mx-auto mb-8">
+              {currentSearch
+                ? `No encontramos jerseys para "${currentSearch}". Prueba con otro equipo.`
+                : "Aún no hay jerseys en esta categoría. Vuelve pronto."}
+            </p>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 bg-[#111111] text-white px-8 py-3 rounded-full text-[11px] font-bold uppercase tracking-widest hover:bg-[#222222] transition-colors"
+            >
+              Ver todo el catálogo
+            </Link>
+          </div>
+        ) : (
+          <>
+            {/* Bento-Inspired Product Grid */}
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-100px" }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10"
+            >
+              {products.map((product) => (
+                <motion.div key={product.id} variants={itemVariants} className="relative">
+                  <WishlistHeart productId={product.id} variant="overlay" />
+                  <Link href={`/producto/${product.id}`} className="group block">
+                    <div className="relative aspect-[4/5] bg-[#F3F3F3] rounded-[2.5rem] overflow-hidden mb-6 transition-all duration-500 group-hover:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.12)]">
+                      {product.badge && (
+                        <div className="absolute top-6 left-6 z-10">
+                          <span className="bg-white/80 backdrop-blur-md text-[#111111] text-[9px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-full shadow-sm">
+                            {product.badge}
+                          </span>
+                        </div>
+                      )}
+
+                      <Image
+                        src={product.image}
+                        alt={product.name}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                        className="object-cover transition-transform duration-1000 ease-[0.23,1,0.32,1] group-hover:scale-110"
+                      />
+
+                      <div className="absolute inset-x-6 bottom-6 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                        <Button className="w-full rounded-2xl bg-white/95 backdrop-blur-md text-[#111111] hover:bg-white border-none py-6 h-auto font-bold uppercase tracking-widest text-[10px] shadow-xl">
+                          Añadir al Carrito
+                        </Button>
+                      </div>
                     </div>
+
+                    <div className="px-2">
+                      <div className="flex items-center justify-between gap-4 mb-2">
+                        <span className="text-[10px] font-bold text-[#111111]/40 uppercase tracking-[0.2em]">
+                          {product.team}
+                        </span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#111111]/5 text-[#111111]/60">
+                          26' Edition
+                        </span>
+                      </div>
+                      <h3 className="font-bold text-xl leading-[1.1] mb-2 text-[#111111] group-hover:translate-x-1 transition-transform tracking-tight">
+                        {product.name}
+                      </h3>
+                      <div className="flex items-baseline gap-2">
+                        <span className="font-bold text-base text-[#111111]">{formatPrice(product.price)}</span>
+                        <span className="text-xs font-medium text-[#111111]/30 line-through">{formatPrice(product.price * 1.2)}</span>
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            {totalPages > 1 && (
+              <nav
+                aria-label="Paginación"
+                className="mt-16 flex flex-col sm:flex-row items-center justify-between gap-6"
+              >
+                <p className="text-[11px] font-bold uppercase tracking-widest text-[#111111]/40">
+                  {totalCount > 0 && (
+                    <>
+                      Mostrando {(currentPage - 1) * 12 + 1}–
+                      {Math.min(currentPage * 12, totalCount)} de {totalCount}
+                    </>
+                  )}
+                </p>
+
+                <div className="flex items-center gap-2">
+                  {currentPage > 1 ? (
+                    <Link
+                      href={buildHref({
+                        category: activeCategory,
+                        sort: currentSort,
+                        search: currentSearch,
+                        page: currentPage - 1,
+                      })}
+                      className="flex items-center gap-2 px-5 h-11 rounded-full border border-[#111111]/10 text-[10px] font-bold uppercase tracking-widest text-[#111111] hover:bg-[#111111] hover:text-white transition-colors"
+                    >
+                      <CaretLeft size={14} weight="bold" />
+                      Anterior
+                    </Link>
+                  ) : (
+                    <span className="flex items-center gap-2 px-5 h-11 rounded-full border border-[#111111]/5 text-[10px] font-bold uppercase tracking-widest text-[#111111]/20 cursor-not-allowed">
+                      <CaretLeft size={14} weight="bold" />
+                      Anterior
+                    </span>
                   )}
 
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                    className="object-cover transition-transform duration-1000 ease-[0.23,1,0.32,1] group-hover:scale-110"
-                  />
+                  <span className="px-5 h-11 flex items-center rounded-full bg-[#111111] text-white text-[10px] font-bold uppercase tracking-widest">
+                    {currentPage} / {totalPages}
+                  </span>
 
-                  {/* Hover Overlay */}
-                  <div className="absolute inset-x-6 bottom-6 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-                    <Button className="w-full rounded-2xl bg-white/95 backdrop-blur-md text-[#111111] hover:bg-white border-none py-6 h-auto font-bold uppercase tracking-widest text-[10px] shadow-xl">
-                      Añadir al Carrito
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="px-2">
-                  <div className="flex items-center justify-between gap-4 mb-2">
-                    <span className="text-[10px] font-bold text-[#111111]/40 uppercase tracking-[0.2em]">
-                      {product.team}
+                  {currentPage < totalPages ? (
+                    <Link
+                      href={buildHref({
+                        category: activeCategory,
+                        sort: currentSort,
+                        search: currentSearch,
+                        page: currentPage + 1,
+                      })}
+                      className="flex items-center gap-2 px-5 h-11 rounded-full border border-[#111111]/10 text-[10px] font-bold uppercase tracking-widest text-[#111111] hover:bg-[#111111] hover:text-white transition-colors"
+                    >
+                      Siguiente
+                      <CaretRight size={14} weight="bold" />
+                    </Link>
+                  ) : (
+                    <span className="flex items-center gap-2 px-5 h-11 rounded-full border border-[#111111]/5 text-[10px] font-bold uppercase tracking-widest text-[#111111]/20 cursor-not-allowed">
+                      Siguiente
+                      <CaretRight size={14} weight="bold" />
                     </span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#111111]/5 text-[#111111]/60">
-                      26' Edition
-                    </span>
-                  </div>
-                  <h3 className="font-bold text-xl leading-[1.1] mb-2 text-[#111111] group-hover:translate-x-1 transition-transform tracking-tight">
-                    {product.name}
-                  </h3>
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-bold text-base text-[#111111]">{formatPrice(product.price)}</span>
-                    <span className="text-xs font-medium text-[#111111]/30 line-through">{formatPrice(product.price * 1.2)}</span>
-                  </div>
+                  )}
                 </div>
-              </Link>
-            </motion.div>
-          ))}
-        </motion.div>
+              </nav>
+            )}
+          </>
+        )}
       </div>
 
       {/* Liquid Glass Sticky Widget */}

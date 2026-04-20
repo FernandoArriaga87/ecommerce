@@ -13,10 +13,12 @@ npm run dev      # Start development server
 npm run build    # Production build
 npm run start    # Run production build locally
 npm run lint     # ESLint check
-npx prisma migrate dev   # Run DB migrations
-npx prisma db seed       # Seed database (ts-node prisma/seed.ts)
+npx prisma db push       # Apply schema.prisma changes to DB (no migration files — schema is source of truth)
+npx prisma generate      # Regenerate client (output: src/lib/generated-prisma)
 npx prisma studio        # Visual DB browser
 ```
+
+Schema changes are applied with `db push`, not `migrate`. The `prisma/migrations/` folder contains one-off `.sql` scripts, not Prisma migration history. If `prisma generate` fails on Windows with `EPERM ... query_engine-windows.dll.node`, stop the dev server first — the DLL is locked while Next is running.
 
 No test suite exists yet.
 
@@ -24,11 +26,14 @@ No test suite exists yet.
 
 ### Data Flow
 
-1. **Browse** → Products from `src/lib/data.ts` (mock) or Prisma `Product` model (DB-backed)
+1. **Browse** → `src/app/page.tsx` (Server Component) queries Prisma with `skip`/`take`/`orderBy` from URL params (`page`, `sort`, `category`, `search`). 12 items per page. `src/lib/data.ts` is a legacy mock type/array still imported in places.
 2. **Cart** → Client-side React Context (`CartProvider`) persisted to localStorage; synced to `Cart`/`CartItem` tables on login
-3. **Checkout** → POST `/api/checkout/stripe` → SERIALIZABLE transaction (stock check + decrement + Order creation) → Stripe session redirect
-4. **Payment confirmation** → Stripe webhook (`/api/webhooks/stripe`) → Order status PENDING→PAID + Resend email
-5. **Auth** → Supabase Auth → webhook (`/api/webhooks/supabase`) syncs user to Prisma `User` table + welcome email
+3. **Wishlist** → `WishlistProvider` (`src/lib/wishlist-context.tsx`) mirrors cart pattern: guest items in localStorage, merged into `WishlistItem` table on `SIGNED_IN` via `onAuthStateChange`. Toggle is optimistic with revert-on-error.
+4. **Checkout** → POST `/api/checkout/stripe` → SERIALIZABLE transaction (stock check + decrement + Order creation) → Stripe session redirect
+5. **Payment confirmation** → Stripe webhook (`/api/webhooks/stripe`) → Order status PENDING→PAID + Resend email
+6. **Refund** → Admin triggers `refundOrderAction` → `stripe.refunds.create({ payment_intent, reason })` → Stripe `charge.refunded` webhook flips order to CANCELLED. Refund UI only shown for statuses PAID/SHIPPED/DELIVERED/DISPUTED.
+7. **Reviews** → `createReviewAction` requires a DELIVERED order containing the product (verified-buyer check). One review per (user, product) via composite `@@unique`. `prisma.review.aggregate` on the PDP powers `aggregateRating` in JSON-LD.
+8. **Auth** → Supabase Auth → webhook (`/api/webhooks/supabase`) syncs user to Prisma `User` table + welcome email
 
 ### Route Handlers vs Server Actions
 
@@ -52,15 +57,24 @@ Rate limiting is applied per-route in middleware (auth: 5 req/min, checkout: 5 r
 
 `WebhookEvent` table tracks processed Stripe event IDs to prevent duplicate order/email processing.
 
+### Observability (Sentry)
+
+Error tracking via `@sentry/nextjs` v10. Init is split across `instrumentation.ts` (server/edge dispatcher), `instrumentation-client.ts` (browser — v10 convention, replaces `sentry.client.config.ts`), `sentry.server.config.ts`, and `sentry.edge.config.ts`. All four read DSN from env and **no-op when DSN is absent**, so local dev stays quiet. `src/lib/sentry-scrub.ts` is a shared `beforeSend` that redacts emails, auth/cookie headers, and any key matching `password|token|secret|api_key|authorization|cookie|email`. `tracesSampleRate` is `0` (errors only). `src/app/global-error.tsx` is the App Router error boundary that calls `Sentry.captureException`. `next.config.ts` is wrapped with `withSentryConfig` and tunnels through `/monitoring` to bypass ad-blockers.
+
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `src/lib/data.ts` | Mock product catalog (UI phase; replace with Prisma queries) |
 | `src/middleware.ts` | Session refresh, auth guards, role checks, rate limiting |
-| `prisma/schema.prisma` | Full data model: User, Product, Variant, Order, Cart, Address |
+| `prisma/schema.prisma` | Full data model: User, Product, Variant, Order, Cart, Address, WishlistItem, Review, WebhookEvent |
 | `src/app/api/checkout/stripe/route.ts` | Stripe checkout session creation + stock reservation |
-| `src/app/api/webhooks/stripe/route.ts` | Payment status updates + stock restoration |
+| `src/app/api/webhooks/stripe/route.ts` | Payment status updates + stock restoration + refund handling |
+| `src/app/actions/admin.ts` | Admin CRUD incl. `refundOrderAction` (blocks refund for PENDING/CANCELLED) |
+| `src/app/actions/reviews.ts` | Review create/delete + admin visibility toggle (verified-buyer gated) |
+| `src/app/actions/wishlist.ts` | Toggle + guest→user merge (`createMany({ skipDuplicates: true })`, capped at 200) |
+| `src/lib/wishlist-context.tsx` | Client provider; syncs on `onAuthStateChange` |
+| `src/lib/sentry-scrub.ts` | PII redaction applied in all three Sentry configs |
+| `src/lib/generated-prisma/` | Prisma client output — regenerated via `prisma generate`; do not hand-edit |
 
 ## Environment Variables
 
@@ -74,6 +88,12 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 STRIPE_WEBHOOK_SECRET
 SUPABASE_WEBHOOK_SECRET
 RESEND_API_KEY
+
+# Optional — Sentry (no-op if unset)
+NEXT_PUBLIC_SENTRY_DSN
+SENTRY_ORG            # only needed for source map upload in prod build
+SENTRY_PROJECT
+SENTRY_AUTH_TOKEN
 ```
 
 ## Styling System
@@ -99,3 +119,6 @@ src/components/
 - En el backend usa **Server Actions** donde sea posible; Route Handlers solo para webhooks externos y endpoints que requieran acceso raw a `Request`.
 - Mantén el look edgy y deportivo: sin bordes redondeados excesivos, alto contraste, tipografía bold/uppercase.
 - `page.tsx` files are Server Components that fetch data directly; avoid adding `"use client"` to page files.
+- After any mutation that affects a listing page, call `revalidatePath` on the relevant route inside the server action.
+- Guest-accessible client state (cart, wishlist) must: (a) persist to localStorage under a `deportivo-*` key, (b) merge into the DB via an `onAuthStateChange` `SIGNED_IN` listener, (c) clear on `SIGNED_OUT`. Mirror the `CartProvider` / `WishlistProvider` shape instead of inventing a new one.
+- Review creation MUST verify a DELIVERED order containing the product — do not relax this check for "easier testing". Use the seeded admin to manually mark an order DELIVERED if you need to test the flow.

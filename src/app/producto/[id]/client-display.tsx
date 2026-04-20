@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { formatPrice } from "@/lib/data";
-import { ShoppingCart, ShieldCheck, Truck, ArrowClockwise, Check, Ruler, Sparkle } from "@phosphor-icons/react";
+import { ShoppingCart, ShieldCheck, Truck, ArrowClockwise, Check, Ruler, Sparkle, Heart } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart-context";
+import { useWishlist } from "@/lib/wishlist-context";
 import { motion, AnimatePresence } from "framer-motion";
+import { StarDisplay } from "@/components/star-rating";
 
 type Variant = { id: string; size: string; color: string; stock: number; sku: string };
 type Product = {
@@ -22,8 +25,27 @@ type Product = {
   variants: Variant[];
 };
 
-export function ProductClientDisplay({ product }: { product: Product }) {
+export function ProductClientDisplay({
+  product,
+  reviewAverage = 0,
+  reviewCount = 0,
+}: {
+  product: Product;
+  reviewAverage?: number;
+  reviewCount?: number;
+}) {
   const { addItem } = useCart();
+  const { isWishlisted, toggle: toggleWishlist } = useWishlist();
+  const router = useRouter();
+  const [isPendingWish, startWishTransition] = useTransition();
+  const wishActive = isWishlisted(product.id);
+
+  const handleToggleWishlist = () => {
+    startWishTransition(async () => {
+      const res = await toggleWishlist(product.id);
+      if (res.requiresAuth) router.push("/login");
+    });
+  };
 
   const firstAvailable = product.variants.find((v) => v.stock > 0);
 
@@ -130,9 +152,21 @@ export function ProductClientDisplay({ product }: { product: Product }) {
             </span>
           </div>
 
-          <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter mb-6 text-[#111111] leading-[0.9]">
+          <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter mb-4 text-[#111111] leading-[0.9]">
             {product.name}
           </h1>
+
+          {reviewCount > 0 && (
+            <div className="mb-6 flex items-center gap-3">
+              <StarDisplay rating={reviewAverage} size={16} />
+              <span className="text-xs font-bold text-[#111111]">
+                {reviewAverage.toFixed(1)}
+              </span>
+              <span className="text-xs text-[#111111]/50">
+                · {reviewCount} {reviewCount === 1 ? "reseña" : "reseñas"}
+              </span>
+            </div>
+          )}
 
           <div className="flex items-baseline gap-4 mb-10">
             <span className="text-4xl font-black tracking-tighter text-[#111111]">
@@ -257,6 +291,22 @@ export function ProductClientDisplay({ product }: { product: Product }) {
               )}
             </Button>
             
+            <button
+              type="button"
+              onClick={handleToggleWishlist}
+              disabled={isPendingWish}
+              aria-pressed={wishActive}
+              aria-label={wishActive ? "Quitar de favoritos" : "Guardar en favoritos"}
+              className={`h-14 rounded-full border flex items-center justify-center gap-3 text-[11px] font-bold uppercase tracking-widest transition-colors ${
+                wishActive
+                  ? "border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
+                  : "border-[#111111]/10 text-[#111111] hover:bg-[#111111]/5"
+              } ${isPendingWish ? "opacity-60" : ""}`}
+            >
+              <Heart size={18} weight={wishActive ? "fill" : "bold"} />
+              {wishActive ? "Guardado en favoritos" : "Guardar en favoritos"}
+            </button>
+
             <div className="flex items-center justify-center gap-3 p-4 bg-white rounded-3xl border border-[#111111]/5">
               <ShieldCheck weight="bold" size={20} className="text-green-600" />
               <p className="text-[10px] text-[#111111]/40 font-black tracking-widest uppercase">

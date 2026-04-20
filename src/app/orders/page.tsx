@@ -18,6 +18,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { OrderReviewButton } from "@/components/order-review-button";
 
 /* ───────────── status config ─────────────── */
 const statusConfig: Record<
@@ -506,6 +507,13 @@ export default function OrdersPage() {
                                       <p className="text-xs font-black text-[#111111] mt-1.5 tracking-tight">
                                         {formatPrice(Number(item.price))}
                                       </p>
+                                      {order.status === "DELIVERED" && (
+                                        <OrderReviewButton
+                                          productId={item.variant.product.id}
+                                          productName={item.variant.product.name}
+                                          hasExistingReview={!!item.variant.product.userReviewed}
+                                        />
+                                      )}
                                     </div>
                                   </div>
                                 ))}

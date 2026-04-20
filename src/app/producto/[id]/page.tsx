@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { ProductClientDisplay } from "./client-display";
+import { ReviewList } from "@/components/review-list";
 import type { Metadata } from "next";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -57,18 +58,28 @@ export async function generateMetadata(
 
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  
-  const dbProduct = await prisma.product.findUnique({
-    where: { id },
-    include: {
-      team: true,
-      variants: true,
-    }
-  });
+
+  const [dbProduct, reviewAgg] = await Promise.all([
+    prisma.product.findUnique({
+      where: { id },
+      include: {
+        team: true,
+        variants: true,
+      }
+    }),
+    prisma.review.aggregate({
+      where: { productId: id, isHidden: false },
+      _avg: { rating: true },
+      _count: { rating: true },
+    }),
+  ]);
 
   if (!dbProduct || dbProduct.isDeleted) {
     notFound();
   }
+
+  const reviewCount = reviewAgg._count.rating;
+  const reviewAverage = reviewAgg._avg.rating ?? 0;
 
   const sizeOrder = ["XS", "S", "M", "L", "XL", "XXL"];
 
@@ -100,7 +111,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const totalStock = dbProduct.variants.reduce((sum, v) => sum + v.stock, 0);
   const nonce = (await headers()).get("x-nonce") ?? undefined;
 
-  const jsonLd = {
+  const jsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
@@ -121,6 +132,16 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     },
   };
 
+  if (reviewCount > 0) {
+    jsonLd.aggregateRating = {
+      "@type": "AggregateRating",
+      ratingValue: reviewAverage.toFixed(2),
+      reviewCount,
+      bestRating: 5,
+      worstRating: 1,
+    };
+  }
+
   return (
     <div className="container mx-auto px-4 py-8 lg:py-16">
       <script
@@ -128,7 +149,12 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <ProductClientDisplay product={product} />
+      <ProductClientDisplay
+        product={product}
+        reviewAverage={reviewAverage}
+        reviewCount={reviewCount}
+      />
+      <ReviewList productId={product.id} />
     </div>
   );
 }

@@ -164,6 +164,26 @@ exports.Prisma.ProductScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.ReviewScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  productId: 'productId',
+  orderId: 'orderId',
+  rating: 'rating',
+  title: 'title',
+  body: 'body',
+  isHidden: 'isHidden',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WishlistItemScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  productId: 'productId',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.VariantScalarFieldEnum = {
   id: 'id',
   productId: 'productId',
@@ -274,6 +294,8 @@ exports.Prisma.ModelName = {
   Category: 'Category',
   Team: 'Team',
   Product: 'Product',
+  Review: 'Review',
+  WishlistItem: 'WishlistItem',
   Variant: 'Variant',
   Address: 'Address',
   Order: 'Order',

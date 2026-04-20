@@ -1,15 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { CartDrawer } from "./cart-drawer";
-import { MagnifyingGlass, User, Football } from "@phosphor-icons/react";
+import { MagnifyingGlass, User, Football, Heart } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { motion } from "framer-motion";
 import { logoutAction } from "@/app/actions/auth";
+import { useWishlist } from "@/lib/wishlist-context";
 
 export function Navbar() {
+  const router = useRouter();
+  const { count: wishlistCount } = useWishlist();
   const [user, setUser] = useState<any>(null);
   const supabase = createClient();
 
@@ -65,23 +69,44 @@ export function Navbar() {
         
         {/* Right side: Actions */}
         <div className="flex items-center gap-6">
-          <form 
-            action={(formData) => {
-              const query = formData.get("q");
-              if (query) window.location.href = `/?search=${query}`;
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const query = String(formData.get("q") || "").trim();
+              if (query) {
+                const sp = new URLSearchParams();
+                sp.set("search", query);
+                router.push(`/?${sp.toString()}`);
+              } else {
+                router.push("/");
+              }
             }}
             className="hidden md:flex items-center bg-[#111111]/5 px-4 h-11 rounded-full border border-[#111111]/5 focus-within:bg-white focus-within:border-[#111111]/10 transition-all group"
           >
             <MagnifyingGlass size={18} className="text-[#111111]/30 group-focus-within:text-[#111111]" />
-            <input 
+            <input
               name="q"
-              type="text" 
-              placeholder="BUSCAR EQUIPO..." 
+              type="search"
+              placeholder="BUSCAR EQUIPO..."
+              aria-label="Buscar productos"
               className="bg-transparent border-none outline-none text-[10px] font-bold tracking-widest px-3 w-32 focus:w-48 transition-all placeholder:text-[#111111]/20 text-[#111111]"
             />
           </form>
           
           <div className="flex items-center gap-3">
+            <Link
+              href="/wishlist"
+              aria-label={`Favoritos${wishlistCount > 0 ? ` (${wishlistCount})` : ""}`}
+              className="relative p-3 hover:bg-[#111111]/5 rounded-full transition-colors text-[#111111] flex items-center"
+            >
+              <Heart size={22} weight="bold" />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#FAFAFA]">
+                  {wishlistCount > 99 ? "99+" : wishlistCount}
+                </span>
+              )}
+            </Link>
             <CartDrawer />
             <div className="relative group">
               <Link 
@@ -101,6 +126,9 @@ export function Navbar() {
                       </Link>
                       <Link href="/orders" className="px-4 py-3 hover:bg-[#111111]/5 rounded-xl text-xs font-bold uppercase tracking-widest text-[#111111] transition-colors">
                         Mis Pedidos
+                      </Link>
+                      <Link href="/wishlist" className="px-4 py-3 hover:bg-[#111111]/5 rounded-xl text-xs font-bold uppercase tracking-widest text-[#111111] transition-colors">
+                        Favoritos
                       </Link>
                       <Link href="/profile/addresses" className="px-4 py-3 hover:bg-[#111111]/5 rounded-xl text-xs font-bold uppercase tracking-widest text-[#111111] transition-colors">
                         Direcciones

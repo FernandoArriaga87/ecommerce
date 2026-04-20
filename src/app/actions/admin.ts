@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { resend, SEND_FROM } from "@/lib/resend";
 import OrderShippedEmail from "@/components/emails/OrderShippedEmail";
+import { stripe } from "@/lib/stripe";
 
 async function verifyAdmin() {
   const supabase = await createClient();
@@ -253,5 +254,68 @@ export async function updateOrderStatusAction(orderId: string, newStatus: OrderS
   } catch (error: any) {
     console.error("Error actualizando estado del pedido:", error);
     return { error: "No se pudo actualizar el estado del pedido." };
+  }
+}
+
+type StripeRefundReason = "duplicate" | "fraudulent" | "requested_by_customer";
+
+export async function refundOrderAction(
+  orderId: string,
+  reason: StripeRefundReason = "requested_by_customer"
+) {
+  if (!(await verifyAdmin())) return { error: "Acceso denegado." };
+
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: {
+      id: true,
+      orderNumber: true,
+      status: true,
+      externalId: true,
+      total: true,
+    },
+  });
+
+  if (!order) return { error: "Pedido no encontrado." };
+
+  if (!order.externalId) {
+    return { error: "Esta orden no tiene un cargo de Stripe asociado." };
+  }
+
+  if (order.status === "PENDING") {
+    return { error: "La orden aún no se ha pagado. Cancélala en su lugar." };
+  }
+
+  if (order.status === "CANCELLED") {
+    return { error: "La orden ya fue cancelada/reembolsada." };
+  }
+
+  try {
+    await stripe.refunds.create({
+      payment_intent: order.externalId,
+      reason,
+      metadata: {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+      },
+    });
+
+    console.log(
+      `💸 Reembolso solicitado por admin — Orden ${order.orderNumber}. ` +
+      `El webhook charge.refunded aplicará el cambio de estado.`
+    );
+
+    revalidatePath("/admin/payments");
+    return { success: true };
+  } catch (error: any) {
+    const message: string =
+      error?.raw?.message || error?.message || "Error desconocido";
+
+    if (message.includes("already been refunded") || error?.code === "charge_already_refunded") {
+      return { error: "Este cargo ya fue reembolsado en Stripe." };
+    }
+
+    console.error("Error reembolsando orden:", error);
+    return { error: `No se pudo procesar el reembolso: ${message}` };
   }
 }

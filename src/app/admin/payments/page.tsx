@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/data";
 import { StatusSelector } from "./status-selector";
+import { RefundButton } from "./refund-button";
 
 export default async function AdminOrdersPage() {
   const orders = await prisma.order.findMany({
@@ -29,12 +30,13 @@ export default async function AdminOrdersPage() {
               <th className="px-6 py-4">Artículos</th>
               <th className="px-6 py-4">Total</th>
               <th className="px-6 py-4">Estado (Actualizar)</th>
+              <th className="px-6 py-4">Reembolso</th>
             </tr>
           </thead>
           <tbody>
             {orders.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-12 text-center text-gray-400 font-bold uppercase tracking-widest">
+                <td colSpan={6} className="px-6 py-12 text-center text-gray-400 font-bold uppercase tracking-widest">
                   No hay pedidos en el sistema
                 </td>
               </tr>
@@ -57,6 +59,14 @@ export default async function AdminOrdersPage() {
                   </td>
                   <td className="px-6 py-4">
                     <StatusSelector orderId={order.id} currentStatus={order.status} />
+                  </td>
+                  <td className="px-6 py-4">
+                    <RefundButton
+                      orderId={order.id}
+                      orderNumber={order.orderNumber}
+                      status={order.status}
+                      total={formatPrice(Number(order.total))}
+                    />
                   </td>
                 </tr>
               ))

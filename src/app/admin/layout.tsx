@@ -34,6 +34,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           <Link href="/admin" className="text-white hover:text-gray-300 transition-colors">Dashboard</Link>
           <Link href="/admin/products" className="text-gray-400 hover:text-white transition-colors">Productos</Link>
           <Link href="/admin/payments" className="text-gray-400 hover:text-white transition-colors">Pedidos</Link>
+          <Link href="/admin/reviews" className="text-gray-400 hover:text-white transition-colors">Reseñas</Link>
           <Link href="/admin/users" className="text-gray-400 hover:text-white transition-colors">Usuarios</Link>
         </nav>
       </aside>

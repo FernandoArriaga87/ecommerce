@@ -25,7 +25,30 @@ export async function GET() {
       orderBy: { createdAt: "desc" }
     });
 
-    return NextResponse.json({ orders });
+    const reviewedIds = new Set(
+      (
+        await prisma.review.findMany({
+          where: { userId: user.id },
+          select: { productId: true },
+        })
+      ).map((r) => r.productId)
+    );
+
+    const shaped = orders.map((o) => ({
+      ...o,
+      items: o.items.map((item) => ({
+        ...item,
+        variant: {
+          ...item.variant,
+          product: {
+            ...item.variant.product,
+            userReviewed: reviewedIds.has(item.variant.product.id),
+          },
+        },
+      })),
+    }));
+
+    return NextResponse.json({ orders: shaped });
   } catch (error) {
     console.error("Orders fetch error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
