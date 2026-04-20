@@ -147,8 +147,26 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(profileUrl);
   }
 
-  // Admin layouts also verify the role, but the middleware acts as the primary barrier
-  // to ensure CUSTOMER users never even load the chunks for the admin components.
+  // ── 4. Content Security Policy (CSP) & Security Headers ──
+  const cspHeader = `
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com;
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' blob: data: https://images.unsplash.com https://plus.unsplash.com https://*.supabase.co;
+    font-src 'self' data:;
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+    frame-src 'self' https://js.stripe.com https://hooks.stripe.com;
+    connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co;
+    upgrade-insecure-requests;
+  `.replace(/\s{2,}/g, " ").trim();
+
+  response.headers.set("Content-Security-Policy", cspHeader);
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
 
   return response;
 }
