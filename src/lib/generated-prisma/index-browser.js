@@ -261,7 +261,8 @@ exports.OrderStatus = exports.$Enums.OrderStatus = {
   PAID: 'PAID',
   SHIPPED: 'SHIPPED',
   DELIVERED: 'DELIVERED',
-  CANCELLED: 'CANCELLED'
+  CANCELLED: 'CANCELLED',
+  DISPUTED: 'DISPUTED'
 };
 
 exports.PaymentMethod = exports.$Enums.PaymentMethod = {

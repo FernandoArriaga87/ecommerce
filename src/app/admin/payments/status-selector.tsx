@@ -31,6 +31,7 @@ export function StatusSelector({
         ${currentStatus === 'SHIPPED' ? 'bg-blue-100 text-blue-800 border-blue-200' : ''}
         ${currentStatus === 'DELIVERED' ? 'bg-zinc-800 text-white border-zinc-800' : ''}
         ${currentStatus === 'CANCELLED' ? 'bg-red-100 text-red-800 border-red-200' : ''}
+        ${currentStatus === 'DISPUTED' ? 'bg-red-600 text-white border-red-700' : ''}
       `}
     >
       <option value="PENDING">Pendiente</option>
@@ -38,6 +39,7 @@ export function StatusSelector({
       <option value="SHIPPED">Enviado</option>
       <option value="DELIVERED">Entregado</option>
       <option value="CANCELLED">Cancelado</option>
+      <option value="DISPUTED">En Disputa (Contracargo)</option>
     </select>
   );
 }

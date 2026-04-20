@@ -157,6 +157,32 @@ export async function POST(req: Request) {
         break;
       }
 
+      // ─────────────────────────────────────────────
+      // CHARGE DISPUTE (CHARGEBACK)
+      // Customer disputed the charge via their bank.
+      // Mark as DISPUTED to stop fulfillment.
+      // ─────────────────────────────────────────────
+      case "charge.dispute.created": {
+        const dispute = event.data.object as any;
+        const paymentIntentId = dispute.payment_intent;
+
+        if (paymentIntentId) {
+          // Find the order that has this payment intent ID (stored as externalId in our PAID flow)
+          const order = await prisma.order.findFirst({
+            where: { externalId: paymentIntentId }
+          });
+
+          if (order) {
+            await prisma.order.update({
+              where: { id: order.id },
+              data: { status: "DISPUTED" }
+            });
+            console.log(`⚠️ Alerta de contracargo: Orden ${order.orderNumber} marcada como DISPUTED.`);
+          }
+        }
+        break;
+      }
+
       default:
         console.log(`Evento no manejado: ${event.type}`);
     }

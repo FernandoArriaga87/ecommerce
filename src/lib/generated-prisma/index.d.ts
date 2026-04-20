@@ -96,7 +96,8 @@ export const OrderStatus: {
   PAID: 'PAID',
   SHIPPED: 'SHIPPED',
   DELIVERED: 'DELIVERED',
-  CANCELLED: 'CANCELLED'
+  CANCELLED: 'CANCELLED',
+  DISPUTED: 'DISPUTED'
 };
 
 export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus]
