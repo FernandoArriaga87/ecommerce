@@ -205,12 +205,24 @@ export async function updateProductAction(prevState: any, formData: FormData) {
   redirect("/admin/products");
 }
 
-export async function updateOrderStatusAction(orderId: string, newStatus: "PENDING" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED") {
+type OrderStatusInput = "PENDING" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED" | "DISPUTED";
+
+export async function updateOrderStatusAction(orderId: string, newStatus: OrderStatusInput) {
   if (!(await verifyAdmin())) return { error: "Acceso denegado." };
 
   try {
-    const supabase = await createClient();
-    
+    const current = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: { status: true }
+    });
+    if (!current) return { error: "Pedido no encontrado." };
+
+    // Safety: never ship or deliver while a chargeback is open. Resolve dispute first
+    // (webhook will revert to PAID automatically if we win).
+    if (current.status === "DISPUTED" && (newStatus === "SHIPPED" || newStatus === "DELIVERED")) {
+      return { error: "No puedes enviar un pedido en disputa. Espera a que Stripe resuelva el contracargo." };
+    }
+
     const order = await prisma.order.update({
       where: { id: orderId },
       data: { status: newStatus },

@@ -149,16 +149,16 @@ const timelineSteps = [
   },
 ];
 
-function getTimelineIndex(status: string) {
+function getTimelineIndex(status: string): 0 | 1 | 2 | 3 {
   switch (status) {
     case "PAID":
-      return 0;
+      return 1;
     case "SHIPPED":
       return 2;
     case "DELIVERED":
       return 3;
     default:
-      return -1;
+      return 0;
   }
 }
 

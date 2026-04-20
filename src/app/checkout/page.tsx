@@ -31,6 +31,7 @@ export default function CheckoutPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [orderNumber, setOrderNumber] = useState("");
   const [stockErrors, setStockErrors] = useState<string[]>([]);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   useEffect(() => {
     async function initialize() {
@@ -296,10 +297,38 @@ export default function CheckoutPage() {
               </div>
             </div>
 
+            {/* Disclosure + consent (chargeback defense) */}
+            <label className="flex gap-3 items-start cursor-pointer select-none p-4 border border-gray-200 bg-white">
+              <input
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-black cursor-pointer"
+                required
+              />
+              <span className="text-xs text-gray-700 leading-relaxed">
+                Entiendo que estos jerseys son <strong>réplicas de aficionado</strong> no oficiales,
+                sin afiliación a los clubes, ligas o patrocinadores cuyos diseños inspiran las prendas.
+                He leído y acepto los{" "}
+                <Link href="/terminos" className="underline font-bold hover:text-black" target="_blank">
+                  Términos
+                </Link>,{" "}
+                el{" "}
+                <Link href="/privacidad" className="underline font-bold hover:text-black" target="_blank">
+                  Aviso de Privacidad
+                </Link>
+                {" "}y la{" "}
+                <Link href="/devoluciones" className="underline font-bold hover:text-black" target="_blank">
+                  Política de Devoluciones
+                </Link>
+                .
+              </span>
+            </label>
+
             {/* Submit */}
             <Button
               type="submit"
-              disabled={loading}
+              disabled={loading || !acceptedTerms}
               className="w-full h-16 rounded-none bg-black text-white hover:bg-gray-900 uppercase font-black tracking-widest transition-all hover:shadow-xl disabled:opacity-50 flex items-center justify-center gap-3"
             >
               {loading ? (

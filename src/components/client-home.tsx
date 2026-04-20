@@ -64,11 +64,14 @@ export function ClientHome({ products, initialCategory = "all" }: { products: Pr
           className="absolute inset-0 w-full h-full z-0"
         >
           <Image
-            src="/ImgHero.jpg"
-            alt="Sports Fashion"
+            src="/ImgHerol.jpg"
+            alt="Aficionado con jersey deportivo inspirado en su equipo favorito"
             fill
-            className="object-cover object-center"
+            sizes="100vw"
+            quality={85}
             priority
+            fetchPriority="high"
+            className="object-cover object-center"
           />
           {/* Enhanced Gradient Overlay for readability: darker on the left where the text is */}
           <div className="absolute inset-0 bg-gradient-to-r from-[#FAFAFA] via-[#FAFAFA]/60 to-transparent z-10" />
@@ -94,7 +97,7 @@ export function ClientHome({ products, initialCategory = "all" }: { products: Pr
             </h1>
 
             <p className="text-lg md:text-xl text-[#111111]/60 font-medium mb-12 leading-relaxed tracking-tight max-w-md">
-              Ediciones limitadas y playeras oficiales de tus equipos favoritos. Diseñadas para el rendimiento, creadas para la gloria.
+              Jerseys de aficionado inspirados en tus equipos favoritos. Calidad premium para vivir el juego en cada entrenamiento y cada grito de gol.
             </p>
 
             <div className="flex flex-wrap gap-5">
@@ -126,8 +129,8 @@ export function ClientHome({ products, initialCategory = "all" }: { products: Pr
               <Sparkle weight="fill" className="text-white" size={24} />
             </div>
             <div className="text-white">
-              <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">Auth Check</p>
-              <p className="font-bold text-sm">100% Original</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">Quality</p>
+              <p className="font-bold text-sm">Calidad Premium</p>
             </div>
           </div>
         </motion.div>

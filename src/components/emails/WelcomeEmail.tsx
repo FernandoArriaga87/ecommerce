@@ -46,7 +46,7 @@ export const WelcomeEmail = ({ userFirstname = 'Deportista' }: WelcomeEmailProps
               </Text>
 
               <Text className="text-[#444444] text-[15px] leading-[26px] mt-[12px]">
-                Gracias por unirte a DeportivoStore. Ahora tienes acceso a la mejor selección de jerseys deportivos originales, con envío rápido y garantía de autenticidad en cada prenda.
+                Gracias por unirte a DeportivoStore. Aquí encontrarás jerseys de aficionado inspirados en tus equipos favoritos, con calidad premium y envío rápido a toda la República.
               </Text>
 
               <Text className="text-[#444444] text-[15px] leading-[26px] mt-[8px]">

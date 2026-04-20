@@ -80,7 +80,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-sm flex flex-col gap-8">
         <div className="text-center">
           <h1 className="text-4xl font-black uppercase tracking-tight mb-2">Registro</h1>
-          <p className="text-sm text-gray-500 font-medium tracking-wide uppercase">Crea tu cuenta oficial.</p>
+          <p className="text-sm text-gray-500 font-medium tracking-wide uppercase">Crea tu cuenta.</p>
         </div>
 
         <Suspense fallback={<div className="h-40 flex items-center justify-center">Cargando...</div>}>

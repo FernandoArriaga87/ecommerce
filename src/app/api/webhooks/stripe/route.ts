@@ -23,15 +23,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
   }
 
-  const session = event.data.object as any;
-  const orderId = session.metadata?.orderId;
-
-  if (!orderId) {
-    return NextResponse.json({ received: true });
-  }
-
   try {
-    // Check if event was already processed
+    // ── Idempotency: skip if we've seen this event id before ──
     const existingEvent = await prisma.webhookEvent.findUnique({
       where: { id: event.id }
     });
@@ -41,31 +34,26 @@ export async function POST(req: Request) {
       return NextResponse.json({ received: true });
     }
 
-    // Save event to prevent future duplicate processing
     await prisma.webhookEvent.create({
-      data: {
-        id: event.id,
-        type: event.type
-      }
+      data: { id: event.id, type: event.type }
     });
 
     switch (event.type) {
       // ─────────────────────────────────────────────
       // PAYMENT SUCCEEDED
-      // Stock was already reserved at checkout time.
-      // We only need to flip status → PAID + send email.
+      // Stock was reserved at checkout → flip to PAID.
+      // We store payment_intent as externalId so that
+      // future dispute/refund events can find the order.
       // ─────────────────────────────────────────────
       case "checkout.session.completed": {
+        const session = event.data.object as any;
+        const orderId = session.metadata?.orderId;
+        if (!orderId) break;
+
         const order = await prisma.order.findUnique({
           where: { id: orderId },
-          include: { 
-            items: {
-              include: {
-                variant: {
-                  include: { product: true }
-                }
-              }
-            },
+          include: {
+            items: { include: { variant: { include: { product: true } } } },
             user: true
           }
         });
@@ -75,13 +63,12 @@ export async function POST(req: Request) {
             where: { id: orderId },
             data: {
               status: "PAID",
-              externalId: session.id,
+              externalId: session.payment_intent ?? session.id,
             },
           });
-          
-          console.log(`✅ Orden ${orderId} marcada como PAGADA. (Stock ya reservado al crear la orden)`);
 
-          // Enviar correo de confirmación de pago con detalles del pedido
+          console.log(`✅ Orden ${orderId} marcada como PAGADA. (Stock ya reservado)`);
+
           if (resend && order.user?.email) {
             try {
               const emailItems = order.items.map((item) => ({
@@ -91,13 +78,13 @@ export async function POST(req: Request) {
                 price: formatPrice(Number(item.price)),
               }));
 
-              const { data, error: sendError } = await resend.emails.send({
+              const { error: sendError } = await resend.emails.send({
                 from: SEND_FROM,
                 to: order.user.email,
                 subject: `✅ Pago Confirmado — Pedido ${order.orderNumber}`,
-                react: OrderPaidEmail({ 
-                  orderNumber: order.orderNumber, 
-                  customerName: order.user.name.split(" ")[0] || "Cliente", 
+                react: OrderPaidEmail({
+                  orderNumber: order.orderNumber,
+                  customerName: order.user.name.split(" ")[0] || "Cliente",
                   total: formatPrice(Number(order.total)),
                   subtotal: formatPrice(Number(order.subtotal)),
                   shipping: Number(order.shipping) === 0 ? "Gratis" : formatPrice(Number(order.shipping)),
@@ -105,11 +92,7 @@ export async function POST(req: Request) {
                 }),
               });
 
-              if (sendError) {
-                console.error("Error desde API de Resend enviando correo de pago:", sendError);
-              } else {
-                console.log(`📧 Correo de pago enviado con éxito para orden: ${order.orderNumber}`, data);
-              }
+              if (sendError) console.error("Error API Resend (correo pago):", sendError);
             } catch (emailError) {
               console.error("Excepción enviando correo de pago:", emailError);
             }
@@ -120,11 +103,14 @@ export async function POST(req: Request) {
 
       // ─────────────────────────────────────────────
       // PAYMENT FAILED / SESSION EXPIRED
-      // Stock was reserved at checkout → must be 
-      // restored so other customers can purchase.
+      // Restore stock reserved at checkout.
       // ─────────────────────────────────────────────
       case "checkout.session.async_payment_failed":
       case "checkout.session.expired": {
+        const session = event.data.object as any;
+        const orderId = session.metadata?.orderId;
+        if (!orderId) break;
+
         const order = await prisma.order.findUnique({
           where: { id: orderId },
           include: { items: true }
@@ -132,54 +118,129 @@ export async function POST(req: Request) {
 
         if (order && order.status === "PENDING") {
           await prisma.$transaction(async (tx) => {
-            // 1. Mark order as CANCELLED
             await tx.order.update({
               where: { id: orderId },
-              data: {
-                status: "CANCELLED",
-                externalId: session.id,
-              },
+              data: { status: "CANCELLED", externalId: session.id },
             });
 
-            // 2. Restore reserved stock for each item
             for (const item of order.items) {
               await tx.variant.update({
                 where: { id: item.variantId },
-                data: {
-                  stock: { increment: item.quantity }
-                }
+                data: { stock: { increment: item.quantity } }
               });
             }
           });
-          
-          console.log(`❌ Orden ${orderId} CANCELADA. Stock restaurado para ${order.items.length} variante(s).`);
+
+          console.log(`❌ Orden ${orderId} CANCELADA. Stock restaurado.`);
         }
         break;
       }
 
       // ─────────────────────────────────────────────
-      // CHARGE DISPUTE (CHARGEBACK)
-      // Customer disputed the charge via their bank.
-      // Mark as DISPUTED to stop fulfillment.
+      // CHARGEBACK: dispute opened at the issuing bank.
+      // Freeze the order (DISPUTED) so admin does not
+      // ship while Stripe investigates.
       // ─────────────────────────────────────────────
       case "charge.dispute.created": {
         const dispute = event.data.object as any;
         const paymentIntentId = dispute.payment_intent;
+        if (!paymentIntentId) break;
 
-        if (paymentIntentId) {
-          // Find the order that has this payment intent ID (stored as externalId in our PAID flow)
-          const order = await prisma.order.findFirst({
-            where: { externalId: paymentIntentId }
+        const order = await prisma.order.findFirst({
+          where: { externalId: paymentIntentId }
+        });
+
+        if (order) {
+          await prisma.order.update({
+            where: { id: order.id },
+            data: { status: "DISPUTED" }
+          });
+          console.error(
+            `⚠️ CHARGEBACK abierto — Orden ${order.orderNumber} (${order.id}) ` +
+            `marcada DISPUTED. Reason: ${dispute.reason}. Amount: ${dispute.amount}.`
+          );
+        } else {
+          console.error(`⚠️ Chargeback recibido pero no se encontró orden con payment_intent=${paymentIntentId}`);
+        }
+        break;
+      }
+
+      // ─────────────────────────────────────────────
+      // CHARGEBACK RESOLVED
+      // won      → revertir a PAID (podemos enviar)
+      // lost     → dejar DISPUTED (ya perdimos el dinero)
+      // warning_closed / needs_response → sin acción
+      // ─────────────────────────────────────────────
+      case "charge.dispute.closed": {
+        const dispute = event.data.object as any;
+        const paymentIntentId = dispute.payment_intent;
+        if (!paymentIntentId) break;
+
+        const order = await prisma.order.findFirst({
+          where: { externalId: paymentIntentId }
+        });
+        if (!order) break;
+
+        if (dispute.status === "won") {
+          await prisma.order.update({
+            where: { id: order.id },
+            data: { status: "PAID" }
+          });
+          console.log(`✅ Dispute GANADA — Orden ${order.orderNumber} revertida a PAID.`);
+        } else if (dispute.status === "lost") {
+          console.error(
+            `❌ Dispute PERDIDA — Orden ${order.orderNumber}. ` +
+            `Revisar manualmente si hay que restaurar stock o no.`
+          );
+        }
+        break;
+      }
+
+      // ─────────────────────────────────────────────
+      // REFUND ISSUED (full or partial)
+      // Marca como CANCELLED si el reembolso cubre el
+      // total y la orden no fue entregada.
+      // ─────────────────────────────────────────────
+      case "charge.refunded": {
+        const charge = event.data.object as any;
+        const paymentIntentId = charge.payment_intent;
+        if (!paymentIntentId) break;
+
+        const order = await prisma.order.findFirst({
+          where: { externalId: paymentIntentId },
+          include: { items: true }
+        });
+        if (!order) break;
+
+        const fullyRefunded = charge.amount_refunded >= charge.amount;
+        if (!fullyRefunded) {
+          console.log(`Reembolso parcial en orden ${order.orderNumber}. Sin cambio de estado.`);
+          break;
+        }
+
+        // If not yet shipped, restore stock.
+        const canRestoreStock = order.status === "PAID" || order.status === "DISPUTED";
+
+        await prisma.$transaction(async (tx) => {
+          await tx.order.update({
+            where: { id: order.id },
+            data: { status: "CANCELLED" }
           });
 
-          if (order) {
-            await prisma.order.update({
-              where: { id: order.id },
-              data: { status: "DISPUTED" }
-            });
-            console.log(`⚠️ Alerta de contracargo: Orden ${order.orderNumber} marcada como DISPUTED.`);
+          if (canRestoreStock) {
+            for (const item of order.items) {
+              await tx.variant.update({
+                where: { id: item.variantId },
+                data: { stock: { increment: item.quantity } }
+              });
+            }
           }
-        }
+        });
+
+        console.log(
+          `💸 Reembolso total aplicado — Orden ${order.orderNumber} CANCELADA. ` +
+          `Stock ${canRestoreStock ? "restaurado" : "NO restaurado (ya enviada)"}.`
+        );
         break;
       }
 

@@ -3,9 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import { formatPrice } from "@/lib/data";
-import { ShoppingCart, ShieldCheck, Truck, ArrowClockwise, Check, Ruler, Info, Sparkle, Globe } from "@phosphor-icons/react";
+import { ShoppingCart, ShieldCheck, Truck, ArrowClockwise, Check, Ruler, Sparkle } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/lib/cart-context";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -124,7 +123,7 @@ export function ProductClientDisplay({ product }: { product: Product }) {
         >
           <div className="mb-6 flex justify-between items-center">
             <span className="text-[#111111]/40 font-bold tracking-[0.2em] uppercase text-[10px]">
-              OFICIAL {product.team}
+              Tributo a {product.team}
             </span>
             <span className="text-[#111111]/20 font-bold tracking-[0.2em] uppercase text-[10px]">
               ID: {product.sku}
@@ -284,8 +283,10 @@ export function ProductClientDisplay({ product }: { product: Product }) {
                   <ArrowClockwise weight="bold" size={24} className="text-[#111111]" />
                 </div>
                 <div>
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] mb-2">Autenticidad Garantizada</h4>
-                  <p className="text-sm text-[#111111]/50 font-medium">Todas nuestras playeras son 100% oficiales y licenciadas.</p>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] mb-2">Producto para aficionados</h4>
+                  <p className="text-sm text-[#111111]/50 font-medium">
+                    Réplica inspirada en el diseño oficial. No está afiliada, licenciada ni respaldada por el club, la liga ni sus patrocinadores.
+                  </p>
                 </div>
               </div>
 
@@ -294,8 +295,8 @@ export function ProductClientDisplay({ product }: { product: Product }) {
                   <Sparkle weight="bold" size={24} className="text-[#111111]" />
                 </div>
                 <div>
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] mb-2">Calidad Profesional</h4>
-                  <p className="text-sm text-[#111111]/50 font-medium">Tejido ultraligero con licencia oficial.</p>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] mb-2">Calidad Premium</h4>
+                  <p className="text-sm text-[#111111]/50 font-medium">Tejido ligero y transpirable, ideal para entrenar o lucir en el estadio.</p>
                 </div>
               </div>
             </div>
