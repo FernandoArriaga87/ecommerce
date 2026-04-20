@@ -9,19 +9,46 @@ import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/lib/cart-context";
 import { motion, AnimatePresence } from "framer-motion";
 
-export function ProductClientDisplay({ product }: { product: any }) {
+type Variant = { id: string; size: string; color: string; stock: number; sku: string };
+type Product = {
+  id: string;
+  name: string;
+  team: string;
+  price: number;
+  images: string[];
+  badge?: string;
+  sku: string;
+  colors: string[];
+  sizes: string[];
+  variants: Variant[];
+};
+
+export function ProductClientDisplay({ product }: { product: Product }) {
   const { addItem } = useCart();
 
+  const firstAvailable = product.variants.find((v) => v.stock > 0);
+
+  const [selectedColor, setSelectedColor] = useState<string>(
+    firstAvailable?.color || product.colors[0] || ""
+  );
   const [selectedSize, setSelectedSize] = useState<string>(
-    product.sizes.find((s: any) => s.stock > 0)?.label || ""
+    firstAvailable?.size || ""
   );
   const [added, setAdded] = useState(false);
 
   const images = product.images?.length > 0 ? product.images : ["/placeholder.jpg"];
   const [activeImage, setActiveImage] = useState<string>(images[0]);
 
+  const stockFor = (size: string, color: string) =>
+    product.variants.find((v) => v.size === size && v.color === color)?.stock ?? 0;
+
+  const selectedVariant = product.variants.find(
+    (v) => v.size === selectedSize && v.color === selectedColor
+  );
+  const canAdd = !!selectedVariant && selectedVariant.stock > 0;
+
   const handleAddToCart = () => {
-    if (!selectedSize) return;
+    if (!canAdd) return;
     addItem({
       productId: product.id,
       name: product.name,
@@ -119,6 +146,42 @@ export function ProductClientDisplay({ product }: { product: any }) {
 
           <div className="h-[1px] w-full bg-[#111111]/5 mb-10" />
 
+          {/* Color Selector */}
+          {product.colors.length > 1 && (
+            <div className="mb-10">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#111111]">
+                  Color: <span className="text-[#111111]/50">{selectedColor}</span>
+                </h3>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                {product.colors.map((color) => {
+                  const available = product.variants.some(
+                    (v) => v.color === color && v.stock > 0
+                  );
+                  const isActive = selectedColor === color;
+                  return (
+                    <button
+                      key={color}
+                      disabled={!available}
+                      onClick={() => setSelectedColor(color)}
+                      className={`px-5 h-12 flex items-center justify-center rounded-2xl border-2 font-black uppercase tracking-widest text-xs transition-all duration-300 ${
+                        !available
+                          ? "border-[#111111]/5 text-[#111111]/20 bg-[#FAFAFA] cursor-not-allowed line-through"
+                          : isActive
+                          ? "border-[#111111] bg-[#111111] text-white"
+                          : "border-[#111111]/10 text-[#111111]/60 bg-white hover:border-[#111111] hover:text-[#111111]"
+                      }`}
+                    >
+                      {color}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Size Selector */}
           <div className="mb-12">
             <div className="flex justify-between items-center mb-6">
@@ -130,28 +193,40 @@ export function ProductClientDisplay({ product }: { product: any }) {
             </div>
 
             <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
-              {product.sizes.map((sizeObj: any, idx: number) => {
-                const outOfStock = sizeObj.stock === 0;
-                const isActive = selectedSize === sizeObj.label && !outOfStock;
+              {product.sizes.map((size) => {
+                const stock = stockFor(size, selectedColor);
+                const outOfStock = stock === 0;
+                const isActive = selectedSize === size && !outOfStock;
 
                 return (
                   <button
-                    key={idx}
+                    key={size}
                     disabled={outOfStock}
-                    onClick={() => setSelectedSize(sizeObj.label)}
-                    className={`h-14 flex items-center justify-center rounded-2xl border-2 font-black uppercase tracking-widest transition-all duration-300 relative ${
+                    onClick={() => setSelectedSize(size)}
+                    className={`h-14 flex items-center justify-center rounded-2xl border-2 font-black uppercase tracking-widest transition-all duration-300 relative overflow-hidden ${
                       outOfStock
-                        ? "border-[#111111]/5 text-[#111111]/10 bg-[#FAFAFA] cursor-not-allowed grayscale"
+                        ? "border-[#111111]/5 text-[#111111]/20 bg-[#FAFAFA] cursor-not-allowed"
                         : isActive
                         ? "border-[#111111] bg-[#111111] text-white shadow-xl shadow-black/10 -translate-y-1"
                         : "border-[#111111]/10 text-[#111111]/60 bg-white hover:border-[#111111] hover:text-[#111111]"
                     }`}
                   >
-                    {sizeObj.label}
+                    {size}
+                    {outOfStock && (
+                      <div className="absolute inset-0 pointer-events-none">
+                        <div className="absolute inset-0 border-t border-[#111111]/10 rotate-[25deg] origin-center scale-150" />
+                      </div>
+                    )}
                   </button>
                 );
               })}
             </div>
+
+            {selectedVariant && selectedVariant.stock > 0 && selectedVariant.stock <= 5 && (
+              <p className="mt-4 text-[10px] font-black uppercase tracking-[0.2em] text-orange-600">
+                ¡Solo quedan {selectedVariant.stock}!
+              </p>
+            )}
           </div>
 
           {/* CTA */}
@@ -164,7 +239,7 @@ export function ProductClientDisplay({ product }: { product: any }) {
                   ? "bg-green-600 hover:bg-green-700 text-white border-none"
                   : "bg-[#111111] text-white hover:bg-[#222222] border-none"
               }`}
-              disabled={!selectedSize}
+              disabled={!canAdd}
             >
               {added ? (
                 <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="flex items-center gap-3">
@@ -174,7 +249,11 @@ export function ProductClientDisplay({ product }: { product: any }) {
               ) : (
                 <div className="flex items-center gap-3">
                   <ShoppingCart weight="bold" size={24} />
-                  {selectedSize ? "AGREGAR AL CARRITO" : "SELECCIONA TALLA"}
+                  {!selectedSize
+                    ? "SELECCIONA TALLA"
+                    : !canAdd
+                    ? "AGOTADO"
+                    : "AGREGAR AL CARRITO"}
                 </div>
               )}
             </Button>
@@ -205,8 +284,8 @@ export function ProductClientDisplay({ product }: { product: any }) {
                   <ArrowClockwise weight="bold" size={24} className="text-[#111111]" />
                 </div>
                 <div>
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] mb-2">Política Cero Riesgo</h4>
-                  <p className="text-sm text-[#111111]/50 font-medium">30 días para cambios sin cargos ocultos.</p>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] mb-2">Autenticidad Garantizada</h4>
+                  <p className="text-sm text-[#111111]/50 font-medium">Todas nuestras playeras son 100% oficiales y licenciadas.</p>
                 </div>
               </div>
 

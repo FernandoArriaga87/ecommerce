@@ -3,14 +3,37 @@ import { ClientHome } from "../components/client-home";
 import { Suspense } from "react";
 import { ProductGridSkeleton } from "@/components/product-skeleton";
 
-async function ProductsList() {
+async function ProductsList({ category, search }: { category?: string, search?: string }) {
+  const whereClause: any = {
+    isActive: true,
+    isDeleted: false,
+  };
+
+  if (category && category !== 'all') {
+    if (category === 'ofertas') {
+      whereClause.comparePrice = { not: null };
+    } else {
+      whereClause.category = {
+        slug: category
+      };
+    }
+  }
+
+  if (search) {
+    whereClause.OR = [
+      { name: { contains: search, mode: 'insensitive' } },
+      { description: { contains: search, mode: 'insensitive' } },
+      { team: { name: { contains: search, mode: 'insensitive' } } },
+    ];
+  }
+
   const dbProducts = await prisma.product.findMany({
-    where: { isActive: true, isDeleted: false },
+    where: whereClause,
     include: {
       team: true
     },
     orderBy: { createdAt: 'desc' },
-    take: 8
+    take: 12
   });
 
   const products = dbProducts.map(p => ({
@@ -23,13 +46,15 @@ async function ProductsList() {
     slug: p.slug
   }));
 
-  return <ClientHome products={products} />;
+  return <ClientHome products={products} initialCategory={category || "all"} />;
 }
 
-export default function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ category?: string, search?: string }> }) {
+  const { category, search } = await searchParams;
+
   return (
     <Suspense fallback={<ProductGridSkeleton />}>
-      <ProductsList />
+      <ProductsList category={category} search={search} />
     </Suspense>
   );
 }

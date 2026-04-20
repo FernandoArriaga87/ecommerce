@@ -13,28 +13,24 @@ export async function POST(req: Request) {
 
     const { localItems } = await req.json();
 
-    // Find or create cart for user
+    if (!Array.isArray(localItems)) {
+      return NextResponse.json({ error: "localItems must be an array" }, { status: 400 });
+    }
+
     const cart = await prisma.cart.upsert({
       where: { userId: user.id },
       update: {},
       create: { userId: user.id },
-      include: { items: true },
     });
 
-    // Strategy: Merge local items into DB. 
-    // If same variant exists, we could sum them or prefer one. 
-    // Here we'll just ensure all local items are in DB.
-    
     for (const item of localItems) {
-      // Find variant ID first (should be passed from client or we find by product + size)
-      // For simplicity, let's assume client sends variantId if it has it, 
-      // otherwise we find it.
-      
+      const qty = Math.max(1, Math.min(99, Number(item.quantity) || 1));
+
       const variant = await prisma.variant.findFirst({
         where: {
           productId: item.productId,
           size: item.size,
-          product: { isDeleted: false }
+          product: { isDeleted: false, isActive: true }
         }
       });
 
@@ -42,15 +38,13 @@ export async function POST(req: Request) {
 
       await prisma.cartItem.upsert({
         where: {
-          // This requires a composite unique index in Prisma if we want real upsert
-          // For now, let's find and update or create
-          id: cart.items.find(i => i.variantId === variant.id)?.id || 'new-id'
+          cartId_variantId: { cartId: cart.id, variantId: variant.id }
         },
-        update: { quantity: item.quantity },
+        update: { quantity: qty },
         create: {
           cartId: cart.id,
           variantId: variant.id,
-          quantity: item.quantity
+          quantity: qty
         }
       });
     }

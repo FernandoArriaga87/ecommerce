@@ -81,8 +81,33 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // ── 2. Supabase session refresh (required for SSR auth) ──
-  let response = NextResponse.next({ request });
+  // ── 2. CSP nonce (per-request, cryptographically random) ──
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+  const isDev = process.env.NODE_ENV !== "production";
+
+  // 'unsafe-eval' is only needed in dev for React refresh / Next.js HMR.
+  // 'strict-dynamic' lets nonced scripts propagate trust to their imports.
+  const cspHeader = `
+    default-src 'self';
+    script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""} https://js.stripe.com;
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' blob: data: https://images.unsplash.com https://plus.unsplash.com https://*.supabase.co;
+    font-src 'self' data:;
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+    frame-src 'self' https://js.stripe.com https://hooks.stripe.com;
+    connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co;
+    upgrade-insecure-requests;
+  `.replace(/\s{2,}/g, " ").trim();
+
+  // Forward the nonce to pages via request header so Server Components can read it.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy", cspHeader);
+
+  // ── 3. Supabase session refresh (required for SSR auth) ──
+  let response = NextResponse.next({ request: { headers: requestHeaders } });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -96,7 +121,7 @@ export async function middleware(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
-          response = NextResponse.next({ request });
+          response = NextResponse.next({ request: { headers: requestHeaders } });
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options)
           );
@@ -110,12 +135,14 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // ── 3. Protected route checks ──
+  // ── 4. Protected route checks ──
   const isProtected = PROTECTED_ROUTES.some((r) => pathname.startsWith(r));
   const isAdmin = ADMIN_ROUTES.some((r) => pathname.startsWith(r));
   const isAuthRoute = AUTH_ROUTES.some((r) => pathname.startsWith(r));
 
-  // If not authenticated trying to access protected routes → redirect to login
+  // Not authenticated → redirect to login. For /admin we also gate at the auth
+  // level here; the authoritative ADMIN role check runs in src/app/admin/layout.tsx
+  // (Prisma) to avoid a per-request Supabase REST call at the edge.
   if (!user && (isProtected || isAdmin)) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
@@ -123,45 +150,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Admin routes strict role check
-  if (user && isAdmin) {
-    // We query the User table using Supabase REST API (Edge compatible)
-    // Note: Prisma created the table as "User" (case sensitive in Postgres usually via Prisma)
-    const { data: dbUser } = await supabase
-      .from('User')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (!dbUser || dbUser.role !== 'ADMIN') {
-      const homeUrl = request.nextUrl.clone();
-      homeUrl.pathname = "/";
-      return NextResponse.redirect(homeUrl);
-    }
-  }
-
-  // If authenticated trying to access login/register → redirect to profile
+  // Authenticated user on login/register → bounce to profile.
   if (user && isAuthRoute) {
     const profileUrl = request.nextUrl.clone();
     profileUrl.pathname = "/profile";
     return NextResponse.redirect(profileUrl);
   }
 
-  // ── 4. Content Security Policy (CSP) & Security Headers ──
-  const cspHeader = `
-    default-src 'self';
-    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com;
-    style-src 'self' 'unsafe-inline';
-    img-src 'self' blob: data: https://images.unsplash.com https://plus.unsplash.com https://*.supabase.co;
-    font-src 'self' data:;
-    object-src 'none';
-    base-uri 'self';
-    form-action 'self';
-    frame-src 'self' https://js.stripe.com https://hooks.stripe.com;
-    connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co;
-    upgrade-insecure-requests;
-  `.replace(/\s{2,}/g, " ").trim();
-
+  // ── 5. Security headers ──
   response.headers.set("Content-Security-Policy", cspHeader);
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-Content-Type-Options", "nosniff");

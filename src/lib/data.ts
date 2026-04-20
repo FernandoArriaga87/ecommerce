@@ -98,7 +98,7 @@ export const products: Product[] = [
     name: "Playera Arsenal Tercera Equipación",
     team: "Arsenal",
     price: 1799,
-    image: "https://images.unsplash.com/photo-1521508934575-b91c8ba6b907?q=80&w=800&auto=format&fit=crop",
+    image: "/brazilshirt.webp",
     colors: ["Gris"],
     sizes: [
       { label: "S", stock: 4 },

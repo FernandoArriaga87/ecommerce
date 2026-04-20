@@ -65,14 +65,21 @@ export function Navbar() {
         
         {/* Right side: Actions */}
         <div className="flex items-center gap-6">
-          <div className="hidden md:flex items-center bg-[#111111]/5 px-4 h-11 rounded-full border border-[#111111]/5 focus-within:bg-white focus-within:border-[#111111]/10 transition-all group">
+          <form 
+            action={(formData) => {
+              const query = formData.get("q");
+              if (query) window.location.href = `/?search=${query}`;
+            }}
+            className="hidden md:flex items-center bg-[#111111]/5 px-4 h-11 rounded-full border border-[#111111]/5 focus-within:bg-white focus-within:border-[#111111]/10 transition-all group"
+          >
             <MagnifyingGlass size={18} className="text-[#111111]/30 group-focus-within:text-[#111111]" />
             <input 
+              name="q"
               type="text" 
               placeholder="BUSCAR EQUIPO..." 
               className="bg-transparent border-none outline-none text-[10px] font-bold tracking-widest px-3 w-32 focus:w-48 transition-all placeholder:text-[#111111]/20 text-[#111111]"
             />
-          </div>
+          </form>
           
           <div className="flex items-center gap-3">
             <CartDrawer />

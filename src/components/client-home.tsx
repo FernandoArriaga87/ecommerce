@@ -3,7 +3,7 @@
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ShoppingCart, ArrowRight, Play, TrendUp, Sparkle, Globe } from "@phosphor-icons/react";
 import { formatPrice } from "@/lib/data";
 import { Button } from "@/components/ui/button";
@@ -19,8 +19,13 @@ interface Product {
   slug: string;
 }
 
-export function ClientHome({ products }: { products: Product[] }) {
-  const [activeCategory, setActiveCategory] = useState("all");
+export function ClientHome({ products, initialCategory = "all" }: { products: Product[], initialCategory?: string }) {
+  const [activeCategory, setActiveCategory] = useState(initialCategory);
+
+  // Sync state if initialCategory changes (e.g. via browser navigation)
+  useEffect(() => {
+    setActiveCategory(initialCategory);
+  }, [initialCategory]);
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -50,9 +55,27 @@ export function ClientHome({ products }: { products: Product[] }) {
   return (
     <div className="w-full bg-[#FAFAFA]">
       {/* Asymmetric Premium Hero */}
-      <section className="relative min-h-[90dvh] flex flex-col lg:flex-row items-stretch overflow-hidden">
-        {/* Left Side: Text Content */}
-        <div className="flex-1 flex flex-col justify-center px-8 md:px-16 lg:px-24 py-20 z-10">
+      <section className="relative min-h-[90dvh] flex items-center overflow-hidden bg-[#FAFAFA]">
+        {/* Background Image - Now covering everything */}
+        <motion.div
+          initial={{ scale: 1.05, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 1.5, ease: [0.23, 1, 0.32, 1] }}
+          className="absolute inset-0 w-full h-full z-0"
+        >
+          <Image
+            src="/ImgHero.jpg"
+            alt="Sports Fashion"
+            fill
+            className="object-cover object-center"
+            priority
+          />
+          {/* Enhanced Gradient Overlay for readability: darker on the left where the text is */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#FAFAFA] via-[#FAFAFA]/60 to-transparent z-10" />
+        </motion.div>
+
+        {/* Content Layer */}
+        <div className="container mx-auto px-8 md:px-16 lg:px-24 py-20 z-20 relative">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -63,13 +86,13 @@ export function ClientHome({ products }: { products: Product[] }) {
               <span className="h-[1px] w-12 bg-[#111111]/20" />
               <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#111111]/60">Colección 2026</span>
             </div>
-            
+
             <h1 className="text-6xl md:text-8xl font-black tracking-[-0.04em] leading-[0.9] text-[#111111] mb-8">
               PURA<br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#111111] to-[#666666]">PASIÓN</span><br />
               DEPORTIVA.
             </h1>
-            
+
             <p className="text-lg md:text-xl text-[#111111]/60 font-medium mb-12 leading-relaxed tracking-tight max-w-md">
               Ediciones limitadas y playeras oficiales de tus equipos favoritos. Diseñadas para el rendimiento, creadas para la gloria.
             </p>
@@ -81,7 +104,7 @@ export function ClientHome({ products }: { products: Product[] }) {
                   <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                 </Button>
               </motion.div>
-              
+
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button variant="outline" className="rounded-full border-[#111111]/10 bg-white/50 backdrop-blur-md text-[#111111] px-8 h-16 text-sm font-bold uppercase tracking-widest flex gap-3">
                   <Play weight="fill" size={20} />
@@ -92,48 +115,28 @@ export function ClientHome({ products }: { products: Product[] }) {
           </motion.div>
         </div>
 
-        {/* Right Side: Visual Asset (Asymmetric Crop) */}
-        <div className="flex-1 relative min-h-[500px] lg:min-h-full">
-          <motion.div 
-            initial={{ scale: 1.2, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 1.5, ease: [0.23, 1, 0.32, 1] }}
-            className="absolute inset-0 w-full h-full"
-          >
-            <Image
-              src="https://images.unsplash.com/photo-1518605368461-1e1292237fac?q=80&w=1920&auto=format&fit=crop"
-              alt="Sports Fashion"
-              fill
-              className="object-cover lg:rounded-bl-[5rem]"
-              priority
-            />
-            {/* Subtle Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#FAFAFA] via-transparent to-transparent hidden lg:block" />
-          </motion.div>
-
-          {/* Floating Aesthetic Badge */}
-          <motion.div 
-            animate={{ y: [0, -20, 0] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute bottom-12 right-12 bg-white/10 backdrop-blur-2xl border border-white/20 p-6 rounded-[2rem] shadow-2xl hidden md:block"
-          >
-            <div className="flex items-center gap-4">
-              <div className="bg-white/20 p-3 rounded-full">
-                <Sparkle weight="fill" className="text-white" size={24} />
-              </div>
-              <div className="text-white">
-                <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">Auth Check</p>
-                <p className="font-bold text-sm">100% Original</p>
-              </div>
+        {/* Floating Aesthetic Badge */}
+        <motion.div
+          animate={{ y: [0, -20, 0] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-12 right-12 bg-white/10 backdrop-blur-2xl border border-white/20 p-6 rounded-[2rem] shadow-2xl hidden md:block z-30"
+        >
+          <div className="flex items-center gap-4">
+            <div className="bg-white/20 p-3 rounded-full">
+              <Sparkle weight="fill" className="text-white" size={24} />
             </div>
-          </motion.div>
-        </div>
+            <div className="text-white">
+              <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">Auth Check</p>
+              <p className="font-bold text-sm">100% Original</p>
+            </div>
+          </div>
+        </motion.div>
       </section>
 
       {/* Trust Bar */}
       <section className="py-12 border-y border-[#111111]/5 bg-white">
         <div className="container mx-auto px-6 overflow-hidden">
-          <motion.div 
+          <motion.div
             animate={{ x: [0, -1000] }}
             transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
             className="flex items-center gap-24 whitespace-nowrap"
@@ -173,18 +176,17 @@ export function ClientHome({ products }: { products: Product[] }) {
           </motion.div>
 
           <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
-            {["all", "liga-mx", "europeos", "selecciones"].map((cat) => (
-              <button
+            {["all", "liga-mx", "europeos", "selecciones", "retro", "ofertas"].map((cat) => (
+              <Link
                 key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`px-8 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 border ${
-                  activeCategory === cat 
-                  ? "bg-[#111111] border-[#111111] text-white shadow-xl shadow-black/10" 
+                href={`/?category=${cat}`}
+                className={`px-8 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 border ${activeCategory === cat
+                  ? "bg-[#111111] border-[#111111] text-white shadow-xl shadow-black/10"
                   : "bg-transparent border-[#111111]/10 text-[#111111]/40 hover:border-[#111111]/30 hover:text-[#111111]"
-                }`}
+                  }`}
               >
                 {cat.replace("-", " ")}
-              </button>
+              </Link>
             ))}
           </div>
         </div>
@@ -208,7 +210,7 @@ export function ClientHome({ products }: { products: Product[] }) {
                       </span>
                     </div>
                   )}
-                  
+
                   <Image
                     src={product.image}
                     alt={product.name}
@@ -216,7 +218,7 @@ export function ClientHome({ products }: { products: Product[] }) {
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                     className="object-cover transition-transform duration-1000 ease-[0.23,1,0.32,1] group-hover:scale-110"
                   />
-                  
+
                   {/* Hover Overlay */}
                   <div className="absolute inset-x-6 bottom-6 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
                     <Button className="w-full rounded-2xl bg-white/95 backdrop-blur-md text-[#111111] hover:bg-white border-none py-6 h-auto font-bold uppercase tracking-widest text-[10px] shadow-xl">
@@ -249,7 +251,7 @@ export function ClientHome({ products }: { products: Product[] }) {
       </div>
 
       {/* Liquid Glass Sticky Widget */}
-      <motion.div 
+      <motion.div
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 1, type: "spring" as const, damping: 15 }}
@@ -260,7 +262,7 @@ export function ClientHome({ products }: { products: Product[] }) {
             2
           </div>
           <ShoppingCart weight="bold" size={24} />
-          
+
           {/* Tooltip */}
           <span className="absolute left-full ml-4 top-1/2 -translate-y-1/2 bg-white text-[#111111] px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity shadow-xl border border-[#111111]/5">
             20% Cupón: GOL20
