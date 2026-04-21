@@ -19,12 +19,18 @@ interface OrderShippedEmailProps {
   orderNumber: string;
   customerName: string;
   estimatedDelivery?: string;
+  carrier?: string;
+  trackingNumber?: string;
+  trackingUrl?: string;
 }
 
 export const OrderShippedEmail = ({
   orderNumber = 'DS-1234',
   customerName = 'Juan',
   estimatedDelivery = '3-5 días hábiles',
+  carrier,
+  trackingNumber,
+  trackingUrl,
 }: OrderShippedEmailProps) => {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
@@ -85,14 +91,25 @@ export const OrderShippedEmail = ({
                 </Column>
                 <Column align="right">
                   <Text className="text-[10px] font-black tracking-[0.2em] uppercase text-[#999999] m-0">
-                    Estado
+                    {carrier ? 'Paquetería' : 'Estado'}
                   </Text>
                   <Text className="text-[#3b82f6] text-[14px] font-black leading-[24px] m-0 mt-[4px]">
-                    🚚 En tránsito
+                    {carrier || '🚚 En tránsito'}
                   </Text>
                 </Column>
               </Row>
             </Section>
+
+            {trackingNumber && (
+              <Section className="mx-[32px] mt-[8px] bg-[#f8f8f8] rounded-[12px] px-[24px] py-[20px]">
+                <Text className="text-[10px] font-black tracking-[0.2em] uppercase text-[#999999] m-0">
+                  Número de rastreo
+                </Text>
+                <Text className="text-[#111111] text-[15px] font-black leading-[24px] m-0 mt-[4px]">
+                  {trackingNumber}
+                </Text>
+              </Section>
+            )}
 
             <Section className="px-[32px] pt-[16px]">
               <Text className="text-[#444444] text-[15px] leading-[26px]">
@@ -104,7 +121,7 @@ export const OrderShippedEmail = ({
             <Section className="text-center px-[32px] pt-[16px] pb-[32px]">
               <Button
                 className="bg-[#111111] rounded-[8px] text-white text-[12px] font-black uppercase tracking-[0.2em] no-underline text-center px-[32px] py-[16px]"
-                href={`${baseUrl}/orders`}
+                href={trackingUrl || `${baseUrl}/orders`}
               >
                 Rastrear mi Pedido
               </Button>

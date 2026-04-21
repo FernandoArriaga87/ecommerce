@@ -29,7 +29,7 @@ No test suite exists yet.
 1. **Browse** → `src/app/page.tsx` (Server Component) queries Prisma with `skip`/`take`/`orderBy` from URL params (`page`, `sort`, `category`, `search`). 12 items per page. `src/lib/data.ts` is a legacy mock type/array still imported in places.
 2. **Cart** → Client-side React Context (`CartProvider`) persisted to localStorage; synced to `Cart`/`CartItem` tables on login
 3. **Wishlist** → `WishlistProvider` (`src/lib/wishlist-context.tsx`) mirrors cart pattern: guest items in localStorage, merged into `WishlistItem` table on `SIGNED_IN` via `onAuthStateChange`. Toggle is optimistic with revert-on-error.
-4. **Checkout** → POST `/api/checkout/stripe` → SERIALIZABLE transaction (stock check + decrement + Order creation) → Stripe session redirect
+4. **Checkout** → POST `/api/checkout/quick-stripe` (auth-gated) → server-side Skydropx re-quote → SERIALIZABLE transaction (stock check + decrement + Order creation with carrier/rateId) → Stripe session redirect
 5. **Payment confirmation** → Stripe webhook (`/api/webhooks/stripe`) → Order status PENDING→PAID + Resend email
 6. **Refund** → Admin triggers `refundOrderAction` → `stripe.refunds.create({ payment_intent, reason })` → Stripe `charge.refunded` webhook flips order to CANCELLED. Refund UI only shown for statuses PAID/SHIPPED/DELIVERED/DISPUTED.
 7. **Reviews** → `createReviewAction` requires a DELIVERED order containing the product (verified-buyer check). One review per (user, product) via composite `@@unique`. `prisma.review.aggregate` on the PDP powers `aggregateRating` in JSON-LD.
@@ -67,7 +67,7 @@ Error tracking via `@sentry/nextjs` v10. Init is split across `instrumentation.t
 |------|---------|
 | `src/middleware.ts` | Session refresh, auth guards, role checks, rate limiting |
 | `prisma/schema.prisma` | Full data model: User, Product, Variant, Order, Cart, Address, WishlistItem, Review, WebhookEvent |
-| `src/app/api/checkout/stripe/route.ts` | Stripe checkout session creation + stock reservation |
+| `src/app/api/checkout/quick-stripe/route.ts` | Stripe checkout session creation + stock reservation + Skydropx re-quote (auth required) |
 | `src/app/api/webhooks/stripe/route.ts` | Payment status updates + stock restoration + refund handling |
 | `src/app/actions/admin.ts` | Admin CRUD incl. `refundOrderAction` (blocks refund for PENDING/CANCELLED) |
 | `src/app/actions/admin-bulk.ts` | Bulk mutations (products/orders/reviews) — each call writes an `AuditLog` entry via `logAudit` |

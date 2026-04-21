@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { resend, SEND_FROM } from "@/lib/resend";
 import OrderShippedEmail from "@/components/emails/OrderShippedEmail";
+import OrderDeliveredEmail from "@/components/emails/OrderDeliveredEmail";
 import { stripe } from "@/lib/stripe";
 
 async function verifyAdmin() {
@@ -224,9 +225,17 @@ export async function updateOrderStatusAction(orderId: string, newStatus: OrderS
       return { error: "No puedes enviar un pedido en disputa. Espera a que Stripe resuelva el contracargo." };
     }
 
+    const extraData: Record<string, any> = {};
+    if (newStatus === "SHIPPED" && current.status !== "SHIPPED") {
+      extraData.shippedAt = new Date();
+    }
+    if (newStatus === "DELIVERED" && current.status !== "DELIVERED") {
+      extraData.deliveredAt = new Date();
+    }
+
     const order = await prisma.order.update({
       where: { id: orderId },
-      data: { status: newStatus },
+      data: { status: newStatus, ...extraData },
       include: { user: true }
     });
 
@@ -237,15 +246,36 @@ export async function updateOrderStatusAction(orderId: string, newStatus: OrderS
           from: SEND_FROM,
           to: order.user.email,
           subject: `📦 Tu pedido ${order.orderNumber} va en camino!`,
-          react: OrderShippedEmail({ 
-            orderNumber: order.orderNumber, 
-            customerName: order.user.name.split(" ")[0] || "Cliente"
+          react: OrderShippedEmail({
+            orderNumber: order.orderNumber,
+            customerName: order.user.name.split(" ")[0] || "Cliente",
+            carrier: order.carrier || undefined,
+            trackingNumber: order.trackingNumber || undefined,
+            trackingUrl: order.trackingUrl || undefined,
           }),
         });
         if (sendError) console.error("Error API Resend (envío en admin action):", sendError);
         else console.log(`Correo de envío despachado con éxito para la orden: ${order.orderNumber}`, data);
       } catch (emailError) {
         console.error("Excepción enviando correo de pedido enviado:", emailError);
+      }
+    }
+
+    // Si se marca como entregado, enviar correo de entrega
+    if (newStatus === "DELIVERED" && resend && order.user?.email) {
+      try {
+        const { error: sendError } = await resend.emails.send({
+          from: SEND_FROM,
+          to: order.user.email,
+          subject: `🎉 Tu pedido ${order.orderNumber} ha sido entregado`,
+          react: OrderDeliveredEmail({
+            orderNumber: order.orderNumber,
+            customerName: order.user.name.split(" ")[0] || "Cliente",
+          }),
+        });
+        if (sendError) console.error("Error API Resend (entrega en admin action):", sendError);
+      } catch (emailError) {
+        console.error("Excepción enviando correo de pedido entregado:", emailError);
       }
     }
 

@@ -155,6 +155,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         type="application/ld+json"
         nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        suppressHydrationWarning
       />
       <ProductClientDisplay
         product={product}

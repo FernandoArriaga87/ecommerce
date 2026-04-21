@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/data";
 import { StatusSelector } from "./status-selector";
 import { RefundButton } from "./refund-button";
+import { PersonalDeliveryActions } from "./personal-delivery-actions";
 import { BulkSelectionProvider } from "@/components/admin/bulk/bulk-provider";
 import { BulkCheckbox, BulkHeaderCheckbox } from "@/components/admin/bulk/bulk-checkbox";
 import { BulkActionsBar } from "@/components/admin/bulk/bulk-actions-bar";
@@ -83,7 +84,37 @@ export default async function AdminOrdersPage() {
                         <div className="text-[9px] font-bold tracking-widest text-gray-400 uppercase">{order.paymentMethod}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <StatusSelector orderId={order.id} currentStatus={order.status} />
+                        <div className="flex flex-col gap-2">
+                          <StatusSelector orderId={order.id} currentStatus={order.status} />
+                          {order.isPersonalDelivery && (
+                            <PersonalDeliveryActions
+                              orderId={order.id}
+                              orderNumber={order.orderNumber}
+                              status={order.status}
+                            />
+                          )}
+                          {!order.isPersonalDelivery && order.trackingNumber && (
+                            <div className="flex flex-col">
+                              <span className="text-[9px] font-bold tracking-widest uppercase text-gray-400">
+                                {order.carrier || "Paquetería"}
+                              </span>
+                              {order.trackingUrl ? (
+                                <a
+                                  href={order.trackingUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[10px] font-bold text-blue-600 hover:underline truncate max-w-[160px]"
+                                >
+                                  {order.trackingNumber}
+                                </a>
+                              ) : (
+                                <span className="text-[10px] font-bold text-gray-700 truncate max-w-[160px]">
+                                  {order.trackingNumber}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <RefundButton

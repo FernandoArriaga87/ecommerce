@@ -4,6 +4,8 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { resend, SEND_FROM } from "@/lib/resend";
 import OrderPaidEmail from "@/components/emails/OrderPaidEmail";
+import OrderShippedEmail from "@/components/emails/OrderShippedEmail";
+import { createShipment } from "@/lib/skydropx";
 import { formatPrice } from "@/lib/data";
 
 export async function POST(req: Request) {
@@ -95,6 +97,76 @@ export async function POST(req: Request) {
               if (sendError) console.error("Error API Resend (correo pago):", sendError);
             } catch (emailError) {
               console.error("Excepción enviando correo de pago:", emailError);
+            }
+          }
+
+          // ── Auto-create Skydropx label for non-personal deliveries ──
+          if (!order.isPersonalDelivery && order.skydropxRateId) {
+            try {
+              const shippingAddr = await prisma.address.findUnique({
+                where: { id: order.addressId },
+              });
+
+              if (!shippingAddr) {
+                console.error(`No se encontró dirección ${order.addressId} para orden ${order.orderNumber}.`);
+              } else {
+                const totalItems = order.items.reduce((sum: number, it: any) => sum + it.quantity, 0);
+                const shipment = await createShipment({
+                  rateId: order.skydropxRateId,
+                  orderNumber: order.orderNumber,
+                  totalItems,
+                  destination: {
+                    name: shippingAddr.name,
+                    street1: shippingAddr.address,
+                    city: shippingAddr.city,
+                    province: shippingAddr.state,
+                    zip: shippingAddr.zipCode,
+                    phone: shippingAddr.phone,
+                    email: order.user?.email || "",
+                  },
+                });
+
+                await prisma.order.update({
+                  where: { id: orderId },
+                  data: {
+                    status: "SHIPPED",
+                    skydropxShipmentId: shipment.shipmentId,
+                    trackingNumber: shipment.trackingNumber,
+                    trackingUrl: shipment.trackingUrl,
+                    shippingLabelUrl: shipment.labelUrl,
+                    shippedAt: new Date(),
+                  },
+                });
+
+                console.log(`📦 Guía Skydropx creada para ${order.orderNumber}: ${shipment.trackingNumber}`);
+
+                if (resend && order.user?.email) {
+                  try {
+                    const { error: shipEmailError } = await resend.emails.send({
+                      from: SEND_FROM,
+                      to: order.user.email,
+                      subject: `📦 Tu pedido ${order.orderNumber} va en camino`,
+                      react: OrderShippedEmail({
+                        orderNumber: order.orderNumber,
+                        customerName: order.user.name.split(" ")[0] || "Cliente",
+                        estimatedDelivery: "3-5 días hábiles",
+                        carrier: order.carrier || undefined,
+                        trackingNumber: shipment.trackingNumber || undefined,
+                        trackingUrl: shipment.trackingUrl || undefined,
+                      }),
+                    });
+                    if (shipEmailError) console.error("Error API Resend (correo envío):", shipEmailError);
+                  } catch (emailError) {
+                    console.error("Excepción enviando correo de envío:", emailError);
+                  }
+                }
+              }
+            } catch (skydropxError) {
+              console.error(
+                `⚠️ No se pudo crear guía Skydropx automáticamente para ${order.orderNumber}. ` +
+                `La orden permanece PAID para revisión manual desde admin.`,
+                skydropxError
+              );
             }
           }
         }

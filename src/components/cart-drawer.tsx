@@ -16,52 +16,11 @@ export function CartDrawer() {
   const [loading, setLoading] = useState(false);
   const [stockErrors, setStockErrors] = useState<string[]>([]);
 
-  const handleCheckout = async () => {
-    try {
-      setLoading(true);
-      setStockErrors([]);
-      const shipping = subtotal >= 1499 ? 0 : 149;
-      const total = subtotal + shipping;
-
-      const res = await fetch("/api/checkout/quick-stripe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items: items.map((i) => ({
-            productId: i.productId,
-            name: i.name,
-            size: i.size,
-            price: i.price,
-            quantity: i.quantity,
-            image: i.image,
-          })),
-          shipping,
-          subtotal,
-          total,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (data.url) {
-        window.location.href = data.url;
-      } else if (res.status === 401) {
-        setIsOpen(false);
-        router.push("/login?returnUrl=/checkout");
-      } else if (data.code === "PROFILE_INCOMPLETE") {
-        setIsOpen(false);
-        router.push("/complete-profile?returnUrl=/");
-      } else if (data.code === "STOCK_ERROR" && data.stockErrors) {
-        setStockErrors(data.stockErrors);
-      } else {
-        alert(data.error || "Hubo un error al iniciar el pago.");
-      }
-    } catch (error) {
-      console.error("Checkout error:", error);
-      alert("Error de conexión. Intenta de nuevo.");
-    } finally {
-      setLoading(false);
-    }
+  const handleCheckout = () => {
+    setLoading(true);
+    setStockErrors([]);
+    setIsOpen(false);
+    router.push("/checkout");
   };
 
   const freeShippingThreshold = 1499;

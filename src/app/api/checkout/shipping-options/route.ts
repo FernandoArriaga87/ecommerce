@@ -5,6 +5,9 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const zip = String(body.zip || "").trim();
+    const city = String(body.city || "").trim();
+    const state = String(body.state || "").trim();
+    const address = String(body.address || "").trim();
     const totalItems = Number(body.totalItems || 1);
 
     if (!/^\d{4,5}$/.test(zip)) {
@@ -14,7 +17,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Cantidad inválida" }, { status: 400 });
     }
 
-    const options = await quoteShipping({ destinationZip: zip, totalItems });
+    const options = await quoteShipping({ 
+      destinationZip: zip, 
+      destinationCity: city, 
+      destinationState: state, 
+      destinationAddress: address, 
+      totalItems 
+    });
     return NextResponse.json({ options });
   } catch (error: any) {
     console.error("Shipping quote error:", error);

@@ -34,6 +34,9 @@ export default function CheckoutPage() {
   const [stockErrors, setStockErrors] = useState<string[]>([]);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [zipCode, setZipCode] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [address, setAddress] = useState("");
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
   const [selectedRateId, setSelectedRateId] = useState<string>("");
   const [loadingShipping, setLoadingShipping] = useState(false);
@@ -52,6 +55,9 @@ export default function CheckoutPage() {
             const data = await res.json();
             setProfile(data);
             if (data?.zipCode) setZipCode(data.zipCode);
+            if (data?.city) setCity(data.city);
+            if (data?.state) setState(data.state);
+            if (data?.address) setAddress(data.address);
           }
         }
       } catch (error) {
@@ -63,50 +69,48 @@ export default function CheckoutPage() {
     initialize();
   }, []);
 
-  // Debounced quote fetch when ZIP changes
-  useEffect(() => {
+  const fetchQuotes = async () => {
     const zip = zipCode.trim();
     if (!/^\d{4,5}$/.test(zip) || totalItems === 0) {
-      setShippingOptions([]);
-      setSelectedRateId("");
+      alert("Por favor ingresa un código postal válido antes de cotizar.");
+      return;
+    }
+    if (!city.trim() || !state.trim() || !address.trim()) {
+      alert("Por favor completa toda tu dirección (Calle, Ciudad y Estado) antes de cotizar el envío.");
       return;
     }
 
     setLoadingShipping(true);
     setShippingError("");
-    const timeoutId = setTimeout(async () => {
-      try {
-        const res = await fetch("/api/checkout/shipping-options", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ zip, totalItems }),
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          setShippingError(data.error || "No pudimos cotizar el envío.");
-          setShippingOptions([]);
-          setSelectedRateId("");
+    try {
+      const res = await fetch("/api/checkout/shipping-options", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ zip, city, state, address, totalItems }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setShippingError(data.error || "No pudimos cotizar el envío.");
+        setShippingOptions([]);
+        setSelectedRateId("");
+      } else {
+        const opts: ShippingOption[] = data.options || [];
+        setShippingOptions(opts);
+        // Auto-select cheapest
+        if (opts.length > 0) {
+          const cheapest = opts.reduce((a, b) => (a.price < b.price ? a : b));
+          setSelectedRateId(cheapest.rateId);
         } else {
-          const opts: ShippingOption[] = data.options || [];
-          setShippingOptions(opts);
-          // Auto-select cheapest
-          if (opts.length > 0) {
-            const cheapest = opts.reduce((a, b) => (a.price < b.price ? a : b));
-            setSelectedRateId(cheapest.rateId);
-          } else {
-            setSelectedRateId("");
-          }
+          setSelectedRateId("");
         }
-      } catch (err) {
-        console.error("Quote fetch error:", err);
-        setShippingError("Error de conexión al cotizar.");
-      } finally {
-        setLoadingShipping(false);
       }
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [zipCode, totalItems]);
+    } catch (err) {
+      console.error("Quote fetch error:", err);
+      setShippingError("Error de conexión al cotizar.");
+    } finally {
+      setLoadingShipping(false);
+    }
+  };
 
   const selectedOption = shippingOptions.find((o) => o.rateId === selectedRateId);
   const shipping = selectedOption?.price ?? 0;
@@ -144,7 +148,7 @@ export default function CheckoutPage() {
     };
 
     try {
-      const res = await fetch("/api/checkout/stripe", {
+      const res = await fetch("/api/checkout/quick-stripe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -314,7 +318,8 @@ export default function CheckoutPage() {
                   <Input
                     name="address"
                     required
-                    defaultValue={profile?.address || ""}
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
                     placeholder="Calle, Número, Colonia"
                     className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black"
                   />
@@ -325,7 +330,8 @@ export default function CheckoutPage() {
                     <Input
                       name="city"
                       required
-                      defaultValue={profile?.city || ""}
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
                       placeholder="CDMX"
                       className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black"
                     />
@@ -335,7 +341,8 @@ export default function CheckoutPage() {
                     <Input
                       name="state"
                       required
-                      defaultValue={profile?.state || ""}
+                      value={state}
+                      onChange={(e) => setState(e.target.value)}
                       placeholder="Estado"
                       className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black"
                     />
@@ -362,14 +369,25 @@ export default function CheckoutPage() {
                 Opciones de Envío
               </h2>
 
-              {!/^\d{4,5}$/.test(zipCode.trim()) && (
-                <div className="p-4 border border-dashed border-gray-300 bg-white flex items-center gap-3">
-                  <Package className="h-5 w-5 text-gray-400" />
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                    Ingresa un código postal válido para cotizar el envío.
-                  </p>
-                </div>
-              )}
+              <div className="flex flex-col gap-4">
+                <Button 
+                  type="button" 
+                  onClick={fetchQuotes} 
+                  disabled={loadingShipping || !zipCode || !city || !state || !address}
+                  className="w-full bg-black hover:bg-gray-800 text-white rounded-none h-12 text-xs font-bold uppercase tracking-widest"
+                >
+                  Confirmar Dirección y Cotizar Envío
+                </Button>
+
+                {shippingOptions.length === 0 && !loadingShipping && !shippingError && (
+                  <div className="p-4 border border-dashed border-gray-300 bg-white flex items-center gap-3">
+                    <Package className="h-5 w-5 text-gray-400" />
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      Ingresa tu dirección completa y presiona el botón para ver las opciones de envío.
+                    </p>
+                  </div>
+                )}
+              </div>
 
               {loadingShipping && (
                 <div className="p-4 border border-gray-200 bg-white flex items-center gap-3">
