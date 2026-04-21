@@ -29,7 +29,9 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json().catch(() => ({}));
-    const localItems = Array.isArray(body?.localItems) ? body.localItems : [];
+    // Cap payload size — the resolve loop is N+1 against variants, so an
+    // uncapped localItems array is a trivial DoS vector from a logged-in user.
+    const localItems = (Array.isArray(body?.localItems) ? body.localItems : []).slice(0, 50);
     const mode: SyncMode = body?.mode === "merge" ? "merge" : "replace";
 
     const cart = await prisma.cart.upsert({

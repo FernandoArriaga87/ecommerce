@@ -307,7 +307,7 @@ export async function POST(req: NextRequest) {
 
     console.error("Checkout Error:", error);
     return NextResponse.json(
-      { error: error.message || "Error interno del servidor" },
+      { error: "Error interno del servidor" },
       { status: 500 }
     );
   }

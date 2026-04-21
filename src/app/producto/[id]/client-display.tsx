@@ -49,6 +49,7 @@ export function ProductClientDisplay({
   };
 
   const firstAvailable = product.variants.find((v) => v.stock > 0);
+  const outOfStock = product.variants.every((v) => v.stock === 0);
 
   const [selectedColor, setSelectedColor] = useState<string>(
     firstAvailable?.color || product.colors[0] || ""
@@ -91,13 +92,19 @@ export function ProductClientDisplay({
           layoutId={`image-${product.id}`}
           className="relative aspect-square md:aspect-[4/5] bg-[#F3F3F3] rounded-[2.5rem] overflow-hidden border border-[#111111]/5"
         >
-          {product.badge && (
+          {outOfStock ? (
+            <div className="absolute top-8 left-8 z-10">
+              <span className="bg-red-600 text-white text-[10px] font-black uppercase tracking-[0.2em] px-5 py-2.5 rounded-full shadow-2xl">
+                Agotado
+              </span>
+            </div>
+          ) : product.badge ? (
             <div className="absolute top-8 left-8 z-10">
               <span className="bg-[#111111] text-white text-[10px] font-black uppercase tracking-[0.2em] px-5 py-2.5 rounded-full shadow-2xl">
                 {product.badge}
               </span>
             </div>
-          )}
+          ) : null}
           <AnimatePresence mode="wait">
             <motion.div
               key={activeImage}
@@ -297,7 +304,9 @@ export function ProductClientDisplay({
               ) : (
                 <div className="flex items-center gap-3">
                   <ShoppingCart weight="bold" size={24} />
-                  {!selectedSize
+                  {outOfStock
+                    ? "AGOTADO"
+                    : !selectedSize
                     ? "SELECCIONA TALLA"
                     : !canAdd
                     ? "AGOTADO"

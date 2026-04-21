@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createClient } from "@/lib/supabase/server";
 import { resend, SEND_FROM } from "@/lib/resend";
 import OrderShippedEmail from "@/components/emails/OrderShippedEmail";
 import OrderDeliveredEmail from "@/components/emails/OrderDeliveredEmail";
 import { formatPrice } from "@/lib/data";
+import { requireAdminUser, logAudit } from "@/lib/admin-utils";
 
 // PATCH /api/orders/[id]/status
 // Body: { status: "SHIPPED" | "DELIVERED" }
@@ -17,22 +17,10 @@ export async function PATCH(
     const { id } = await params;
     const { status } = await req.json();
 
-    // 1. Auth check
-    const supabase = await createClient();
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-
-    if (!authUser) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-    }
-
-    // 2. Role check
-    const dbUser = await prisma.user.findUnique({
-      where: { id: authUser.id },
-      select: { role: true },
-    });
-
-    if (!dbUser || dbUser.role !== "ADMIN") {
-      return NextResponse.json({ error: "Acceso denegado: se requiere rol de administrador" }, { status: 403 });
+    // 1. Unified admin check (same helper the server actions use)
+    const admin = await requireAdminUser();
+    if (!admin) {
+      return NextResponse.json({ error: "Acceso denegado" }, { status: 403 });
     }
 
     // 3. Validate status transition
@@ -73,6 +61,15 @@ export async function PATCH(
     const updatedOrder = await prisma.order.update({
       where: { id },
       data: { status },
+    });
+
+    // Audit trail — match the pattern used by admin-bulk actions
+    await logAudit({
+      actorId: admin.id,
+      action: `ORDER_STATUS_${status}`,
+      entityType: "ORDER",
+      entityIds: [id],
+      metadata: { from: order.status, to: status },
     });
 
     // 7. Send corresponding email notification
@@ -143,6 +140,6 @@ export async function PATCH(
     });
   } catch (error: any) {
     console.error("Error actualizando estado de orden:", error);
-    return NextResponse.json({ error: error.message || "Error interno" }, { status: 500 });
+    return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }

@@ -75,11 +75,21 @@ export async function POST(req: NextRequest) {
   const eventId = `sdpx_${shipmentId}_${status || "update"}_${packageId}`;
 
   try {
-    const existing = await prisma.webhookEvent.findUnique({ where: { id: eventId } });
-    if (existing) {
-      return NextResponse.json({ received: true, duplicate: true });
+    // Race-safe idempotency: let the PK unique constraint reject duplicates.
+    // findUnique-then-create allowed two concurrent deliveries of the same
+    // event to both pass the guard and double-process (second delivery would
+    // fail on create, but only after the side-effects had already started).
+    try {
+      await prisma.webhookEvent.create({
+        data: { id: eventId, type: `skydropx.${status || "update"}` },
+      });
+    } catch (e: any) {
+      // P2002 = unique constraint violation → already processed.
+      if (e?.code === "P2002") {
+        return NextResponse.json({ received: true, duplicate: true });
+      }
+      throw e;
     }
-    await prisma.webhookEvent.create({ data: { id: eventId, type: `skydropx.${status || "update"}` } });
 
     const order = await prisma.order.findFirst({
       where: { skydropxShipmentId: shipmentId },

@@ -2,11 +2,20 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
 
+// Only accept same-origin relative paths. Anything else (absolute URLs,
+// protocol-relative "//evil.com", backslashes IE-style) would let an attacker
+// craft a login link that lands the user on a phishing site.
+function safeNext(raw: string | null): string {
+  if (!raw) return '/profile';
+  if (!raw.startsWith('/')) return '/profile';
+  if (raw.startsWith('//') || raw.startsWith('/\\')) return '/profile';
+  return raw;
+}
+
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  // if "next" is in search params, use it as the redirection URL
-  const next = searchParams.get('next') ?? searchParams.get('returnUrl') ?? '/profile';
+  const next = safeNext(searchParams.get('next') ?? searchParams.get('returnUrl'));
 
   try {
     if (code) {

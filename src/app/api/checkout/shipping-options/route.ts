@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { quoteShipping, type ShippingOption } from "@/lib/skydropx";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/lib/generated-prisma";
+import { createClient } from "@/lib/supabase/server";
 
 // Skydropx rate IDs are scoped to the quotation that produced them. We persist
 // the quote (with a 30 min TTL) and hand the client a quoteId to reference
@@ -11,11 +12,20 @@ const QUOTE_TTL_MINUTES = 30;
 
 export async function POST(req: NextRequest) {
   try {
+    // Shipping quotes hit Skydropx + write a ShippingQuote row, so gate behind
+    // auth. The /checkout page that calls this is already auth-protected by
+    // middleware; this prevents a bare curl from farming quotes anonymously.
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
     const body = await req.json();
-    const zip = String(body.zip || "").trim();
-    const city = String(body.city || "").trim();
-    const state = String(body.state || "").trim();
-    const address = String(body.address || "").trim();
+    const zip = String(body.zip || "").trim().slice(0, 10);
+    const city = String(body.city || "").trim().slice(0, 80);
+    const state = String(body.state || "").trim().slice(0, 80);
+    const address = String(body.address || "").trim().slice(0, 200);
     const totalItems = Number(body.totalItems || 1);
 
     if (!/^\d{5}$/.test(zip)) {

@@ -2,12 +2,20 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { resend, SEND_FROM } from "@/lib/resend";
 import WelcomeEmail from "@/components/emails/WelcomeEmail";
+import { timingSafeEqual } from "crypto";
+
+function safeCompare(a: string, b: string): boolean {
+  const ab = Buffer.from(a);
+  const bb = Buffer.from(b);
+  if (ab.length !== bb.length) return false;
+  return timingSafeEqual(ab, bb);
+}
 
 export async function POST(req: Request) {
-  const authHeader = req.headers.get("authorization");
-  
-  // Verificación de seguridad simple
-  if (authHeader !== `Bearer ${process.env.SUPABASE_WEBHOOK_SECRET}`) {
+  const authHeader = req.headers.get("authorization") || "";
+  const expected = `Bearer ${process.env.SUPABASE_WEBHOOK_SECRET ?? ""}`;
+
+  if (!process.env.SUPABASE_WEBHOOK_SECRET || !safeCompare(authHeader, expected)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
@@ -58,6 +66,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error("Supabase Webhook Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 });
   }
 }
