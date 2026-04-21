@@ -40,7 +40,7 @@ export const OrderShippedEmail = ({
               <Row>
                 <Column>
                   <Text className="text-[13px] leading-[20px] text-white font-black tracking-[0.3em] uppercase m-0">
-                    DEPORTIVOSTORE
+                    AURASPORT
                   </Text>
                 </Column>
                 <Column align="right">
@@ -114,10 +114,10 @@ export const OrderShippedEmail = ({
             <Hr className="border border-solid border-[#eaeaea] my-0 w-full" />
             <Section className="px-[32px] py-[24px]">
               <Text className="text-[#999999] text-[11px] leading-[18px] m-0 text-center">
-                Gracias por confiar en DeportivoStore. ¡Que disfrutes tu nueva equipación!
+                Gracias por confiar en AuraSport. ¡Que disfrutes tu nueva equipación!
               </Text>
               <Text className="text-[#cccccc] text-[10px] leading-[18px] mt-[12px] text-center font-bold tracking-[0.2em] uppercase m-0">
-                © {new Date().getFullYear()} DeportivoStore. Todos los derechos reservados.
+                © {new Date().getFullYear()} AuraSport. Todos los derechos reservados.
               </Text>
             </Section>
           </Container>

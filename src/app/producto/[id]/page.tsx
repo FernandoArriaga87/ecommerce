@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { ProductClientDisplay } from "./client-display";
 import { ReviewList } from "@/components/review-list";
+import { getPlaceholderAggregate } from "@/lib/placeholder-reviews";
 import type { Metadata } from "next";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -78,8 +79,14 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     notFound();
   }
 
-  const reviewCount = reviewAgg._count.rating;
-  const reviewAverage = reviewAgg._avg.rating ?? 0;
+  const realCount = reviewAgg._count.rating;
+  const realAverage = reviewAgg._avg.rating ?? 0;
+
+  // When there are no real reviews yet, fall back to placeholder aggregate
+  // for the UI header. JSON-LD below intentionally only uses real data.
+  const placeholderAgg = realCount === 0 ? getPlaceholderAggregate(id) : null;
+  const reviewCount = placeholderAgg ? placeholderAgg.count : realCount;
+  const reviewAverage = placeholderAgg ? placeholderAgg.average : realAverage;
 
   const sizeOrder = ["XS", "S", "M", "L", "XL", "XXL"];
 
@@ -118,7 +125,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     description: dbProduct.description || `Jersey de aficionado inspirado en ${product.team}.`,
     image: product.images,
     sku: product.sku,
-    brand: { "@type": "Brand", name: "DeportivoStore" },
+    brand: { "@type": "Brand", name: "AuraSport" },
     offers: {
       "@type": "Offer",
       url: `${SITE_URL}/producto/${product.id}`,
@@ -132,11 +139,11 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     },
   };
 
-  if (reviewCount > 0) {
+  if (realCount > 0) {
     jsonLd.aggregateRating = {
       "@type": "AggregateRating",
-      ratingValue: reviewAverage.toFixed(2),
-      reviewCount,
+      ratingValue: realAverage.toFixed(2),
+      reviewCount: realCount,
       bestRating: 5,
       worstRating: 1,
     };

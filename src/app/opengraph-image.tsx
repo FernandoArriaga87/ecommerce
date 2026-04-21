@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "DeportivoStore — Jerseys de Aficionado";
+export const alt = "AuraSport — Jerseys de Aficionado";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -31,7 +31,7 @@ export default async function Image() {
               fontWeight: 800,
             }}
           >
-            DeportivoStore
+            AuraSport
           </div>
         </div>
 
@@ -76,7 +76,7 @@ export default async function Image() {
           }}
         >
           <div>Envío a toda la República</div>
-          <div>deportivostore.mx</div>
+          <div>aurasport.mx</div>
         </div>
       </div>
     ),

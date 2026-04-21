@@ -44,7 +44,7 @@ export function Navbar() {
               <Football weight="fill" size={24} />
             </div>
             <span className="font-black text-xl tracking-tighter text-[#111111]">
-              DEPORTIVOSTORE
+              AURASPORT
             </span>
           </Link>
           <nav className="hidden lg:flex gap-8 text-[11px] font-bold uppercase tracking-[0.2em] text-[#111111]/50">

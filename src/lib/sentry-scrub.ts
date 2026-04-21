@@ -47,8 +47,8 @@ export function scrubPII(event: ErrorEvent, _hint: EventHint): ErrorEvent | null
         }
       }
     }
-    if (typeof event.request.cookies === "string") {
-      event.request.cookies = "[redacted]";
+    if (event.request.cookies) {
+      delete event.request.cookies;
     }
     if (event.request.data && typeof event.request.data === "object") {
       event.request.data = redactObject(event.request.data as Record<string, unknown>);

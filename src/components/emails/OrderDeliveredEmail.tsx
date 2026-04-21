@@ -38,7 +38,7 @@ export const OrderDeliveredEmail = ({
               <Row>
                 <Column>
                   <Text className="text-[13px] leading-[20px] text-white font-black tracking-[0.3em] uppercase m-0">
-                    DEPORTIVOSTORE
+                    AURASPORT
                   </Text>
                 </Column>
                 <Column align="right">
@@ -90,7 +90,7 @@ export const OrderDeliveredEmail = ({
                 Gracias por tu compra. Tu opinión es muy importante para nosotros.
               </Text>
               <Text className="text-[#cccccc] text-[10px] leading-[18px] mt-[12px] text-center font-bold tracking-[0.2em] uppercase m-0">
-                © {new Date().getFullYear()} DeportivoStore. Todos los derechos reservados.
+                © {new Date().getFullYear()} AuraSport. Todos los derechos reservados.
               </Text>
             </Section>
           </Container>

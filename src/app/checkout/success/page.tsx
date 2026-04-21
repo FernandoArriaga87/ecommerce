@@ -543,7 +543,7 @@ function SuccessContent() {
             className="mt-16 text-center"
           >
             <p className="text-[10px] font-black uppercase tracking-[0.35em] text-[#111111]/15">
-              Gracias por elegir DeportivoStore
+              Gracias por elegir AuraSport
             </p>
           </motion.div>
         </div>

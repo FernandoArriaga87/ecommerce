@@ -27,7 +27,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       <aside className="w-full md:w-64 bg-black text-white flex flex-col p-6 border-r border-gray-800">
         <div className="mb-10 mt-4">
           <h2 className="text-2xl font-black tracking-tight uppercase">Admin Panel</h2>
-          <p className="text-xs text-gray-400 mt-1 uppercase font-bold tracking-widest">DeportivoStore</p>
+          <p className="text-xs text-gray-400 mt-1 uppercase font-bold tracking-widest">AuraSport</p>
         </div>
         
         <nav className="flex flex-col gap-4 font-bold text-sm tracking-widest uppercase">
@@ -36,6 +36,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           <Link href="/admin/payments" className="text-gray-400 hover:text-white transition-colors">Pedidos</Link>
           <Link href="/admin/reviews" className="text-gray-400 hover:text-white transition-colors">Reseñas</Link>
           <Link href="/admin/users" className="text-gray-400 hover:text-white transition-colors">Usuarios</Link>
+          <Link href="/admin/audit" className="text-gray-400 hover:text-white transition-colors">Auditoría</Link>
         </nav>
       </aside>
       

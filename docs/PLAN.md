@@ -1,7 +1,7 @@
-# Plan: DeportivoStore - Ecommerce de Playeras de Deportes
+# Plan: AuraSport - Ecommerce de Playeras de Deportes
 
 ## Configuración del Proyecto
-- **Nombre**: DeportivoStore
+- **Nombre**: AuraSport
 
 ## Stack Tecnológico
 - **Frontend**: Next.js 15 (App Router, Server Actions)

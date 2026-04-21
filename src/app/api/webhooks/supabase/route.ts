@@ -39,7 +39,7 @@ export async function POST(req: Request) {
           const { data, error: sendError } = await resend.emails.send({
             from: SEND_FROM,
             to: email,
-            subject: "¡Bienvenido a DeportivoStore!",
+            subject: "¡Bienvenido a AuraSport!",
             react: WelcomeEmail({ userFirstname: name.split(" ")[0] }),
           });
           

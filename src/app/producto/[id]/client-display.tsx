@@ -168,12 +168,15 @@ export function ProductClientDisplay({
             </div>
           )}
 
-          <div className="flex items-baseline gap-4 mb-10">
+          <div className="flex items-baseline gap-4 mb-10 flex-wrap">
             <span className="text-4xl font-black tracking-tighter text-[#111111]">
               {formatPrice(product.price)}
             </span>
             <span className="text-xl font-medium text-[#111111]/20 line-through">
-              {formatPrice(product.price * 1.25)}
+              {formatPrice(product.price * 2.5)}
+            </span>
+            <span className="text-[11px] font-black uppercase tracking-widest bg-red-500 text-white px-3 py-1 rounded-full">
+              -60%
             </span>
           </div>
 

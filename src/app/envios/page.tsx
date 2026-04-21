@@ -2,7 +2,7 @@ import { LegalPageShell, LegalSection } from "@/components/legal-page-shell";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Envíos | DeportivoStore",
+  title: "Envíos | AuraSport",
   description: "Tiempos, cobertura y costos de envío.",
 };
 
@@ -52,7 +52,7 @@ export default function EnviosPage() {
       <LegalSection title="Cobertura">
         <p>
           Enviamos a las 32 entidades de la República Mexicana. Para envíos internacionales, escríbenos
-          a <strong>contacto@deportivostore.mx</strong> y te daremos una cotización.
+          a <strong>contacto@aurasport.mx</strong> y te daremos una cotización.
         </p>
       </LegalSection>
 
@@ -66,7 +66,7 @@ export default function EnviosPage() {
       <LegalSection title="Problemas con tu envío">
         <p>
           Si tu paquete no llega en el tiempo estimado, si llega dañado o si aparece como entregado pero
-          no lo recibiste, escríbenos a <strong>contacto@deportivostore.mx</strong> o consulta nuestra
+          no lo recibiste, escríbenos a <strong>contacto@aurasport.mx</strong> o consulta nuestra
           <a href="/devoluciones" className="underline font-bold"> Política de Devoluciones</a>.
         </p>
       </LegalSection>

@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { ShoppingCart, ArrowRight, Play, TrendUp, Sparkle, Globe, CaretLeft, CaretRight } from "@phosphor-icons/react";
+import { ArrowRight, Play, TrendUp, Sparkle, Globe, CaretLeft, CaretRight, ShoppingBag, MapPin } from "@phosphor-icons/react";
 import { formatPrice } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +28,41 @@ const SORT_LABELS: Record<SortKey, string> = {
   "price-asc": "Precio: menor a mayor",
   "price-desc": "Precio: mayor a menor",
 };
+
+const FAKE_NAMES = [
+  "Fernando A.", "Sofía R.", "Diego M.", "Valeria L.", "Santiago H.",
+  "Renata G.", "Mateo P.", "Regina V.", "Emilio C.", "Ximena B.",
+  "Leonardo T.", "Camila F.", "Alejandro S.", "Natalia O.", "Iker D.",
+  "Paola N.", "Rodrigo E.", "Isabella Q.", "Sebastián J.", "Fernanda Z.",
+  "Andrés K.", "Mariana U.", "Héctor Y.", "Daniela I.", "Luis A.",
+  "Aitana W.", "Bruno X.", "Ximena A.", "Javier R.", "Carla M.",
+];
+
+const FAKE_STATES = [
+  "Tijuana, BC", "Guadalajara, JAL", "Monterrey, NL", "CDMX",
+  "Puebla, PUE", "Mérida, YUC", "Querétaro, QRO", "León, GTO",
+  "Cancún, QROO", "Toluca, EDOMEX", "San Luis Potosí, SLP", "Aguascalientes, AGS",
+  "Morelia, MICH", "Hermosillo, SON", "Chihuahua, CHIH", "Culiacán, SIN",
+  "Saltillo, COAH", "Veracruz, VER", "Tuxtla Gutiérrez, CHIS", "Oaxaca, OAX",
+  "Pachuca, HGO", "Durango, DGO", "Tepic, NAY", "Villahermosa, TAB",
+  "Campeche, CAMP", "Colima, COL", "Zacatecas, ZAC", "Tlaxcala, TLX",
+  "La Paz, BCS", "Chetumal, QROO", "Cuernavaca, MOR",
+];
+
+const COPY_VARIANTS = [
+  (name: string, qty: number) => `${name} acaba de comprar ${qty} ${qty === 1 ? "playera" : "playeras"}`,
+  (name: string, qty: number) => `${name} se llevó ${qty} ${qty === 1 ? "jersey" : "jerseys"} a casa`,
+  (name: string, qty: number) => `${name} ordenó ${qty} ${qty === 1 ? "jersey" : "jerseys"} hace un momento`,
+  (name: string, qty: number) => `${name} acaba de unirse al equipo con ${qty} ${qty === 1 ? "playera" : "playeras"}`,
+];
+
+function randomPurchase() {
+  const name = FAKE_NAMES[Math.floor(Math.random() * FAKE_NAMES.length)];
+  const state = FAKE_STATES[Math.floor(Math.random() * FAKE_STATES.length)];
+  const qty = Math.floor(Math.random() * 6) + 1;
+  const copy = COPY_VARIANTS[Math.floor(Math.random() * COPY_VARIANTS.length)];
+  return { text: copy(name, qty), state, id: Date.now() + Math.random() };
+}
 
 function buildHref(params: {
   category?: string;
@@ -67,6 +102,28 @@ export function ClientHome({
   useEffect(() => {
     setActiveCategory(initialCategory);
   }, [initialCategory]);
+
+  const [purchaseNotif, setPurchaseNotif] = useState<ReturnType<typeof randomPurchase> | null>(null);
+
+  useEffect(() => {
+    let hideTimeout: ReturnType<typeof setTimeout>;
+    let nextTimeout: ReturnType<typeof setTimeout>;
+
+    const cycle = () => {
+      setPurchaseNotif(randomPurchase());
+      hideTimeout = setTimeout(() => {
+        setPurchaseNotif(null);
+        nextTimeout = setTimeout(cycle, 6000 + Math.random() * 4000);
+      }, 5000);
+    };
+
+    const startTimeout = setTimeout(cycle, 3000);
+    return () => {
+      clearTimeout(startTimeout);
+      clearTimeout(hideTimeout);
+      clearTimeout(nextTimeout);
+    };
+  }, []);
 
   const handleSortChange = (sort: SortKey) => {
     router.push(buildHref({ category: activeCategory, sort, search: currentSearch, page: 1 }));
@@ -337,9 +394,10 @@ export function ClientHome({
                       <h3 className="font-bold text-xl leading-[1.1] mb-2 text-[#111111] group-hover:translate-x-1 transition-transform tracking-tight">
                         {product.name}
                       </h3>
-                      <div className="flex items-baseline gap-2">
+                      <div className="flex items-baseline gap-2 flex-wrap">
                         <span className="font-bold text-base text-[#111111]">{formatPrice(product.price)}</span>
-                        <span className="text-xs font-medium text-[#111111]/30 line-through">{formatPrice(product.price * 1.2)}</span>
+                        <span className="text-xs font-medium text-[#111111]/30 line-through">{formatPrice(product.price * 2.5)}</span>
+                        <span className="text-[9px] font-black uppercase tracking-widest bg-red-500 text-white px-2 py-0.5 rounded-full">-60%</span>
                       </div>
                     </div>
                   </Link>
@@ -412,25 +470,36 @@ export function ClientHome({
         )}
       </div>
 
-      {/* Liquid Glass Sticky Widget */}
-      <motion.div
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 1, type: "spring" as const, damping: 15 }}
-        className="fixed bottom-8 left-8 z-[100]"
-      >
-        <button className="group relative bg-[#111111] text-white p-5 rounded-full shadow-2xl hover:bg-[#222222] transition-colors">
-          <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-[#FAFAFA]">
-            2
-          </div>
-          <ShoppingCart weight="bold" size={24} />
-
-          {/* Tooltip */}
-          <span className="absolute left-full ml-4 top-1/2 -translate-y-1/2 bg-white text-[#111111] px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity shadow-xl border border-[#111111]/5">
-            20% Cupón: GOL20
-          </span>
-        </button>
-      </motion.div>
+      {/* Social proof — live purchase notifications */}
+      <div className="fixed bottom-8 left-8 z-[100] pointer-events-none max-w-[calc(100vw-4rem)]">
+        <AnimatePresence mode="wait">
+          {purchaseNotif && (
+            <motion.div
+              key={purchaseNotif.id}
+              initial={{ opacity: 0, y: 30, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              transition={{ type: "spring" as const, stiffness: 200, damping: 22 }}
+              className="pointer-events-auto flex items-center gap-4 bg-white border border-[#111111]/5 rounded-full shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)] pl-3 pr-6 py-3 backdrop-blur-xl"
+            >
+              <div className="shrink-0 bg-[#111111] text-white w-11 h-11 rounded-full flex items-center justify-center">
+                <ShoppingBag weight="fill" size={20} />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <p className="text-[13px] font-bold text-[#111111] leading-tight truncate">
+                  {purchaseNotif.text}
+                </p>
+                <p className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-[#111111]/40 mt-1">
+                  <MapPin weight="fill" size={10} className="text-red-500" />
+                  {purchaseNotif.state}
+                  <span className="opacity-40">•</span>
+                  <span>Hace instantes</span>
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* Decorative Blur Elements */}
       <div className="fixed top-[-10%] right-[-10%] w-[50%] aspect-square bg-[#111111]/[0.02] rounded-full blur-[120px] pointer-events-none -z-10" />

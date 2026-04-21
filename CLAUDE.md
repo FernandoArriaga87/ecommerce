@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-DeportivoStore is an e-commerce application for sports team jerseys built with Next.js 15 (App Router), TypeScript, Tailwind CSS v4, and shadcn/ui. The project adheres to an edgy, high-contrast visual editorial pattern inspired by modern sport/fashion interfaces.
+AuraSport is an e-commerce application for sports team jerseys built with Next.js 15 (App Router), TypeScript, Tailwind CSS v4, and shadcn/ui. The project adheres to an edgy, high-contrast visual editorial pattern inspired by modern sport/fashion interfaces.
 
 ## Commands
 
@@ -70,6 +70,9 @@ Error tracking via `@sentry/nextjs` v10. Init is split across `instrumentation.t
 | `src/app/api/checkout/stripe/route.ts` | Stripe checkout session creation + stock reservation |
 | `src/app/api/webhooks/stripe/route.ts` | Payment status updates + stock restoration + refund handling |
 | `src/app/actions/admin.ts` | Admin CRUD incl. `refundOrderAction` (blocks refund for PENDING/CANCELLED) |
+| `src/app/actions/admin-bulk.ts` | Bulk mutations (products/orders/reviews) — each call writes an `AuditLog` entry via `logAudit` |
+| `src/lib/admin-utils.ts` | `requireAdminUser` + `logAudit` helpers — use these for any new admin action |
+| `src/components/admin/bulk/` | `BulkSelectionProvider` + row/header checkbox + floating `BulkActionsBar` — compose over server-rendered tables |
 | `src/app/actions/reviews.ts` | Review create/delete + admin visibility toggle (verified-buyer gated) |
 | `src/app/actions/wishlist.ts` | Toggle + guest→user merge (`createMany({ skipDuplicates: true })`, capped at 200) |
 | `src/lib/wishlist-context.tsx` | Client provider; syncs on `onAuthStateChange` |
@@ -122,3 +125,4 @@ src/components/
 - After any mutation that affects a listing page, call `revalidatePath` on the relevant route inside the server action.
 - Guest-accessible client state (cart, wishlist) must: (a) persist to localStorage under a `deportivo-*` key, (b) merge into the DB via an `onAuthStateChange` `SIGNED_IN` listener, (c) clear on `SIGNED_OUT`. Mirror the `CartProvider` / `WishlistProvider` shape instead of inventing a new one.
 - Review creation MUST verify a DELIVERED order containing the product — do not relax this check for "easier testing". Use the seeded admin to manually mark an order DELIVERED if you need to test the flow.
+- Admin bulk actions must (a) use `requireAdminUser()` instead of reimplementing the check, (b) sanitize/cap input IDs (see `sanitizeIds` in `admin-bulk.ts`, MAX=200), (c) write an `AuditLog` entry via `logAudit`. Destructive operations in the UI must confirm via `confirm()` before firing.

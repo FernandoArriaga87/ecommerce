@@ -49,6 +49,7 @@ model User {
   cart      Cart?
   wishlist  WishlistItem[]
   reviews   Review[]
+  auditLogs AuditLog[]
 }
 
 model Category {
@@ -170,6 +171,17 @@ model Order {
   externalId    String? // ID from Stripe or Mercado Pago
   createdAt     DateTime      @default(now())
 
+  // Shipping (Skydropx integration)
+  carrier            String? // "Estafeta", "DHL", "Entrega Personal (NL)", etc.
+  skydropxRateId     String? // rate_id selected at checkout, used to create shipment after payment
+  skydropxShipmentId String? // id returned by Skydropx once the shipment is created
+  trackingNumber     String?
+  trackingUrl        String?
+  shippingLabelUrl   String? // PDF label URL
+  isPersonalDelivery Boolean   @default(false) // true when shipped in person (NL zone)
+  shippedAt          DateTime?
+  deliveredAt        DateTime?
+
   items OrderItem[]
 }
 
@@ -207,4 +219,18 @@ model WebhookEvent {
   id        String   @id
   type      String
   createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String
+  actor      User     @relation(fields: [actorId], references: [id], onDelete: Cascade)
+  action     String
+  entityType String
+  entityIds  String[]
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([actorId])
+  @@index([entityType, createdAt])
 }

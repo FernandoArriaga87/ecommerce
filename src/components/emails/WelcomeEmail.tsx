@@ -24,14 +24,14 @@ export const WelcomeEmail = ({ userFirstname = 'Deportista' }: WelcomeEmailProps
   return (
     <Html>
       <Head />
-      <Preview>Bienvenido a DeportivoStore — Tu nueva equipación te espera</Preview>
+      <Preview>Bienvenido a AuraSport — Tu nueva equipación te espera</Preview>
       <Tailwind>
         <Body className="bg-[#f6f6f6] my-auto mx-auto font-sans">
           <Container className="bg-white border border-solid border-[#e5e5e5] rounded-[16px] my-[40px] mx-auto max-w-[520px] overflow-hidden">
             {/* Header */}
             <Section className="bg-[#111111] px-[32px] py-[28px]">
               <Text className="text-[13px] leading-[20px] text-white font-black tracking-[0.3em] uppercase m-0">
-                DEPORTIVOSTORE
+                AURASPORT
               </Text>
             </Section>
 
@@ -46,7 +46,7 @@ export const WelcomeEmail = ({ userFirstname = 'Deportista' }: WelcomeEmailProps
               </Text>
 
               <Text className="text-[#444444] text-[15px] leading-[26px] mt-[12px]">
-                Gracias por unirte a DeportivoStore. Aquí encontrarás jerseys de aficionado inspirados en tus equipos favoritos, con calidad premium y envío rápido a toda la República.
+                Gracias por unirte a AuraSport. Aquí encontrarás jerseys de aficionado inspirados en tus equipos favoritos, con calidad premium y envío rápido a toda la República.
               </Text>
 
               <Text className="text-[#444444] text-[15px] leading-[26px] mt-[8px]">
@@ -88,7 +88,7 @@ export const WelcomeEmail = ({ userFirstname = 'Deportista' }: WelcomeEmailProps
                 Nuestro equipo te atenderá con gusto.
               </Text>
               <Text className="text-[#cccccc] text-[10px] leading-[18px] mt-[12px] text-center font-bold tracking-[0.2em] uppercase m-0">
-                © {new Date().getFullYear()} DeportivoStore. Todos los derechos reservados.
+                © {new Date().getFullYear()} AuraSport. Todos los derechos reservados.
               </Text>
             </Section>
           </Container>

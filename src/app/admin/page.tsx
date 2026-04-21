@@ -54,7 +54,7 @@ export default async function AdminDashboardPage() {
             Panel <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#111111] to-[#111111]/40">General</span>
           </h1>
           <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">
-            Control central de DeportivoStore
+            Control central de AuraSport
           </p>
         </div>
         <div className="flex items-center gap-2 bg-white border border-gray-200 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-green-600 shadow-sm">

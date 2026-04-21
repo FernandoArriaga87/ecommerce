@@ -2,7 +2,7 @@ import { LegalPageShell, LegalSection } from "@/components/legal-page-shell";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Términos y Condiciones | DeportivoStore",
+  title: "Términos y Condiciones | AuraSport",
   description: "Términos de uso del sitio y de compra.",
 };
 
@@ -20,17 +20,17 @@ export default function TerminosPage() {
 
       <LegalSection title="1. Aceptación">
         <p>
-          Al usar el sitio <strong>deportivostore.mx</strong> o realizar una compra, aceptas estos
+          Al usar el sitio <strong>aurasport.mx</strong> o realizar una compra, aceptas estos
           términos y condiciones. Si no estás de acuerdo, no utilices el sitio.
         </p>
       </LegalSection>
 
       <LegalSection title="2. Datos del comerciante">
         <p>
-          <strong>DeportivoStore</strong><br />
+          <strong>AuraSport</strong><br />
           [Razón social] · RFC: [RFC]<br />
           Domicilio fiscal: [dirección completa]<br />
-          Correo: contacto@deportivostore.mx
+          Correo: contacto@aurasport.mx
         </p>
       </LegalSection>
 
@@ -109,7 +109,7 @@ export default function TerminosPage() {
       <LegalSection title="10. Propiedad intelectual">
         <p>
           El contenido editorial del sitio (textos, fotografías del producto, código) es propiedad de
-          DeportivoStore. Los nombres, escudos, logotipos, tipografías y demás signos distintivos de
+          AuraSport. Los nombres, escudos, logotipos, tipografías y demás signos distintivos de
           clubes, ligas, selecciones, federaciones y patrocinadores mencionados en el sitio son
           propiedad de sus respectivos titulares; su uso en este sitio es meramente descriptivo para
           orientar al aficionado sobre la inspiración del diseño y no implica afiliación, licencia ni
@@ -117,7 +117,7 @@ export default function TerminosPage() {
         </p>
         <p>
           Si consideras que algún contenido infringe tus derechos de propiedad intelectual, escribe a
-          <strong> legal@deportivostore.mx</strong> y lo revisaremos a la brevedad.
+          <strong> legal@aurasport.mx</strong> y lo revisaremos a la brevedad.
         </p>
       </LegalSection>
 

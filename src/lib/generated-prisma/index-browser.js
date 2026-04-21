@@ -219,7 +219,16 @@ exports.Prisma.OrderScalarFieldEnum = {
   paymentMethod: 'paymentMethod',
   notes: 'notes',
   externalId: 'externalId',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  carrier: 'carrier',
+  skydropxRateId: 'skydropxRateId',
+  skydropxShipmentId: 'skydropxShipmentId',
+  trackingNumber: 'trackingNumber',
+  trackingUrl: 'trackingUrl',
+  shippingLabelUrl: 'shippingLabelUrl',
+  isPersonalDelivery: 'isPersonalDelivery',
+  shippedAt: 'shippedAt',
+  deliveredAt: 'deliveredAt'
 };
 
 exports.Prisma.OrderItemScalarFieldEnum = {
@@ -250,9 +259,24 @@ exports.Prisma.WebhookEventScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.AuditLogScalarFieldEnum = {
+  id: 'id',
+  actorId: 'actorId',
+  action: 'action',
+  entityType: 'entityType',
+  entityIds: 'entityIds',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
+};
+
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull
 };
 
 exports.Prisma.QueryMode = {
@@ -263,6 +287,12 @@ exports.Prisma.QueryMode = {
 exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
+};
+
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
 };
 exports.Role = exports.$Enums.Role = {
   CUSTOMER: 'CUSTOMER',
@@ -302,7 +332,8 @@ exports.Prisma.ModelName = {
   OrderItem: 'OrderItem',
   Cart: 'Cart',
   CartItem: 'CartItem',
-  WebhookEvent: 'WebhookEvent'
+  WebhookEvent: 'WebhookEvent',
+  AuditLog: 'AuditLog'
 };
 
 /**

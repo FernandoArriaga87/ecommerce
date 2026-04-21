@@ -1,8 +1,8 @@
-# PRD: DeportivoStore
+# PRD: AuraSport
 
 ## 1. Resumen Ejecutivo
 
-**DeportivoStore** es una plataforma e-commerce especializada en playeras de equipos deportivos (fútbol). El sistema permite a los usuarios navegar, filtrar por tallas/colores y comprar productos mediante pagos rápidos, mientras que los administradores gestionan el inventario, usuarios y pedidos.
+**AuraSport** es una plataforma e-commerce especializada en playeras de equipos deportivos (fútbol). El sistema permite a los usuarios navegar, filtrar por tallas/colores y comprar productos mediante pagos rápidos, mientras que los administradores gestionan el inventario, usuarios y pedidos.
 
 | Aspecto | Detalle |
 |---------|---------|

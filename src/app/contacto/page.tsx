@@ -2,7 +2,7 @@ import { LegalPageShell, LegalSection } from "@/components/legal-page-shell";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Contacto | DeportivoStore",
+  title: "Contacto | AuraSport",
   description: "Canales de atención a clientes.",
 };
 
@@ -24,19 +24,19 @@ export default function ContactoPage() {
         <div className="border border-[#111111]/10 divide-y divide-[#111111]/10 text-sm">
           <div className="p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 bg-[#F7F7F7]">
             <span className="font-black uppercase tracking-widest text-xs">Pedidos y envíos</span>
-            <a href="mailto:contacto@deportivostore.mx" className="underline font-bold">contacto@deportivostore.mx</a>
+            <a href="mailto:contacto@aurasport.mx" className="underline font-bold">contacto@aurasport.mx</a>
           </div>
           <div className="p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
             <span className="font-black uppercase tracking-widest text-xs">Devoluciones</span>
-            <a href="mailto:devoluciones@deportivostore.mx" className="underline font-bold">devoluciones@deportivostore.mx</a>
+            <a href="mailto:devoluciones@aurasport.mx" className="underline font-bold">devoluciones@aurasport.mx</a>
           </div>
           <div className="p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 bg-[#F7F7F7]">
             <span className="font-black uppercase tracking-widest text-xs">Privacidad (ARCO)</span>
-            <a href="mailto:privacidad@deportivostore.mx" className="underline font-bold">privacidad@deportivostore.mx</a>
+            <a href="mailto:privacidad@aurasport.mx" className="underline font-bold">privacidad@aurasport.mx</a>
           </div>
           <div className="p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
             <span className="font-black uppercase tracking-widest text-xs">Prensa y alianzas</span>
-            <a href="mailto:prensa@deportivostore.mx" className="underline font-bold">prensa@deportivostore.mx</a>
+            <a href="mailto:prensa@aurasport.mx" className="underline font-bold">prensa@aurasport.mx</a>
           </div>
         </div>
       </LegalSection>

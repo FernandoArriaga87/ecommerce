@@ -2,7 +2,7 @@ import { LegalPageShell, LegalSection } from "@/components/legal-page-shell";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Política de Cookies | DeportivoStore",
+  title: "Política de Cookies | AuraSport",
   description: "Qué cookies usamos y cómo puedes administrarlas.",
 };
 

@@ -51,7 +51,7 @@ async function main() {
     {
       name: 'Jersey Tigres UANL Local 24/25',
       slug: 'jersey-tigres-local-2425',
-      price: 1899,
+      price: 600,
       images: ['https://images.unsplash.com/photo-1577223625816-7546f13df25d?q=80&w=800&auto=format&fit=crop'],
       isNew: true,
       isFeatured: true,
@@ -62,7 +62,7 @@ async function main() {
     {
       name: 'Jersey Rayados Local 24/25',
       slug: 'jersey-rayados-local-2425',
-      price: 1899,
+      price: 600,
       images: ['/brazilshirt.webp'],
       isNew: true,
       isFeatured: false,
@@ -73,7 +73,7 @@ async function main() {
     {
       name: 'Playera Club América Local 24/25',
       slug: 'playera-america-local-2425',
-      price: 1999,
+      price: 600,
       images: ['/america shirt.webp'],
       isNew: false,
       isFeatured: true,
@@ -84,7 +84,7 @@ async function main() {
     {
       name: 'Jersey Chivas Local 24/25',
       slug: 'jersey-chivas-local-2425',
-      price: 1799,
+      price: 600,
       images: ['/Sin título (2).png'],
       isNew: true,
       isFeatured: true,
@@ -95,7 +95,7 @@ async function main() {
     {
       name: 'Jersey Cruz Azul Local 23/24',
       slug: 'jersey-cruz-azul-local-2324',
-      price: 1699,
+      price: 600,
       images: ['/camisetas-liga-mx-2023-24-cruz-azul-1.jpg'],
       isNew: false,
       isFeatured: false,
@@ -106,7 +106,7 @@ async function main() {
     {
       name: 'Playera Pumas UNAM Visita 24/25',
       slug: 'playera-pumas-visita-2425',
-      price: 1899,
+      price: 600,
       images: ['/brazilshirt.webp'],
       isNew: true,
       isFeatured: false,
@@ -117,7 +117,7 @@ async function main() {
     {
       name: 'Jersey Toluca Local 24/25',
       slug: 'jersey-toluca-local-2425',
-      price: 1599,
+      price: 600,
       images: ['https://images.unsplash.com/photo-1577223625816-7546f13df25d?q=80&w=800&auto=format&fit=crop'],
       isNew: true,
       isFeatured: false,
@@ -128,7 +128,7 @@ async function main() {
     {
       name: 'Jersey Pachuca Tercera Equipación',
       slug: 'jersey-pachuca-tercera',
-      price: 1499,
+      price: 600,
       images: ['/Sin título (3).png'],
       isNew: false,
       isFeatured: false,

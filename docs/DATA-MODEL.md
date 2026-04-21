@@ -1,4 +1,4 @@
-# Modelo de Datos - DeportivoStore
+# Modelo de Datos - AuraSport
 
 ## Resumen de Requisitos
 

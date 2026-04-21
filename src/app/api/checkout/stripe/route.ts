@@ -2,22 +2,34 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { checkoutSchema } from "@/lib/validations/checkout";
+import { quoteShipping } from "@/lib/skydropx";
 import { Decimal } from "@prisma/client/runtime/library";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    
+
     // 1. Validar el cuerpo de la petición con Zod
     const validation = checkoutSchema.safeParse(body);
     if (!validation.success) {
-      return NextResponse.json({ 
-        error: "Datos inválidos", 
-        details: validation.error.flatten().fieldErrors 
+      return NextResponse.json({
+        error: "Datos inválidos",
+        details: validation.error.flatten().fieldErrors
       }, { status: 400 });
     }
 
-    const { name, email, phone, address, city, state, zipCode, items } = validation.data;
+    const { name, email, phone, address, city, state, zipCode, shippingRateId, items } = validation.data;
+
+    // 1b. Re-quote server-side to validate the chosen rate and pricing
+    const totalQty = items.reduce((sum, it) => sum + it.quantity, 0);
+    const quoted = await quoteShipping({ destinationZip: zipCode, totalItems: totalQty });
+    const chosenRate = quoted.find((r) => r.rateId === shippingRateId);
+    if (!chosenRate) {
+      return NextResponse.json(
+        { error: "La opción de envío seleccionada ya no está disponible. Vuelve a cotizar." },
+        { status: 400 }
+      );
+    }
 
     // 2. Stock check + order creation inside a single SERIALIZABLE transaction
     //    to eliminate race conditions (two concurrent checkouts for the same item).
@@ -91,7 +103,7 @@ export async function POST(req: NextRequest) {
         return acc.add(new Decimal(item.price.toString()).mul(item.quantity));
       }, new Decimal(0));
 
-      const shipping = new Decimal(subtotal.gte(1499) ? 0 : 150);
+      const shipping = new Decimal(chosenRate.price);
       const total = subtotal.add(shipping);
 
       // ── Find or create user ──
@@ -132,6 +144,9 @@ export async function POST(req: NextRequest) {
           total,
           paymentMethod: "STRIPE",
           status: "PENDING",
+          carrier: chosenRate.carrier,
+          skydropxRateId: chosenRate.rateId,
+          isPersonalDelivery: chosenRate.isPersonalDelivery,
           items: {
             create: dbItems.map((item) => ({
               variantId: item.variant.id,
@@ -185,7 +200,10 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Create Stripe session
-    const origin = req.headers.get("origin");
+    const origin =
+      req.headers.get("origin") ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      req.nextUrl.origin;
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items,

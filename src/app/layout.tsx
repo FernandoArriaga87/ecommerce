@@ -22,12 +22,12 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "DeportivoStore — Jerseys de Aficionado",
-    template: "%s | DeportivoStore",
+    default: "AuraSport — Jerseys de Aficionado",
+    template: "%s | AuraSport",
   },
   description:
     "Jerseys de aficionado inspirados en tus equipos favoritos. Calidad premium y envío seguro a toda la República Mexicana. Réplicas no oficiales.",
-  applicationName: "DeportivoStore",
+  applicationName: "AuraSport",
   keywords: [
     "jerseys",
     "playeras de fútbol",
@@ -38,23 +38,23 @@ export const metadata: Metadata = {
     "tienda deportiva",
     "México",
   ],
-  authors: [{ name: "DeportivoStore" }],
-  creator: "DeportivoStore",
-  publisher: "DeportivoStore",
+  authors: [{ name: "AuraSport" }],
+  creator: "AuraSport",
+  publisher: "AuraSport",
   formatDetection: { telephone: false, email: false, address: false },
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     locale: "es_MX",
     url: SITE_URL,
-    siteName: "DeportivoStore",
-    title: "DeportivoStore — Jerseys de Aficionado",
+    siteName: "AuraSport",
+    title: "AuraSport — Jerseys de Aficionado",
     description:
       "Jerseys de aficionado inspirados en tus equipos favoritos. Envío seguro a toda la República.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "DeportivoStore — Jerseys de Aficionado",
+    title: "AuraSport — Jerseys de Aficionado",
     description:
       "Jerseys de aficionado inspirados en tus equipos favoritos. Envío seguro a toda la República.",
   },
@@ -120,7 +120,7 @@ export default function RootLayout({
                   </ul>
                 </div>
                 <div>
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-white mb-5">DeportivoStore</h3>
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-white mb-5">AuraSport</h3>
                   <p className="text-sm text-white/50 leading-relaxed">
                     Jerseys de aficionado para vivir el juego. Envío seguro a toda la república.
                   </p>
@@ -131,7 +131,7 @@ export default function RootLayout({
               </div>
 
               <div className="pt-8 border-t border-white/[0.05] flex flex-col md:flex-row md:justify-between md:items-center gap-3 text-xs">
-                <p className="text-white/50">&copy; {new Date().getFullYear()} DeportivoStore. Todos los derechos reservados.</p>
+                <p className="text-white/50">&copy; {new Date().getFullYear()} AuraSport. Todos los derechos reservados.</p>
                 <p className="text-white/30">Pagos seguros procesados por Stripe.</p>
               </div>
             </div>

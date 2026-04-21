@@ -7,7 +7,7 @@ async function testEmail() {
   console.log("Probando enviar correo a cbm0100687arriaga@gmail.com...");
   try {
     const result = await resend.emails.send({
-      from: 'DeportivoStore <onboarding@resend.dev>',
+      from: 'AuraSport <onboarding@resend.dev>',
       to: 'cbm0100687arriaga@gmail.com',
       subject: 'Prueba desde script',
       html: '<p>Este es un correo de prueba.</p>'

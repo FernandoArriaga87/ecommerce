@@ -2,7 +2,7 @@ import { LegalPageShell, LegalSection } from "@/components/legal-page-shell";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Aviso de Privacidad | DeportivoStore",
+  title: "Aviso de Privacidad | AuraSport",
   description: "Cómo recopilamos, usamos y protegemos tus datos personales.",
 };
 
@@ -20,12 +20,12 @@ export default function PrivacidadPage() {
 
       <LegalSection title="1. Responsable del tratamiento">
         <p>
-          <strong>DeportivoStore</strong> (en adelante &quot;el Responsable&quot;), con domicilio en [Calle, Número, Colonia,
+          <strong>AuraSport</strong> (en adelante &quot;el Responsable&quot;), con domicilio en [Calle, Número, Colonia,
           C.P., Ciudad, Estado, México], es responsable del tratamiento de los datos personales que
           recabe a través de este sitio web, en los términos de la Ley Federal de Protección de Datos
           Personales en Posesión de los Particulares (LFPDPPP) y su Reglamento.
         </p>
-        <p>Para cualquier duda relacionada con este aviso, escribe a: <strong>privacidad@deportivostore.mx</strong></p>
+        <p>Para cualquier duda relacionada con este aviso, escribe a: <strong>privacidad@aurasport.mx</strong></p>
       </LegalSection>
 
       <LegalSection title="2. Datos personales que recabamos">
@@ -53,7 +53,7 @@ export default function PrivacidadPage() {
           <li>Envío de promociones y boletines comerciales.</li>
           <li>Análisis estadístico para mejorar nuestros productos y el sitio.</li>
         </ul>
-        <p>Puedes negarte en cualquier momento enviando un correo a <strong>privacidad@deportivostore.mx</strong>.</p>
+        <p>Puedes negarte en cualquier momento enviando un correo a <strong>privacidad@aurasport.mx</strong>.</p>
       </LegalSection>
 
       <LegalSection title="4. Transferencias de datos">
@@ -72,7 +72,7 @@ export default function PrivacidadPage() {
         <p>
           Tienes derecho a <strong>Acceder, Rectificar, Cancelar u Oponerte</strong> al tratamiento de tus datos
           (derechos ARCO). También puedes revocar tu consentimiento. Para ejercerlos, envía a
-          <strong> privacidad@deportivostore.mx</strong> una solicitud que incluya:
+          <strong> privacidad@aurasport.mx</strong> una solicitud que incluya:
         </p>
         <ul className="list-disc pl-6 space-y-1">
           <li>Tu nombre completo y correo de contacto.</li>

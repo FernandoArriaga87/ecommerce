@@ -137,7 +137,7 @@ export async function POST(req: NextRequest) {
         currency: "mxn",
         product_data: {
           name: item.variant.product.name,
-          images: item.image ? [item.image] : [],
+          images: item.image && /^https?:\/\//i.test(item.image) ? [item.image] : [],
           metadata: {
             productId: item.variant.productId,
             variantId: item.variant.id,
@@ -169,7 +169,10 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Create Stripe Checkout Session ──
-    const origin = req.headers.get("origin");
+    const origin =
+      req.headers.get("origin") ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      req.nextUrl.origin;
     const stripeSession = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items,

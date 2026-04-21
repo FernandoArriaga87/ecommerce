@@ -1,4 +1,4 @@
-# Listado de Páginas - DeportivoStore
+# Listado de Páginas - AuraSport
 
 ## Páginas Públicas (Shop)
 

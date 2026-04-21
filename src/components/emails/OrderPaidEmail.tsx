@@ -54,7 +54,7 @@ export const OrderPaidEmail = ({
               <Row>
                 <Column>
                   <Text className="text-[13px] leading-[20px] text-white font-black tracking-[0.3em] uppercase m-0">
-                    DEPORTIVOSTORE
+                    AURASPORT
                   </Text>
                 </Column>
                 <Column align="right">
@@ -165,7 +165,7 @@ export const OrderPaidEmail = ({
                 Este es un correo de confirmación automático. Si tienes alguna duda, responde directamente a este correo.
               </Text>
               <Text className="text-[#cccccc] text-[10px] leading-[18px] mt-[12px] text-center font-bold tracking-[0.2em] uppercase m-0">
-                © {new Date().getFullYear()} DeportivoStore · Pago seguro vía Stripe
+                © {new Date().getFullYear()} AuraSport · Pago seguro vía Stripe
               </Text>
             </Section>
           </Container>

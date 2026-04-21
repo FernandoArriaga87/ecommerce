@@ -2,7 +2,7 @@ import { LegalPageShell, LegalSection } from "@/components/legal-page-shell";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Política de Devoluciones | DeportivoStore",
+  title: "Política de Devoluciones | AuraSport",
   description: "Cómo solicitar un cambio o devolución de tu pedido.",
 };
 
@@ -50,7 +50,7 @@ export default function DevolucionesPage() {
 
       <LegalSection title="4. Cómo iniciar una devolución">
         <ol className="list-decimal pl-6 space-y-1">
-          <li>Escribe a <strong>devoluciones@deportivostore.mx</strong> con tu número de pedido y el motivo.</li>
+          <li>Escribe a <strong>devoluciones@aurasport.mx</strong> con tu número de pedido y el motivo.</li>
           <li>Te enviaremos una guía de retorno prepagada (en caso de error nuestro o producto defectuoso) o instrucciones para el envío (en caso de cambio por decisión del cliente).</li>
           <li>Empaca el producto bien protegido y envíalo al domicilio indicado en la guía.</li>
           <li>Una vez recibido e inspeccionado (2–3 días hábiles), procesaremos tu reembolso o cambio.</li>

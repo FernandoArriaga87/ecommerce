@@ -6,9 +6,10 @@ import { useCart } from "@/lib/cart-context";
 import { formatPrice } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ShieldCheck, Truck, CreditCard, ArrowLeft, Check, Loader2, Lock } from "lucide-react";
+import { ShieldCheck, Truck, CreditCard, ArrowLeft, Check, Loader2, Lock, Package } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import type { ShippingOption } from "@/lib/skydropx";
 
 const supabase = createClient();
 
@@ -32,6 +33,11 @@ export default function CheckoutPage() {
   const [orderNumber, setOrderNumber] = useState("");
   const [stockErrors, setStockErrors] = useState<string[]>([]);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [zipCode, setZipCode] = useState("");
+  const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
+  const [selectedRateId, setSelectedRateId] = useState<string>("");
+  const [loadingShipping, setLoadingShipping] = useState(false);
+  const [shippingError, setShippingError] = useState<string>("");
 
   useEffect(() => {
     async function initialize() {
@@ -45,6 +51,7 @@ export default function CheckoutPage() {
           if (res.ok) {
             const data = await res.json();
             setProfile(data);
+            if (data?.zipCode) setZipCode(data.zipCode);
           }
         }
       } catch (error) {
@@ -56,13 +63,65 @@ export default function CheckoutPage() {
     initialize();
   }, []);
 
-  const shipping = subtotal >= 1499 ? 0 : 149;
+  // Debounced quote fetch when ZIP changes
+  useEffect(() => {
+    const zip = zipCode.trim();
+    if (!/^\d{4,5}$/.test(zip) || totalItems === 0) {
+      setShippingOptions([]);
+      setSelectedRateId("");
+      return;
+    }
+
+    setLoadingShipping(true);
+    setShippingError("");
+    const timeoutId = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/checkout/shipping-options", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ zip, totalItems }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setShippingError(data.error || "No pudimos cotizar el envío.");
+          setShippingOptions([]);
+          setSelectedRateId("");
+        } else {
+          const opts: ShippingOption[] = data.options || [];
+          setShippingOptions(opts);
+          // Auto-select cheapest
+          if (opts.length > 0) {
+            const cheapest = opts.reduce((a, b) => (a.price < b.price ? a : b));
+            setSelectedRateId(cheapest.rateId);
+          } else {
+            setSelectedRateId("");
+          }
+        }
+      } catch (err) {
+        console.error("Quote fetch error:", err);
+        setShippingError("Error de conexión al cotizar.");
+      } finally {
+        setLoadingShipping(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [zipCode, totalItems]);
+
+  const selectedOption = shippingOptions.find((o) => o.rateId === selectedRateId);
+  const shipping = selectedOption?.price ?? 0;
   const total = subtotal + shipping;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setStockErrors([]);
+
+    if (!selectedRateId) {
+      alert("Selecciona una opción de envío antes de continuar.");
+      setLoading(false);
+      return;
+    }
 
     const formData = new FormData(e.currentTarget);
     const body = {
@@ -73,6 +132,7 @@ export default function CheckoutPage() {
       city: formData.get("city"),
       state: formData.get("state"),
       zipCode: formData.get("zipCode"),
+      shippingRateId: selectedRateId,
       items: items.map((i) => ({
         productId: i.productId,
         name: i.name,
@@ -81,9 +141,6 @@ export default function CheckoutPage() {
         quantity: i.quantity,
         image: i.image,
       })),
-      subtotal,
-      shipping,
-      total,
     };
 
     try {
@@ -288,13 +345,95 @@ export default function CheckoutPage() {
                     <Input
                       name="zipCode"
                       required
-                      defaultValue={profile?.zipCode || ""}
+                      value={zipCode}
+                      onChange={(e) => setZipCode(e.target.value.replace(/\D/g, "").slice(0, 5))}
                       placeholder="01000"
+                      inputMode="numeric"
                       className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black"
                     />
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Shipping Options */}
+            <div>
+              <h2 className="text-xs font-black uppercase tracking-widest mb-4 pb-2 border-b border-gray-200">
+                Opciones de Envío
+              </h2>
+
+              {!/^\d{4,5}$/.test(zipCode.trim()) && (
+                <div className="p-4 border border-dashed border-gray-300 bg-white flex items-center gap-3">
+                  <Package className="h-5 w-5 text-gray-400" />
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    Ingresa un código postal válido para cotizar el envío.
+                  </p>
+                </div>
+              )}
+
+              {loadingShipping && (
+                <div className="p-4 border border-gray-200 bg-white flex items-center gap-3">
+                  <Loader2 className="h-5 w-5 animate-spin text-black" />
+                  <p className="text-xs font-bold uppercase tracking-widest text-gray-600">
+                    Cotizando opciones de envío...
+                  </p>
+                </div>
+              )}
+
+              {!loadingShipping && shippingError && (
+                <div className="p-4 border border-red-200 bg-red-50">
+                  <p className="text-xs font-bold uppercase tracking-widest text-red-600">{shippingError}</p>
+                </div>
+              )}
+
+              {!loadingShipping && !shippingError && shippingOptions.length > 0 && (
+                <div className="space-y-3">
+                  {shippingOptions.map((opt) => {
+                    const active = selectedRateId === opt.rateId;
+                    return (
+                      <button
+                        type="button"
+                        key={opt.rateId}
+                        onClick={() => setSelectedRateId(opt.rateId)}
+                        className={`w-full text-left p-4 border transition-all flex items-center gap-4 ${
+                          active
+                            ? "border-black bg-black text-white"
+                            : "border-gray-200 bg-white hover:border-black"
+                        }`}
+                      >
+                        <div className={`h-4 w-4 rounded-full border-2 shrink-0 ${
+                          active ? "border-white bg-white" : "border-gray-400"
+                        }`}>
+                          {active && <div className="h-full w-full rounded-full bg-black scale-50" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-black uppercase tracking-wide truncate">
+                            {opt.carrier}
+                          </p>
+                          <p className={`text-[10px] font-bold uppercase tracking-widest mt-0.5 ${
+                            active ? "text-white/70" : "text-gray-500"
+                          }`}>
+                            {opt.serviceLevel} · {opt.daysMin === opt.daysMax
+                              ? `${opt.daysMin} día${opt.daysMin > 1 ? "s" : ""}`
+                              : `${opt.daysMin}-${opt.daysMax} días`}
+                          </p>
+                        </div>
+                        <div className="text-sm font-black whitespace-nowrap">
+                          {formatPrice(opt.price)}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {!loadingShipping && !shippingError && shippingOptions.length === 0 && /^\d{4,5}$/.test(zipCode.trim()) && (
+                <div className="p-4 border border-gray-200 bg-white">
+                  <p className="text-xs font-bold uppercase tracking-widest text-gray-500">
+                    No hay opciones de envío disponibles para este código postal.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Disclosure + consent (chargeback defense) */}
@@ -328,7 +467,7 @@ export default function CheckoutPage() {
             {/* Submit */}
             <Button
               type="submit"
-              disabled={loading || !acceptedTerms}
+              disabled={loading || !acceptedTerms || !selectedRateId}
               className="w-full h-16 rounded-none bg-black text-white hover:bg-gray-900 uppercase font-black tracking-widest transition-all hover:shadow-xl disabled:opacity-50 flex items-center justify-center gap-3"
             >
               {loading ? (
@@ -389,10 +528,20 @@ export default function CheckoutPage() {
                 <span className="flex items-center gap-1">
                   <Truck className="w-3 h-3" /> Envío
                 </span>
-                <span className={shipping === 0 ? "text-green-600" : "text-black"}>
-                  {shipping === 0 ? "GRATIS" : formatPrice(shipping)}
+                <span className="text-black">
+                  {selectedOption ? formatPrice(shipping) : "—"}
                 </span>
               </div>
+              {selectedOption && (
+                <div className="flex justify-between text-[10px] font-medium text-gray-400 tracking-wide -mt-1">
+                  <span className="truncate">{selectedOption.carrier}</span>
+                  <span className="whitespace-nowrap">
+                    {selectedOption.daysMin === selectedOption.daysMax
+                      ? `${selectedOption.daysMin} día${selectedOption.daysMin > 1 ? "s" : ""}`
+                      : `${selectedOption.daysMin}-${selectedOption.daysMax} días`}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between text-lg font-black pt-3 border-t border-gray-200">
                 <span>Total</span>
                 <span>{formatPrice(total)}</span>
