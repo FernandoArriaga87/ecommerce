@@ -171,10 +171,13 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      const addr = await tx.address.create({
-        data: {
+      // Dedup by content: if the user already has a saved address with the
+      // exact same name/phone/street/city/state/zip, reuse it. Otherwise the
+      // Address table grows by one row per checkout and the user's address
+      // book fills up with duplicates of the same place.
+      const existingAddr = await tx.address.findFirst({
+        where: {
           userId: user.id,
-          label: "Envío Checkout",
           name,
           phone,
           address,
@@ -183,6 +186,21 @@ export async function POST(req: NextRequest) {
           zipCode,
         },
       });
+
+      const addr =
+        existingAddr ??
+        (await tx.address.create({
+          data: {
+            userId: user.id,
+            label: "Envío",
+            name,
+            phone,
+            address,
+            city,
+            state,
+            zipCode,
+          },
+        }));
 
       const orderNumber = `DS-${Date.now().toString(36).toUpperCase()}`;
       const order = await tx.order.create({

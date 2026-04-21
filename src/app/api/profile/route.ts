@@ -2,11 +2,16 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 
-// GET /api/profile — returns the authenticated user's profile + default address
+// GET /api/profile
+// Returns the authenticated user's profile. For backwards compatibility
+// it still exposes the flat `address/city/state/zipCode` of the default
+// address; new callers (checkout) should use the full `addresses` array.
 export async function GET() {
   try {
     const supabase = await createClient();
-    const { data: { user: authUser } } = await supabase.auth.getUser();
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
 
     if (!authUser) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -16,8 +21,7 @@ export async function GET() {
       where: { id: authUser.id },
       include: {
         addresses: {
-          where: { isDefault: true },
-          take: 1,
+          orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
         },
       },
     });
@@ -26,7 +30,8 @@ export async function GET() {
       return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
     }
 
-    const defaultAddress = user.addresses[0];
+    const defaultAddress =
+      user.addresses.find((a) => a.isDefault) || user.addresses[0];
 
     return NextResponse.json({
       name: user.name,
@@ -36,8 +41,19 @@ export async function GET() {
       city: defaultAddress?.city || "",
       state: defaultAddress?.state || "",
       zipCode: defaultAddress?.zipCode || "",
+      addresses: user.addresses.map((a) => ({
+        id: a.id,
+        label: a.label,
+        name: a.name,
+        phone: a.phone,
+        address: a.address,
+        city: a.city,
+        state: a.state,
+        zipCode: a.zipCode,
+        isDefault: a.isDefault,
+      })),
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error fetching profile:", error);
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }

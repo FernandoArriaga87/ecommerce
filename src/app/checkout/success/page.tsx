@@ -19,6 +19,7 @@ import { useEffect, useState, useRef, useCallback, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import { formatPrice } from "@/lib/data";
+import { track } from "@vercel/analytics";
 
 /* ───────────────  confetti canvas  ─────────────── */
 function ConfettiCanvas() {
@@ -188,7 +189,23 @@ function SuccessContent() {
       try {
         const res = await fetch(`/api/orders/${orderId}`);
         const data = await res.json();
-        if (data.order) setOrder(data.order);
+        if (data.order) {
+          setOrder(data.order);
+          // Dedupe by orderId so a reload doesn't double-count revenue.
+          const key = `purchase_tracked_${data.order.id}`;
+          if (typeof window !== "undefined" && !sessionStorage.getItem(key)) {
+            track("purchase_completed", {
+              orderId: data.order.id,
+              orderNumber: data.order.orderNumber,
+              total: Number(data.order.total),
+              itemCount: data.order.items.reduce(
+                (acc: number, it: any) => acc + it.quantity,
+                0
+              ),
+            });
+            sessionStorage.setItem(key, "1");
+          }
+        }
       } catch {
         /* silently fail — page still works without order data */
       } finally {

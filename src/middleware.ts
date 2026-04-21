@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 // ───────────── Route protection config ─────────────
 // Routes that require authentication
@@ -16,72 +17,12 @@ const ADMIN_ROUTES = ["/admin"];
 // Routes that should redirect TO home if user IS authenticated
 const AUTH_ROUTES = ["/login", "/register"];
 
-// ───────────── Rate limiting (in-memory, per-IP) ─────────────
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-
-const RATE_LIMIT_CONFIG = {
-  // Sensitive routes get stricter limits
-  checkout: { windowMs: 60_000, maxRequests: 5 },    // 5 req/min for checkout
-  api: { windowMs: 60_000, maxRequests: 30 },        // 30 req/min for general API
-};
-
-function getRateLimitKey(ip: string, bucket: string) {
-  return `${ip}:${bucket}`;
-}
-
-let cleanupCounter = 0;
-
-function checkRateLimit(ip: string, bucket: keyof typeof RATE_LIMIT_CONFIG): boolean {
-  const config = RATE_LIMIT_CONFIG[bucket];
-  const key = getRateLimitKey(ip, bucket);
-  const now = Date.now();
-  const entry = rateLimitMap.get(key);
-
-  // Lazy cleanup: every 100 calls, purge expired entries
-  cleanupCounter++;
-  if (cleanupCounter >= 100) {
-    cleanupCounter = 0;
-    for (const [k, v] of rateLimitMap) {
-      if (now > v.resetAt) rateLimitMap.delete(k);
-    }
-  }
-
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(key, { count: 1, resetAt: now + config.windowMs });
-    return true;
-  }
-
-  if (entry.count >= config.maxRequests) {
-    return false;
-  }
-
-  entry.count++;
-  return true;
-}
-
 // ───────────── Middleware ─────────────
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
 
-  // ── 1. Rate limiting on API & auth routes ──
-  if (pathname.startsWith("/api/checkout")) {
-    if (!checkRateLimit(ip, "checkout")) {
-      return NextResponse.json(
-        { error: "Demasiadas solicitudes. Intenta de nuevo en un momento." },
-        { status: 429 }
-      );
-    }
-  } else if (pathname.startsWith("/api/")) {
-    if (!checkRateLimit(ip, "api")) {
-      return NextResponse.json(
-        { error: "Demasiadas solicitudes. Intenta de nuevo en un momento." },
-        { status: 429 }
-      );
-    }
-  }
-
-  // ── 2. CSP nonce (per-request, cryptographically random) ──
+  // ── 1. CSP nonce (per-request, cryptographically random) ──
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const isDev = process.env.NODE_ENV !== "production";
 
@@ -106,7 +47,7 @@ export async function middleware(request: NextRequest) {
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("Content-Security-Policy", cspHeader);
 
-  // ── 3. Supabase session refresh (required for SSR auth) ──
+  // ── 2. Supabase client (used for both rate-limit RPC and auth refresh) ──
   let response = NextResponse.next({ request: { headers: requestHeaders } });
 
   const supabase = createServerClient(
@@ -130,12 +71,29 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Refresh session token (important: do this before checking auth)
+  // ── 3. Rate limiting on API routes (Supabase-backed, survives cold starts) ──
+  if (pathname.startsWith("/api/checkout")) {
+    if (!(await checkRateLimit(supabase, ip, "checkout"))) {
+      return NextResponse.json(
+        { error: "Demasiadas solicitudes. Intenta de nuevo en un momento." },
+        { status: 429 }
+      );
+    }
+  } else if (pathname.startsWith("/api/")) {
+    if (!(await checkRateLimit(supabase, ip, "api"))) {
+      return NextResponse.json(
+        { error: "Demasiadas solicitudes. Intenta de nuevo en un momento." },
+        { status: 429 }
+      );
+    }
+  }
+
+  // ── 4. Session refresh ──
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // ── 4. Protected route checks ──
+  // ── 5. Protected route checks ──
   const isProtected = PROTECTED_ROUTES.some((r) => pathname.startsWith(r));
   const isAdmin = ADMIN_ROUTES.some((r) => pathname.startsWith(r));
   const isAuthRoute = AUTH_ROUTES.some((r) => pathname.startsWith(r));
@@ -157,7 +115,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(profileUrl);
   }
 
-  // ── 5. Security headers ──
+  // ── 6. Security headers ──
   response.headers.set("Content-Security-Policy", cspHeader);
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-Content-Type-Options", "nosniff");

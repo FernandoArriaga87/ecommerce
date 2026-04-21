@@ -257,3 +257,17 @@ model AuditLog {
   @@index([actorId])
   @@index([entityType, createdAt])
 }
+
+// Distributed rate-limit bucket. One row per (ip, bucket) pair; touched
+// atomically by the public.check_rate_limit() SQL function (see
+// prisma/migrations/rate_limit_fn.sql). Prisma never queries this table
+// directly — the middleware calls the RPC via the Supabase client, which
+// is why the function uses SECURITY DEFINER and the table has RLS enabled.
+model RateLimitBucket {
+  key     String   @id
+  count   Int      @default(0)
+  resetAt DateTime @map("reset_at")
+
+  @@index([resetAt])
+  @@map("rate_limit_bucket")
+}

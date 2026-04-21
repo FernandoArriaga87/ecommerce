@@ -88,6 +88,11 @@ export type ShippingQuote = $Result.DefaultSelection<Prisma.$ShippingQuotePayloa
  * 
  */
 export type AuditLog = $Result.DefaultSelection<Prisma.$AuditLogPayload>
+/**
+ * Model RateLimitBucket
+ * 
+ */
+export type RateLimitBucket = $Result.DefaultSelection<Prisma.$RateLimitBucketPayload>
 
 /**
  * Enums
@@ -414,6 +419,16 @@ export class PrismaClient<
     * ```
     */
   get auditLog(): Prisma.AuditLogDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.rateLimitBucket`: Exposes CRUD operations for the **RateLimitBucket** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more RateLimitBuckets
+    * const rateLimitBuckets = await prisma.rateLimitBucket.findMany()
+    * ```
+    */
+  get rateLimitBucket(): Prisma.RateLimitBucketDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -869,7 +884,8 @@ export namespace Prisma {
     CartItem: 'CartItem',
     WebhookEvent: 'WebhookEvent',
     ShippingQuote: 'ShippingQuote',
-    AuditLog: 'AuditLog'
+    AuditLog: 'AuditLog',
+    RateLimitBucket: 'RateLimitBucket'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -888,7 +904,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "category" | "team" | "product" | "review" | "wishlistItem" | "variant" | "address" | "order" | "orderItem" | "cart" | "cartItem" | "webhookEvent" | "shippingQuote" | "auditLog"
+      modelProps: "user" | "category" | "team" | "product" | "review" | "wishlistItem" | "variant" | "address" | "order" | "orderItem" | "cart" | "cartItem" | "webhookEvent" | "shippingQuote" | "auditLog" | "rateLimitBucket"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2002,6 +2018,80 @@ export namespace Prisma {
           }
         }
       }
+      RateLimitBucket: {
+        payload: Prisma.$RateLimitBucketPayload<ExtArgs>
+        fields: Prisma.RateLimitBucketFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.RateLimitBucketFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RateLimitBucketPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.RateLimitBucketFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RateLimitBucketPayload>
+          }
+          findFirst: {
+            args: Prisma.RateLimitBucketFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RateLimitBucketPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.RateLimitBucketFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RateLimitBucketPayload>
+          }
+          findMany: {
+            args: Prisma.RateLimitBucketFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RateLimitBucketPayload>[]
+          }
+          create: {
+            args: Prisma.RateLimitBucketCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RateLimitBucketPayload>
+          }
+          createMany: {
+            args: Prisma.RateLimitBucketCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.RateLimitBucketCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RateLimitBucketPayload>[]
+          }
+          delete: {
+            args: Prisma.RateLimitBucketDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RateLimitBucketPayload>
+          }
+          update: {
+            args: Prisma.RateLimitBucketUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RateLimitBucketPayload>
+          }
+          deleteMany: {
+            args: Prisma.RateLimitBucketDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.RateLimitBucketUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.RateLimitBucketUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RateLimitBucketPayload>[]
+          }
+          upsert: {
+            args: Prisma.RateLimitBucketUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RateLimitBucketPayload>
+          }
+          aggregate: {
+            args: Prisma.RateLimitBucketAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateRateLimitBucket>
+          }
+          groupBy: {
+            args: Prisma.RateLimitBucketGroupByArgs<ExtArgs>
+            result: $Utils.Optional<RateLimitBucketGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.RateLimitBucketCountArgs<ExtArgs>
+            result: $Utils.Optional<RateLimitBucketCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -2113,6 +2203,7 @@ export namespace Prisma {
     webhookEvent?: WebhookEventOmit
     shippingQuote?: ShippingQuoteOmit
     auditLog?: AuditLogOmit
+    rateLimitBucket?: RateLimitBucketOmit
   }
 
   /* Types for Logging */
@@ -19463,6 +19554,1009 @@ export namespace Prisma {
 
 
   /**
+   * Model RateLimitBucket
+   */
+
+  export type AggregateRateLimitBucket = {
+    _count: RateLimitBucketCountAggregateOutputType | null
+    _avg: RateLimitBucketAvgAggregateOutputType | null
+    _sum: RateLimitBucketSumAggregateOutputType | null
+    _min: RateLimitBucketMinAggregateOutputType | null
+    _max: RateLimitBucketMaxAggregateOutputType | null
+  }
+
+  export type RateLimitBucketAvgAggregateOutputType = {
+    count: number | null
+  }
+
+  export type RateLimitBucketSumAggregateOutputType = {
+    count: number | null
+  }
+
+  export type RateLimitBucketMinAggregateOutputType = {
+    key: string | null
+    count: number | null
+    resetAt: Date | null
+  }
+
+  export type RateLimitBucketMaxAggregateOutputType = {
+    key: string | null
+    count: number | null
+    resetAt: Date | null
+  }
+
+  export type RateLimitBucketCountAggregateOutputType = {
+    key: number
+    count: number
+    resetAt: number
+    _all: number
+  }
+
+
+  export type RateLimitBucketAvgAggregateInputType = {
+    count?: true
+  }
+
+  export type RateLimitBucketSumAggregateInputType = {
+    count?: true
+  }
+
+  export type RateLimitBucketMinAggregateInputType = {
+    key?: true
+    count?: true
+    resetAt?: true
+  }
+
+  export type RateLimitBucketMaxAggregateInputType = {
+    key?: true
+    count?: true
+    resetAt?: true
+  }
+
+  export type RateLimitBucketCountAggregateInputType = {
+    key?: true
+    count?: true
+    resetAt?: true
+    _all?: true
+  }
+
+  export type RateLimitBucketAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RateLimitBucket to aggregate.
+     */
+    where?: RateLimitBucketWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RateLimitBuckets to fetch.
+     */
+    orderBy?: RateLimitBucketOrderByWithRelationInput | RateLimitBucketOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: RateLimitBucketWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RateLimitBuckets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RateLimitBuckets.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned RateLimitBuckets
+    **/
+    _count?: true | RateLimitBucketCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: RateLimitBucketAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: RateLimitBucketSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: RateLimitBucketMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: RateLimitBucketMaxAggregateInputType
+  }
+
+  export type GetRateLimitBucketAggregateType<T extends RateLimitBucketAggregateArgs> = {
+        [P in keyof T & keyof AggregateRateLimitBucket]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateRateLimitBucket[P]>
+      : GetScalarType<T[P], AggregateRateLimitBucket[P]>
+  }
+
+
+
+
+  export type RateLimitBucketGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RateLimitBucketWhereInput
+    orderBy?: RateLimitBucketOrderByWithAggregationInput | RateLimitBucketOrderByWithAggregationInput[]
+    by: RateLimitBucketScalarFieldEnum[] | RateLimitBucketScalarFieldEnum
+    having?: RateLimitBucketScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: RateLimitBucketCountAggregateInputType | true
+    _avg?: RateLimitBucketAvgAggregateInputType
+    _sum?: RateLimitBucketSumAggregateInputType
+    _min?: RateLimitBucketMinAggregateInputType
+    _max?: RateLimitBucketMaxAggregateInputType
+  }
+
+  export type RateLimitBucketGroupByOutputType = {
+    key: string
+    count: number
+    resetAt: Date
+    _count: RateLimitBucketCountAggregateOutputType | null
+    _avg: RateLimitBucketAvgAggregateOutputType | null
+    _sum: RateLimitBucketSumAggregateOutputType | null
+    _min: RateLimitBucketMinAggregateOutputType | null
+    _max: RateLimitBucketMaxAggregateOutputType | null
+  }
+
+  type GetRateLimitBucketGroupByPayload<T extends RateLimitBucketGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<RateLimitBucketGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof RateLimitBucketGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], RateLimitBucketGroupByOutputType[P]>
+            : GetScalarType<T[P], RateLimitBucketGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type RateLimitBucketSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    key?: boolean
+    count?: boolean
+    resetAt?: boolean
+  }, ExtArgs["result"]["rateLimitBucket"]>
+
+  export type RateLimitBucketSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    key?: boolean
+    count?: boolean
+    resetAt?: boolean
+  }, ExtArgs["result"]["rateLimitBucket"]>
+
+  export type RateLimitBucketSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    key?: boolean
+    count?: boolean
+    resetAt?: boolean
+  }, ExtArgs["result"]["rateLimitBucket"]>
+
+  export type RateLimitBucketSelectScalar = {
+    key?: boolean
+    count?: boolean
+    resetAt?: boolean
+  }
+
+  export type RateLimitBucketOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"key" | "count" | "resetAt", ExtArgs["result"]["rateLimitBucket"]>
+
+  export type $RateLimitBucketPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "RateLimitBucket"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      key: string
+      count: number
+      resetAt: Date
+    }, ExtArgs["result"]["rateLimitBucket"]>
+    composites: {}
+  }
+
+  type RateLimitBucketGetPayload<S extends boolean | null | undefined | RateLimitBucketDefaultArgs> = $Result.GetResult<Prisma.$RateLimitBucketPayload, S>
+
+  type RateLimitBucketCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<RateLimitBucketFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: RateLimitBucketCountAggregateInputType | true
+    }
+
+  export interface RateLimitBucketDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['RateLimitBucket'], meta: { name: 'RateLimitBucket' } }
+    /**
+     * Find zero or one RateLimitBucket that matches the filter.
+     * @param {RateLimitBucketFindUniqueArgs} args - Arguments to find a RateLimitBucket
+     * @example
+     * // Get one RateLimitBucket
+     * const rateLimitBucket = await prisma.rateLimitBucket.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends RateLimitBucketFindUniqueArgs>(args: SelectSubset<T, RateLimitBucketFindUniqueArgs<ExtArgs>>): Prisma__RateLimitBucketClient<$Result.GetResult<Prisma.$RateLimitBucketPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one RateLimitBucket that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {RateLimitBucketFindUniqueOrThrowArgs} args - Arguments to find a RateLimitBucket
+     * @example
+     * // Get one RateLimitBucket
+     * const rateLimitBucket = await prisma.rateLimitBucket.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends RateLimitBucketFindUniqueOrThrowArgs>(args: SelectSubset<T, RateLimitBucketFindUniqueOrThrowArgs<ExtArgs>>): Prisma__RateLimitBucketClient<$Result.GetResult<Prisma.$RateLimitBucketPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first RateLimitBucket that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RateLimitBucketFindFirstArgs} args - Arguments to find a RateLimitBucket
+     * @example
+     * // Get one RateLimitBucket
+     * const rateLimitBucket = await prisma.rateLimitBucket.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends RateLimitBucketFindFirstArgs>(args?: SelectSubset<T, RateLimitBucketFindFirstArgs<ExtArgs>>): Prisma__RateLimitBucketClient<$Result.GetResult<Prisma.$RateLimitBucketPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first RateLimitBucket that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RateLimitBucketFindFirstOrThrowArgs} args - Arguments to find a RateLimitBucket
+     * @example
+     * // Get one RateLimitBucket
+     * const rateLimitBucket = await prisma.rateLimitBucket.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends RateLimitBucketFindFirstOrThrowArgs>(args?: SelectSubset<T, RateLimitBucketFindFirstOrThrowArgs<ExtArgs>>): Prisma__RateLimitBucketClient<$Result.GetResult<Prisma.$RateLimitBucketPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more RateLimitBuckets that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RateLimitBucketFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all RateLimitBuckets
+     * const rateLimitBuckets = await prisma.rateLimitBucket.findMany()
+     * 
+     * // Get first 10 RateLimitBuckets
+     * const rateLimitBuckets = await prisma.rateLimitBucket.findMany({ take: 10 })
+     * 
+     * // Only select the `key`
+     * const rateLimitBucketWithKeyOnly = await prisma.rateLimitBucket.findMany({ select: { key: true } })
+     * 
+     */
+    findMany<T extends RateLimitBucketFindManyArgs>(args?: SelectSubset<T, RateLimitBucketFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RateLimitBucketPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a RateLimitBucket.
+     * @param {RateLimitBucketCreateArgs} args - Arguments to create a RateLimitBucket.
+     * @example
+     * // Create one RateLimitBucket
+     * const RateLimitBucket = await prisma.rateLimitBucket.create({
+     *   data: {
+     *     // ... data to create a RateLimitBucket
+     *   }
+     * })
+     * 
+     */
+    create<T extends RateLimitBucketCreateArgs>(args: SelectSubset<T, RateLimitBucketCreateArgs<ExtArgs>>): Prisma__RateLimitBucketClient<$Result.GetResult<Prisma.$RateLimitBucketPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many RateLimitBuckets.
+     * @param {RateLimitBucketCreateManyArgs} args - Arguments to create many RateLimitBuckets.
+     * @example
+     * // Create many RateLimitBuckets
+     * const rateLimitBucket = await prisma.rateLimitBucket.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends RateLimitBucketCreateManyArgs>(args?: SelectSubset<T, RateLimitBucketCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many RateLimitBuckets and returns the data saved in the database.
+     * @param {RateLimitBucketCreateManyAndReturnArgs} args - Arguments to create many RateLimitBuckets.
+     * @example
+     * // Create many RateLimitBuckets
+     * const rateLimitBucket = await prisma.rateLimitBucket.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many RateLimitBuckets and only return the `key`
+     * const rateLimitBucketWithKeyOnly = await prisma.rateLimitBucket.createManyAndReturn({
+     *   select: { key: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends RateLimitBucketCreateManyAndReturnArgs>(args?: SelectSubset<T, RateLimitBucketCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RateLimitBucketPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a RateLimitBucket.
+     * @param {RateLimitBucketDeleteArgs} args - Arguments to delete one RateLimitBucket.
+     * @example
+     * // Delete one RateLimitBucket
+     * const RateLimitBucket = await prisma.rateLimitBucket.delete({
+     *   where: {
+     *     // ... filter to delete one RateLimitBucket
+     *   }
+     * })
+     * 
+     */
+    delete<T extends RateLimitBucketDeleteArgs>(args: SelectSubset<T, RateLimitBucketDeleteArgs<ExtArgs>>): Prisma__RateLimitBucketClient<$Result.GetResult<Prisma.$RateLimitBucketPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one RateLimitBucket.
+     * @param {RateLimitBucketUpdateArgs} args - Arguments to update one RateLimitBucket.
+     * @example
+     * // Update one RateLimitBucket
+     * const rateLimitBucket = await prisma.rateLimitBucket.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends RateLimitBucketUpdateArgs>(args: SelectSubset<T, RateLimitBucketUpdateArgs<ExtArgs>>): Prisma__RateLimitBucketClient<$Result.GetResult<Prisma.$RateLimitBucketPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more RateLimitBuckets.
+     * @param {RateLimitBucketDeleteManyArgs} args - Arguments to filter RateLimitBuckets to delete.
+     * @example
+     * // Delete a few RateLimitBuckets
+     * const { count } = await prisma.rateLimitBucket.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends RateLimitBucketDeleteManyArgs>(args?: SelectSubset<T, RateLimitBucketDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RateLimitBuckets.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RateLimitBucketUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many RateLimitBuckets
+     * const rateLimitBucket = await prisma.rateLimitBucket.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends RateLimitBucketUpdateManyArgs>(args: SelectSubset<T, RateLimitBucketUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RateLimitBuckets and returns the data updated in the database.
+     * @param {RateLimitBucketUpdateManyAndReturnArgs} args - Arguments to update many RateLimitBuckets.
+     * @example
+     * // Update many RateLimitBuckets
+     * const rateLimitBucket = await prisma.rateLimitBucket.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more RateLimitBuckets and only return the `key`
+     * const rateLimitBucketWithKeyOnly = await prisma.rateLimitBucket.updateManyAndReturn({
+     *   select: { key: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends RateLimitBucketUpdateManyAndReturnArgs>(args: SelectSubset<T, RateLimitBucketUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RateLimitBucketPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one RateLimitBucket.
+     * @param {RateLimitBucketUpsertArgs} args - Arguments to update or create a RateLimitBucket.
+     * @example
+     * // Update or create a RateLimitBucket
+     * const rateLimitBucket = await prisma.rateLimitBucket.upsert({
+     *   create: {
+     *     // ... data to create a RateLimitBucket
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the RateLimitBucket we want to update
+     *   }
+     * })
+     */
+    upsert<T extends RateLimitBucketUpsertArgs>(args: SelectSubset<T, RateLimitBucketUpsertArgs<ExtArgs>>): Prisma__RateLimitBucketClient<$Result.GetResult<Prisma.$RateLimitBucketPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of RateLimitBuckets.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RateLimitBucketCountArgs} args - Arguments to filter RateLimitBuckets to count.
+     * @example
+     * // Count the number of RateLimitBuckets
+     * const count = await prisma.rateLimitBucket.count({
+     *   where: {
+     *     // ... the filter for the RateLimitBuckets we want to count
+     *   }
+     * })
+    **/
+    count<T extends RateLimitBucketCountArgs>(
+      args?: Subset<T, RateLimitBucketCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], RateLimitBucketCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a RateLimitBucket.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RateLimitBucketAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends RateLimitBucketAggregateArgs>(args: Subset<T, RateLimitBucketAggregateArgs>): Prisma.PrismaPromise<GetRateLimitBucketAggregateType<T>>
+
+    /**
+     * Group by RateLimitBucket.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RateLimitBucketGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends RateLimitBucketGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: RateLimitBucketGroupByArgs['orderBy'] }
+        : { orderBy?: RateLimitBucketGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, RateLimitBucketGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetRateLimitBucketGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the RateLimitBucket model
+   */
+  readonly fields: RateLimitBucketFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for RateLimitBucket.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__RateLimitBucketClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the RateLimitBucket model
+   */
+  interface RateLimitBucketFieldRefs {
+    readonly key: FieldRef<"RateLimitBucket", 'String'>
+    readonly count: FieldRef<"RateLimitBucket", 'Int'>
+    readonly resetAt: FieldRef<"RateLimitBucket", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * RateLimitBucket findUnique
+   */
+  export type RateLimitBucketFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RateLimitBucket
+     */
+    select?: RateLimitBucketSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RateLimitBucket
+     */
+    omit?: RateLimitBucketOmit<ExtArgs> | null
+    /**
+     * Filter, which RateLimitBucket to fetch.
+     */
+    where: RateLimitBucketWhereUniqueInput
+  }
+
+  /**
+   * RateLimitBucket findUniqueOrThrow
+   */
+  export type RateLimitBucketFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RateLimitBucket
+     */
+    select?: RateLimitBucketSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RateLimitBucket
+     */
+    omit?: RateLimitBucketOmit<ExtArgs> | null
+    /**
+     * Filter, which RateLimitBucket to fetch.
+     */
+    where: RateLimitBucketWhereUniqueInput
+  }
+
+  /**
+   * RateLimitBucket findFirst
+   */
+  export type RateLimitBucketFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RateLimitBucket
+     */
+    select?: RateLimitBucketSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RateLimitBucket
+     */
+    omit?: RateLimitBucketOmit<ExtArgs> | null
+    /**
+     * Filter, which RateLimitBucket to fetch.
+     */
+    where?: RateLimitBucketWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RateLimitBuckets to fetch.
+     */
+    orderBy?: RateLimitBucketOrderByWithRelationInput | RateLimitBucketOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RateLimitBuckets.
+     */
+    cursor?: RateLimitBucketWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RateLimitBuckets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RateLimitBuckets.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RateLimitBuckets.
+     */
+    distinct?: RateLimitBucketScalarFieldEnum | RateLimitBucketScalarFieldEnum[]
+  }
+
+  /**
+   * RateLimitBucket findFirstOrThrow
+   */
+  export type RateLimitBucketFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RateLimitBucket
+     */
+    select?: RateLimitBucketSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RateLimitBucket
+     */
+    omit?: RateLimitBucketOmit<ExtArgs> | null
+    /**
+     * Filter, which RateLimitBucket to fetch.
+     */
+    where?: RateLimitBucketWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RateLimitBuckets to fetch.
+     */
+    orderBy?: RateLimitBucketOrderByWithRelationInput | RateLimitBucketOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RateLimitBuckets.
+     */
+    cursor?: RateLimitBucketWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RateLimitBuckets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RateLimitBuckets.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RateLimitBuckets.
+     */
+    distinct?: RateLimitBucketScalarFieldEnum | RateLimitBucketScalarFieldEnum[]
+  }
+
+  /**
+   * RateLimitBucket findMany
+   */
+  export type RateLimitBucketFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RateLimitBucket
+     */
+    select?: RateLimitBucketSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RateLimitBucket
+     */
+    omit?: RateLimitBucketOmit<ExtArgs> | null
+    /**
+     * Filter, which RateLimitBuckets to fetch.
+     */
+    where?: RateLimitBucketWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RateLimitBuckets to fetch.
+     */
+    orderBy?: RateLimitBucketOrderByWithRelationInput | RateLimitBucketOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing RateLimitBuckets.
+     */
+    cursor?: RateLimitBucketWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RateLimitBuckets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RateLimitBuckets.
+     */
+    skip?: number
+    distinct?: RateLimitBucketScalarFieldEnum | RateLimitBucketScalarFieldEnum[]
+  }
+
+  /**
+   * RateLimitBucket create
+   */
+  export type RateLimitBucketCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RateLimitBucket
+     */
+    select?: RateLimitBucketSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RateLimitBucket
+     */
+    omit?: RateLimitBucketOmit<ExtArgs> | null
+    /**
+     * The data needed to create a RateLimitBucket.
+     */
+    data: XOR<RateLimitBucketCreateInput, RateLimitBucketUncheckedCreateInput>
+  }
+
+  /**
+   * RateLimitBucket createMany
+   */
+  export type RateLimitBucketCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many RateLimitBuckets.
+     */
+    data: RateLimitBucketCreateManyInput | RateLimitBucketCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * RateLimitBucket createManyAndReturn
+   */
+  export type RateLimitBucketCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RateLimitBucket
+     */
+    select?: RateLimitBucketSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the RateLimitBucket
+     */
+    omit?: RateLimitBucketOmit<ExtArgs> | null
+    /**
+     * The data used to create many RateLimitBuckets.
+     */
+    data: RateLimitBucketCreateManyInput | RateLimitBucketCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * RateLimitBucket update
+   */
+  export type RateLimitBucketUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RateLimitBucket
+     */
+    select?: RateLimitBucketSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RateLimitBucket
+     */
+    omit?: RateLimitBucketOmit<ExtArgs> | null
+    /**
+     * The data needed to update a RateLimitBucket.
+     */
+    data: XOR<RateLimitBucketUpdateInput, RateLimitBucketUncheckedUpdateInput>
+    /**
+     * Choose, which RateLimitBucket to update.
+     */
+    where: RateLimitBucketWhereUniqueInput
+  }
+
+  /**
+   * RateLimitBucket updateMany
+   */
+  export type RateLimitBucketUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update RateLimitBuckets.
+     */
+    data: XOR<RateLimitBucketUpdateManyMutationInput, RateLimitBucketUncheckedUpdateManyInput>
+    /**
+     * Filter which RateLimitBuckets to update
+     */
+    where?: RateLimitBucketWhereInput
+    /**
+     * Limit how many RateLimitBuckets to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * RateLimitBucket updateManyAndReturn
+   */
+  export type RateLimitBucketUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RateLimitBucket
+     */
+    select?: RateLimitBucketSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the RateLimitBucket
+     */
+    omit?: RateLimitBucketOmit<ExtArgs> | null
+    /**
+     * The data used to update RateLimitBuckets.
+     */
+    data: XOR<RateLimitBucketUpdateManyMutationInput, RateLimitBucketUncheckedUpdateManyInput>
+    /**
+     * Filter which RateLimitBuckets to update
+     */
+    where?: RateLimitBucketWhereInput
+    /**
+     * Limit how many RateLimitBuckets to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * RateLimitBucket upsert
+   */
+  export type RateLimitBucketUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RateLimitBucket
+     */
+    select?: RateLimitBucketSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RateLimitBucket
+     */
+    omit?: RateLimitBucketOmit<ExtArgs> | null
+    /**
+     * The filter to search for the RateLimitBucket to update in case it exists.
+     */
+    where: RateLimitBucketWhereUniqueInput
+    /**
+     * In case the RateLimitBucket found by the `where` argument doesn't exist, create a new RateLimitBucket with this data.
+     */
+    create: XOR<RateLimitBucketCreateInput, RateLimitBucketUncheckedCreateInput>
+    /**
+     * In case the RateLimitBucket was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<RateLimitBucketUpdateInput, RateLimitBucketUncheckedUpdateInput>
+  }
+
+  /**
+   * RateLimitBucket delete
+   */
+  export type RateLimitBucketDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RateLimitBucket
+     */
+    select?: RateLimitBucketSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RateLimitBucket
+     */
+    omit?: RateLimitBucketOmit<ExtArgs> | null
+    /**
+     * Filter which RateLimitBucket to delete.
+     */
+    where: RateLimitBucketWhereUniqueInput
+  }
+
+  /**
+   * RateLimitBucket deleteMany
+   */
+  export type RateLimitBucketDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RateLimitBuckets to delete
+     */
+    where?: RateLimitBucketWhereInput
+    /**
+     * Limit how many RateLimitBuckets to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * RateLimitBucket without action
+   */
+  export type RateLimitBucketDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RateLimitBucket
+     */
+    select?: RateLimitBucketSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RateLimitBucket
+     */
+    omit?: RateLimitBucketOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -19679,6 +20773,15 @@ export namespace Prisma {
   };
 
   export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
+
+
+  export const RateLimitBucketScalarFieldEnum: {
+    key: 'key',
+    count: 'count',
+    resetAt: 'resetAt'
+  };
+
+  export type RateLimitBucketScalarFieldEnum = (typeof RateLimitBucketScalarFieldEnum)[keyof typeof RateLimitBucketScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -20978,6 +22081,50 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"AuditLog"> | Date | string
   }
 
+  export type RateLimitBucketWhereInput = {
+    AND?: RateLimitBucketWhereInput | RateLimitBucketWhereInput[]
+    OR?: RateLimitBucketWhereInput[]
+    NOT?: RateLimitBucketWhereInput | RateLimitBucketWhereInput[]
+    key?: StringFilter<"RateLimitBucket"> | string
+    count?: IntFilter<"RateLimitBucket"> | number
+    resetAt?: DateTimeFilter<"RateLimitBucket"> | Date | string
+  }
+
+  export type RateLimitBucketOrderByWithRelationInput = {
+    key?: SortOrder
+    count?: SortOrder
+    resetAt?: SortOrder
+  }
+
+  export type RateLimitBucketWhereUniqueInput = Prisma.AtLeast<{
+    key?: string
+    AND?: RateLimitBucketWhereInput | RateLimitBucketWhereInput[]
+    OR?: RateLimitBucketWhereInput[]
+    NOT?: RateLimitBucketWhereInput | RateLimitBucketWhereInput[]
+    count?: IntFilter<"RateLimitBucket"> | number
+    resetAt?: DateTimeFilter<"RateLimitBucket"> | Date | string
+  }, "key">
+
+  export type RateLimitBucketOrderByWithAggregationInput = {
+    key?: SortOrder
+    count?: SortOrder
+    resetAt?: SortOrder
+    _count?: RateLimitBucketCountOrderByAggregateInput
+    _avg?: RateLimitBucketAvgOrderByAggregateInput
+    _max?: RateLimitBucketMaxOrderByAggregateInput
+    _min?: RateLimitBucketMinOrderByAggregateInput
+    _sum?: RateLimitBucketSumOrderByAggregateInput
+  }
+
+  export type RateLimitBucketScalarWhereWithAggregatesInput = {
+    AND?: RateLimitBucketScalarWhereWithAggregatesInput | RateLimitBucketScalarWhereWithAggregatesInput[]
+    OR?: RateLimitBucketScalarWhereWithAggregatesInput[]
+    NOT?: RateLimitBucketScalarWhereWithAggregatesInput | RateLimitBucketScalarWhereWithAggregatesInput[]
+    key?: StringWithAggregatesFilter<"RateLimitBucket"> | string
+    count?: IntWithAggregatesFilter<"RateLimitBucket"> | number
+    resetAt?: DateTimeWithAggregatesFilter<"RateLimitBucket"> | Date | string
+  }
+
   export type UserCreateInput = {
     id?: string
     email: string
@@ -22146,6 +23293,48 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type RateLimitBucketCreateInput = {
+    key: string
+    count?: number
+    resetAt: Date | string
+  }
+
+  export type RateLimitBucketUncheckedCreateInput = {
+    key: string
+    count?: number
+    resetAt: Date | string
+  }
+
+  export type RateLimitBucketUpdateInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    count?: IntFieldUpdateOperationsInput | number
+    resetAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RateLimitBucketUncheckedUpdateInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    count?: IntFieldUpdateOperationsInput | number
+    resetAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RateLimitBucketCreateManyInput = {
+    key: string
+    count?: number
+    resetAt: Date | string
+  }
+
+  export type RateLimitBucketUpdateManyMutationInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    count?: IntFieldUpdateOperationsInput | number
+    resetAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RateLimitBucketUncheckedUpdateManyInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    count?: IntFieldUpdateOperationsInput | number
+    resetAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -23227,6 +24416,32 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedJsonNullableFilter<$PrismaModel>
     _max?: NestedJsonNullableFilter<$PrismaModel>
+  }
+
+  export type RateLimitBucketCountOrderByAggregateInput = {
+    key?: SortOrder
+    count?: SortOrder
+    resetAt?: SortOrder
+  }
+
+  export type RateLimitBucketAvgOrderByAggregateInput = {
+    count?: SortOrder
+  }
+
+  export type RateLimitBucketMaxOrderByAggregateInput = {
+    key?: SortOrder
+    count?: SortOrder
+    resetAt?: SortOrder
+  }
+
+  export type RateLimitBucketMinOrderByAggregateInput = {
+    key?: SortOrder
+    count?: SortOrder
+    resetAt?: SortOrder
+  }
+
+  export type RateLimitBucketSumOrderByAggregateInput = {
+    count?: SortOrder
   }
 
   export type AddressCreateNestedManyWithoutUserInput = {

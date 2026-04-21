@@ -20,6 +20,8 @@ npx prisma studio        # Visual DB browser
 
 Schema changes are applied with `db push`, not `migrate`. The `prisma/migrations/` folder contains one-off `.sql` scripts, not Prisma migration history. If `prisma generate` fails on Windows with `EPERM ... query_engine-windows.dll.node`, stop the dev server first — the DLL is locked while Next is running.
 
+After first setup — or after any change to `prisma/migrations/rate_limit_fn.sql` — paste that file into the Supabase SQL editor (or `psql "$DIRECT_URL" -f ...`). `db push` creates the `rate_limit_bucket` table from schema.prisma; the SQL file installs the `check_rate_limit` RPC + RLS that the middleware calls on every `/api/*` request.
+
 No test suite exists yet.
 
 ## Architecture
@@ -61,11 +63,24 @@ Rate limiting is applied per-route in middleware (auth: 5 req/min, checkout: 5 r
 
 Error tracking via `@sentry/nextjs` v10. Init is split across `instrumentation.ts` (server/edge dispatcher), `instrumentation-client.ts` (browser — v10 convention, replaces `sentry.client.config.ts`), `sentry.server.config.ts`, and `sentry.edge.config.ts`. All four read DSN from env and **no-op when DSN is absent**, so local dev stays quiet. `src/lib/sentry-scrub.ts` is a shared `beforeSend` that redacts emails, auth/cookie headers, and any key matching `password|token|secret|api_key|authorization|cookie|email`. `tracesSampleRate` is `0` (errors only). `src/app/global-error.tsx` is the App Router error boundary that calls `Sentry.captureException`. `next.config.ts` is wrapped with `withSentryConfig` and tunnels through `/monitoring` to bypass ad-blockers.
 
+### Analytics (Vercel)
+
+Page views + Web Vitals via `@vercel/analytics` and `@vercel/speed-insights`. `<Analytics />` and `<SpeedInsights />` are mounted in `src/app/layout.tsx` — they auto-detect Vercel deployments and no-op locally. Funnel events use `track()` from `@vercel/analytics`:
+- `add_to_cart` — fired in `CartProvider.addItem` (src/lib/cart-context.tsx)
+- `checkout_started` — fired before the `/api/checkout/quick-stripe` POST (src/app/checkout/page.tsx)
+- `purchase_completed` — fired on the success page once the order loads; deduped via `sessionStorage` keyed by orderId so reloads don't double-count (src/app/checkout/success/page.tsx)
+
+No env vars needed. Events appear in the Vercel dashboard under the project's Analytics tab. Before adding more events, ask whether it's worth the noise — the goal is funnel visibility, not telemetry for its own sake.
+
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `src/middleware.ts` | Session refresh, auth guards, role checks, rate limiting |
+| `src/middleware.ts` | Session refresh, auth guards, role checks, rate limiting (via `checkRateLimit`) |
+| `src/lib/rate-limit.ts` | Wraps the `check_rate_limit` Supabase RPC — fails open on DB errors |
+| `src/lib/csv.ts` | RFC-4180 CSV encoder (Excel-friendly UTF-8 BOM) used by admin exports |
+| `src/app/api/admin/export/*` | Admin CSV downloads (orders, products) — gated by `requireAdminUser` + `logAudit` |
+| `prisma/migrations/rate_limit_fn.sql` | One-off SQL for the rate-limit RPC + RLS (run in Supabase SQL editor) |
 | `prisma/schema.prisma` | Full data model: User, Product, Variant, Order, Cart, Address, WishlistItem, Review, WebhookEvent |
 | `src/app/api/checkout/quick-stripe/route.ts` | Stripe checkout session creation + stock reservation + Skydropx re-quote (auth required) |
 | `src/app/api/webhooks/stripe/route.ts` | Payment status updates + stock restoration + refund handling |

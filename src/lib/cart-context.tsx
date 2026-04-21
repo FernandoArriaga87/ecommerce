@@ -1,6 +1,16 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  ReactNode,
+} from "react";
+import { createClient } from "@/lib/supabase/client";
+import { track } from "@vercel/analytics";
 
 export interface CartItem {
   productId: string;
@@ -28,7 +38,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 const CART_KEY = "deportivo-cart";
 
-function loadCart(): CartItem[] {
+function loadGuest(): CartItem[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(CART_KEY);
@@ -38,55 +48,115 @@ function loadCart(): CartItem[] {
   }
 }
 
-function saveCart(items: CartItem[]) {
+function saveGuest(items: CartItem[]) {
   if (typeof window === "undefined") return;
   localStorage.setItem(CART_KEY, JSON.stringify(items));
+}
+
+function clearGuest() {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(CART_KEY);
+}
+
+async function postSync(
+  localItems: CartItem[],
+  mode: "merge" | "replace"
+): Promise<CartItem[] | null> {
+  try {
+    const res = await fetch("/api/cart/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ localItems, mode }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return Array.isArray(data?.items) ? (data.items as CartItem[]) : null;
+  } catch (e) {
+    console.error("Cart sync failed", e);
+    return null;
+  }
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // Hydrate from localStorage on mount
+  // When state comes from the server (initial load, login merge, logout reset),
+  // skip the very next auto-persist so we don't bounce the same payload back.
+  const skipNextPersistRef = useRef(false);
+  const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
-    const saved = loadCart();
-    setItems(saved);
-    setHydrated(true);
+    const supabase = createClient();
+
+    const handleLogin = async () => {
+      const guest = loadGuest();
+      // Always round-trip: guest→merge pulls back the combined cart; empty
+      // guest still needs to hydrate whatever the DB already had.
+      const merged = await postSync(guest, "merge");
+      skipNextPersistRef.current = true;
+      setItems(merged ?? guest);
+      clearGuest();
+    };
+
+    const init = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const loggedIn = !!session?.user;
+      setIsLoggedIn(loggedIn);
+
+      if (loggedIn) {
+        await handleLogin();
+      } else {
+        skipNextPersistRef.current = true;
+        setItems(loadGuest());
+      }
+      setHydrated(true);
+    };
+
+    init();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      const loggedIn = !!session?.user;
+      setIsLoggedIn(loggedIn);
+
+      if (event === "SIGNED_IN" && loggedIn) {
+        await handleLogin();
+      } else if (event === "SIGNED_OUT") {
+        skipNextPersistRef.current = true;
+        setItems([]);
+        clearGuest();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  // Sync with backend if logged in
+  // Persist: guest → localStorage; logged in → debounced server "replace".
   useEffect(() => {
     if (!hydrated) return;
 
-    const { createClient } = require("@/lib/supabase/client");
-    const supabase = createClient();
+    if (skipNextPersistRef.current) {
+      skipNextPersistRef.current = false;
+      return;
+    }
 
-    const sync = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        try {
-          await fetch("/api/cart/sync", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ localItems: items }),
-          });
-        } catch (e) {
-          console.error("Cart sync failed", e);
-        }
-      }
-    };
-
-    // Debounce or just sync on length change
-    const timeout = setTimeout(sync, 1000);
-    return () => clearTimeout(timeout);
-  }, [items, hydrated]);
-
-  // Persist every change
-  useEffect(() => {
-    if (hydrated) saveCart(items);
-  }, [items, hydrated]);
-
+    if (isLoggedIn) {
+      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+      syncTimeoutRef.current = setTimeout(() => {
+        postSync(items, "replace");
+      }, 500);
+    } else {
+      saveGuest(items);
+    }
+  }, [items, hydrated, isLoggedIn]);
 
   const addItem = useCallback((newItem: Omit<CartItem, "quantity">) => {
     setItems((prev) => {
@@ -102,7 +172,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       return [...prev, { ...newItem, quantity: 1 }];
     });
-    setIsOpen(true); // auto-open drawer on add
+    track("add_to_cart", {
+      productId: newItem.productId,
+      name: newItem.name,
+      size: newItem.size,
+      price: newItem.price,
+    });
+    setIsOpen(true);
   }, []);
 
   const removeItem = useCallback((productId: string, size: string) => {

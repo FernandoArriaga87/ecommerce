@@ -281,6 +281,12 @@ exports.Prisma.AuditLogScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.RateLimitBucketScalarFieldEnum = {
+  key: 'key',
+  count: 'count',
+  resetAt: 'resetAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -350,7 +356,8 @@ exports.Prisma.ModelName = {
   CartItem: 'CartItem',
   WebhookEvent: 'WebhookEvent',
   ShippingQuote: 'ShippingQuote',
-  AuditLog: 'AuditLog'
+  AuditLog: 'AuditLog',
+  RateLimitBucket: 'RateLimitBucket'
 };
 
 /**

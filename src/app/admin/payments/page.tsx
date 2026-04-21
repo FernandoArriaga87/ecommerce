@@ -32,6 +32,12 @@ export default async function AdminOrdersPage() {
             <h1 className="text-4xl font-black uppercase tracking-tight">Registro de Pedidos</h1>
             <p className="text-sm text-gray-500 font-bold uppercase tracking-widest mt-1">Control de envíos y pagos</p>
           </div>
+          <a
+            href="/api/admin/export/orders"
+            className="inline-flex items-center h-12 px-6 bg-black text-white hover:bg-gray-800 uppercase font-black tracking-widest text-xs transition-colors"
+          >
+            Exportar CSV
+          </a>
         </div>
 
         <BulkActionsBar label="pedido(s) seleccionado(s)">

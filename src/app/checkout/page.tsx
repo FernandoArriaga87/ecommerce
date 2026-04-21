@@ -11,6 +11,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import type { ShippingOption } from "@/lib/skydropx";
 import { qualifiesForFreeShipping, FREE_SHIPPING_THRESHOLD } from "@/lib/shipping";
+import { track } from "@vercel/analytics";
 
 const supabase = createClient();
 
@@ -22,6 +23,19 @@ interface UserProfile {
   city: string;
   state: string;
   zipCode: string;
+  addresses?: SavedAddress[];
+}
+
+interface SavedAddress {
+  id: string;
+  label: string;
+  name: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  isDefault: boolean;
 }
 
 export default function CheckoutPage() {
@@ -34,10 +48,14 @@ export default function CheckoutPage() {
   const [orderNumber, setOrderNumber] = useState("");
   const [stockErrors, setStockErrors] = useState<string[]>([]);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [zipCode, setZipCode] = useState("");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [address, setAddress] = useState("");
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
   const [selectedRateId, setSelectedRateId] = useState<string>("");
   const [quoteId, setQuoteId] = useState<string>("");
@@ -66,12 +84,32 @@ export default function CheckoutPage() {
         if (session?.user) {
           const res = await fetch("/api/profile");
           if (res.ok) {
-            const data = await res.json();
+            const data: UserProfile = await res.json();
             setProfile(data);
-            if (data?.zipCode) setZipCode(data.zipCode);
-            if (data?.city) setCity(data.city);
-            if (data?.state) setState(data.state);
-            if (data?.address) setAddress(data.address);
+            const addrs = data.addresses || [];
+            setSavedAddresses(addrs);
+
+            // Preselect the default address (or the first one) so the
+            // returning user lands on the form already filled in.
+            const preselected = addrs.find((a) => a.isDefault) || addrs[0];
+            if (preselected) {
+              setSelectedAddressId(preselected.id);
+              setName(preselected.name);
+              setPhone(preselected.phone);
+              setAddress(preselected.address);
+              setCity(preselected.city);
+              setState(preselected.state);
+              setZipCode(preselected.zipCode);
+            } else {
+              // No saved addresses — fall back to whatever the profile flat
+              // fields gave us (legacy shape).
+              setName(data.name || session.user.user_metadata?.name || "");
+              setPhone(data.phone || "");
+              if (data.address) setAddress(data.address);
+              if (data.city) setCity(data.city);
+              if (data.state) setState(data.state);
+              if (data.zipCode) setZipCode(data.zipCode);
+            }
           }
         }
       } catch (error) {
@@ -163,6 +201,11 @@ export default function CheckoutPage() {
     };
 
     try {
+      track("checkout_started", {
+        itemCount: items.reduce((acc, i) => acc + i.quantity, 0),
+        subtotal,
+        freeShipping: qualifiesForFreeShipping(subtotal),
+      });
       const res = await fetch("/api/checkout/quick-stripe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -292,7 +335,8 @@ export default function CheckoutPage() {
                   <Input
                     name="name"
                     required
-                    defaultValue={profile?.name || user?.user_metadata?.name || user?.user_metadata?.full_name || ""}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     placeholder="Juan Pérez"
                     className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black"
                   />
@@ -314,7 +358,8 @@ export default function CheckoutPage() {
                     name="phone"
                     type="tel"
                     required
-                    defaultValue={profile?.phone || ""}
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
                     placeholder="+52 555 123 4567"
                     className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black"
                   />
@@ -327,6 +372,81 @@ export default function CheckoutPage() {
               <h2 className="text-xs font-black uppercase tracking-widest mb-4 pb-2 border-b border-gray-200">
                 Dirección de Envío
               </h2>
+
+              {savedAddresses.length > 0 && (
+                <div className="mb-5">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3">
+                    Direcciones Guardadas
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {savedAddresses.map((a) => {
+                      const active = selectedAddressId === a.id;
+                      return (
+                        <button
+                          type="button"
+                          key={a.id}
+                          onClick={() => {
+                            setSelectedAddressId(a.id);
+                            setName(a.name);
+                            setPhone(a.phone);
+                            setAddress(a.address);
+                            setCity(a.city);
+                            setState(a.state);
+                            setZipCode(a.zipCode);
+                          }}
+                          className={`text-left p-4 border transition-all ${
+                            active
+                              ? "border-black bg-black text-white"
+                              : "border-gray-200 bg-white hover:border-black"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <span className="text-[10px] font-black uppercase tracking-widest truncate">
+                              {a.label || "Envío"}
+                            </span>
+                            {a.isDefault && (
+                              <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 ${
+                                active ? "bg-white text-black" : "bg-black text-white"
+                              }`}>
+                                Predet.
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs font-bold truncate">{a.name}</p>
+                          <p className={`text-[11px] mt-0.5 truncate ${active ? "text-white/70" : "text-gray-500"}`}>
+                            {a.address}
+                          </p>
+                          <p className={`text-[11px] truncate ${active ? "text-white/70" : "text-gray-500"}`}>
+                            {a.city}, {a.state} {a.zipCode}
+                          </p>
+                        </button>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedAddressId(null);
+                        setName("");
+                        setPhone("");
+                        setAddress("");
+                        setCity("");
+                        setState("");
+                        setZipCode("");
+                      }}
+                      className={`text-left p-4 border-2 border-dashed transition-all flex items-center justify-center ${
+                        selectedAddressId === null
+                          ? "border-black bg-zinc-50"
+                          : "border-gray-300 bg-white hover:border-black"
+                      }`}
+                    >
+                      <span className="text-[11px] font-black uppercase tracking-widest">
+                        + Usar una nueva dirección
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Dirección Completa</label>

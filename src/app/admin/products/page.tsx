@@ -30,11 +30,19 @@ export default async function AdminProductsPage() {
             <h1 className="text-4xl font-black uppercase tracking-tight">Catálogo de Productos</h1>
             <p className="text-sm text-gray-500 font-bold uppercase tracking-widest mt-1">Gestión de Inventario y Precios</p>
           </div>
-          <Link href="/admin/products/new">
-            <Button className="rounded-none bg-black text-white hover:bg-gray-800 uppercase font-black tracking-widest px-6 h-12">
-              + Agregar Producto
-            </Button>
-          </Link>
+          <div className="flex items-center gap-3">
+            <a
+              href="/api/admin/export/products"
+              className="inline-flex items-center h-12 px-6 border border-black text-black hover:bg-black hover:text-white uppercase font-black tracking-widest text-xs transition-colors"
+            >
+              Exportar CSV
+            </a>
+            <Link href="/admin/products/new">
+              <Button className="rounded-none bg-black text-white hover:bg-gray-800 uppercase font-black tracking-widest px-6 h-12">
+                + Agregar Producto
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <BulkActionsBar label="producto(s) seleccionado(s)">
