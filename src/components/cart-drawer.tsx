@@ -9,6 +9,7 @@ import { useCart } from "@/lib/cart-context";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { FREE_SHIPPING_THRESHOLD } from "@/lib/shipping";
 
 export function CartDrawer() {
   const { items, removeItem, updateQuantity, totalItems, subtotal, isOpen, setIsOpen } = useCart();
@@ -23,9 +24,8 @@ export function CartDrawer() {
     router.push("/checkout");
   };
 
-  const freeShippingThreshold = 1499;
-  const remaining = Math.max(0, freeShippingThreshold - subtotal);
-  const shippingProgress = Math.min(100, (subtotal / freeShippingThreshold) * 100);
+  const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
+  const shippingProgress = Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100);
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>

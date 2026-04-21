@@ -3,7 +3,8 @@ import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { checkoutSchema } from "@/lib/validations/checkout";
-import { quoteShipping } from "@/lib/skydropx";
+import type { ShippingOption } from "@/lib/skydropx";
+import { qualifiesForFreeShipping } from "@/lib/shipping";
 import { Decimal } from "@prisma/client/runtime/library";
 
 /**
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    const { name, email, phone, address, city, state, zipCode, shippingRateId, items } = validation.data;
+    const { name, email, phone, address, city, state, zipCode, quoteId, shippingRateId, items } = validation.data;
 
     // ── 3. Security: email must match the session ──
     const sessionEmail = (authUser.email || "").trim().toLowerCase();
@@ -49,10 +50,33 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── 4. Re-quote shipping server-side (do NOT trust client price) ──
+    // ── 4. Validate shipping against the persisted quote ──
+    // We do NOT re-call Skydropx — its rate IDs are scoped to each quotation
+    // and would never match the one the client picked. Instead we trust the
+    // snapshot we stored when the user clicked "Cotizar" and just verify
+    // freshness, destination, and that the chosen rate exists in it.
     const totalQty = items.reduce((sum, it) => sum + it.quantity, 0);
-    const quoted = await quoteShipping({ destinationZip: zipCode, totalItems: totalQty });
-    const chosenRate = quoted.find((r) => r.rateId === shippingRateId);
+    const quote = await prisma.shippingQuote.findUnique({ where: { id: quoteId } });
+    if (!quote) {
+      return NextResponse.json(
+        { error: "Tu cotización de envío expiró. Vuelve a cotizar." },
+        { status: 400 }
+      );
+    }
+    if (quote.expiresAt < new Date()) {
+      return NextResponse.json(
+        { error: "Tu cotización de envío expiró. Vuelve a cotizar." },
+        { status: 400 }
+      );
+    }
+    if (quote.zipCode !== zipCode.trim() || quote.totalItems !== totalQty) {
+      return NextResponse.json(
+        { error: "Cambiaste el envío después de cotizar. Vuelve a cotizar para confirmar el precio." },
+        { status: 400 }
+      );
+    }
+    const storedRates = (quote.rates as unknown as ShippingOption[]) || [];
+    const chosenRate = storedRates.find((r) => r.rateId === shippingRateId);
     if (!chosenRate) {
       return NextResponse.json(
         { error: "La opción de envío seleccionada ya no está disponible. Vuelve a cotizar." },
@@ -121,14 +145,31 @@ export async function POST(req: NextRequest) {
       const subtotal = dbItems.reduce((acc, item) => {
         return acc.add(new Decimal(item.price.toString()).mul(item.quantity));
       }, new Decimal(0));
-      const shipping = new Decimal(chosenRate.price);
+      // Envío gratis cuando el subtotal califica. La tienda absorbe el costo
+      // real cobrado por la paquetería — al cliente se le cobra $0 y el admin
+      // genera la guía manualmente (no pasa por la automatización de Skydropx
+      // en el webhook de Stripe, que está reservada para envíos cobrados).
+      const isFreeShipping = qualifiesForFreeShipping(subtotal.toNumber());
+      const shipping = isFreeShipping ? new Decimal(0) : new Decimal(chosenRate.price);
       const total = subtotal.add(shipping);
 
-      // Find or create user — prefer matching by auth id, fall back to email
-      let user = await tx.user.findUnique({ where: { email } });
-      if (!user) {
-        user = await tx.user.create({ data: { email, name, phone } });
-      }
+      // Match the user by Supabase auth id (the source of truth) to avoid races
+      // with the Supabase webhook that syncs new users by id. Email-only lookups
+      // can either miss (webhook hasn't run yet) or, worse, collide with a stale
+      // row that the webhook would have replaced.
+      const user = await tx.user.upsert({
+        where: { id: authUser.id },
+        update: {
+          // Refresh phone if missing, never overwrite an existing name silently
+          phone: phone || undefined,
+        },
+        create: {
+          id: authUser.id,
+          email,
+          name,
+          phone,
+        },
+      });
 
       const addr = await tx.address.create({
         data: {
@@ -155,8 +196,12 @@ export async function POST(req: NextRequest) {
           paymentMethod: "STRIPE",
           status: "PENDING",
           carrier: chosenRate.carrier,
-          skydropxRateId: chosenRate.rateId,
+          // No guardes el rateId de Skydropx en casos manuales — el admin genera
+          // la guía afuera del sistema, y dejar el rateId provocaría que el
+          // webhook intente crearla automáticamente.
+          skydropxRateId: (chosenRate.isPersonalDelivery || isFreeShipping) ? null : chosenRate.rateId,
           isPersonalDelivery: chosenRate.isPersonalDelivery,
+          isFreeShipping,
           items: {
             create: dbItems.map((item) => ({
               variantId: item.variant.id,

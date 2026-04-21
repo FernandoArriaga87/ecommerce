@@ -79,41 +79,57 @@ export const OrderShippedEmail = ({
             </Section>
 
             {/* Delivery Info */}
-            <Section className="mx-[32px] mt-[24px] mb-[8px] bg-[#f8f8f8] rounded-[12px] px-[24px] py-[20px]">
+            <Section className="mx-[32px] mt-[24px] mb-[24px] bg-[#f8f8f8] rounded-[12px] px-[24px] py-[24px]">
               <Row>
                 <Column>
                   <Text className="text-[10px] font-black tracking-[0.2em] uppercase text-[#999999] m-0">
                     Entrega estimada
                   </Text>
-                  <Text className="text-[#111111] text-[16px] font-black leading-[24px] m-0 mt-[4px]">
+                  <Text className="text-[#111111] text-[15px] font-black leading-[24px] m-0 mt-[4px]">
                     {estimatedDelivery}
                   </Text>
                 </Column>
                 <Column align="right">
                   <Text className="text-[10px] font-black tracking-[0.2em] uppercase text-[#999999] m-0">
-                    {carrier ? 'Paquetería' : 'Estado'}
+                    Paquetería
                   </Text>
-                  <Text className="text-[#3b82f6] text-[14px] font-black leading-[24px] m-0 mt-[4px]">
-                    {carrier || '🚚 En tránsito'}
+                  <Text className="text-[#3b82f6] text-[15px] font-black leading-[24px] m-0 mt-[4px]">
+                    {carrier || '📦 Por confirmar'}
                   </Text>
                 </Column>
               </Row>
+
+              {trackingNumber && (
+                <Section className="mt-[20px] pt-[20px] border-t border-solid border-[#eeeeee]">
+                  <Text className="text-[10px] font-black tracking-[0.2em] uppercase text-[#999999] m-0">
+                    Número de rastreo
+                  </Text>
+                  <Text className="m-0 mt-[4px]">
+                    {trackingUrl ? (
+                      <a
+                        href={trackingUrl}
+                        className="text-[#111111] text-[18px] font-black leading-[24px] no-underline hover:underline"
+                      >
+                        {trackingNumber}
+                      </a>
+                    ) : (
+                      <span className="text-[#111111] text-[18px] font-black leading-[24px]">
+                        {trackingNumber}
+                      </span>
+                    )}
+                  </Text>
+                  {trackingUrl && (
+                    <Text className="text-[11px] text-[#3b82f6] font-bold mt-[4px] m-0">
+                      Haz clic en el número para rastrear directamente.
+                    </Text>
+                  )}
+                </Section>
+              )}
             </Section>
 
-            {trackingNumber && (
-              <Section className="mx-[32px] mt-[8px] bg-[#f8f8f8] rounded-[12px] px-[24px] py-[20px]">
-                <Text className="text-[10px] font-black tracking-[0.2em] uppercase text-[#999999] m-0">
-                  Número de rastreo
-                </Text>
-                <Text className="text-[#111111] text-[15px] font-black leading-[24px] m-0 mt-[4px]">
-                  {trackingNumber}
-                </Text>
-              </Section>
-            )}
-
-            <Section className="px-[32px] pt-[16px]">
-              <Text className="text-[#444444] text-[15px] leading-[26px]">
-                Puedes revisar el estado de tu pedido en cualquier momento desde tu panel de control.
+            <Section className="px-[32px] pt-[8px]">
+              <Text className="text-[#444444] text-[14px] leading-[24px]">
+                Puedes revisar el estado de tu pedido en cualquier momento desde tu panel de control o haciendo clic en el botón de abajo.
               </Text>
             </Section>
 

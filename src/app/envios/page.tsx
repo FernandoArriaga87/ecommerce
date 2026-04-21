@@ -58,7 +58,7 @@ export default function EnviosPage() {
 
       <LegalSection title="Rastreo">
         <p>
-          Cuando tu pedido salga del almacén, recibirás un correo con el número de guía y la paquetería.
+          Cuando tu pedido salga del almacén, recibirás un correo con el número de rastreo y la paquetería.
           También puedes ver el estado en la sección <a href="/orders" className="underline font-bold">Mis pedidos</a>.
         </p>
       </LegalSection>

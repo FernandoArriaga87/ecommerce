@@ -10,6 +10,7 @@ import { ShieldCheck, Truck, CreditCard, ArrowLeft, Check, Loader2, Lock, Packag
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import type { ShippingOption } from "@/lib/skydropx";
+import { qualifiesForFreeShipping, FREE_SHIPPING_THRESHOLD } from "@/lib/shipping";
 
 const supabase = createClient();
 
@@ -39,8 +40,21 @@ export default function CheckoutPage() {
   const [address, setAddress] = useState("");
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
   const [selectedRateId, setSelectedRateId] = useState<string>("");
+  const [quoteId, setQuoteId] = useState<string>("");
   const [loadingShipping, setLoadingShipping] = useState(false);
   const [shippingError, setShippingError] = useState<string>("");
+
+  // The persisted quote is bound to a specific (zip, totalItems) snapshot. If
+  // any of those change after cotizar, the saved quoteId is no longer valid —
+  // force the user to re-quote so the server-side validation passes.
+  useEffect(() => {
+    if (quoteId) {
+      setQuoteId("");
+      setShippingOptions([]);
+      setSelectedRateId("");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zipCode, totalItems]);
 
   useEffect(() => {
     async function initialize() {
@@ -71,8 +85,8 @@ export default function CheckoutPage() {
 
   const fetchQuotes = async () => {
     const zip = zipCode.trim();
-    if (!/^\d{4,5}$/.test(zip) || totalItems === 0) {
-      alert("Por favor ingresa un código postal válido antes de cotizar.");
+    if (!/^\d{5}$/.test(zip) || totalItems === 0) {
+      alert("Ingresa un código postal mexicano válido (5 dígitos) antes de cotizar.");
       return;
     }
     if (!city.trim() || !state.trim() || !address.trim()) {
@@ -96,6 +110,7 @@ export default function CheckoutPage() {
       } else {
         const opts: ShippingOption[] = data.options || [];
         setShippingOptions(opts);
+        setQuoteId(data.quoteId || "");
         // Auto-select cheapest
         if (opts.length > 0) {
           const cheapest = opts.reduce((a, b) => (a.price < b.price ? a : b));
@@ -113,7 +128,9 @@ export default function CheckoutPage() {
   };
 
   const selectedOption = shippingOptions.find((o) => o.rateId === selectedRateId);
-  const shipping = selectedOption?.price ?? 0;
+  const freeShipping = qualifiesForFreeShipping(subtotal);
+  const rawShipping = selectedOption?.price ?? 0;
+  const shipping = freeShipping ? 0 : rawShipping;
   const total = subtotal + shipping;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -121,8 +138,8 @@ export default function CheckoutPage() {
     setLoading(true);
     setStockErrors([]);
 
-    if (!selectedRateId) {
-      alert("Selecciona una opción de envío antes de continuar.");
+    if (!selectedRateId || !quoteId) {
+      alert("Cotiza el envío antes de continuar.");
       setLoading(false);
       return;
     }
@@ -136,14 +153,12 @@ export default function CheckoutPage() {
       city: formData.get("city"),
       state: formData.get("state"),
       zipCode: formData.get("zipCode"),
+      quoteId,
       shippingRateId: selectedRateId,
       items: items.map((i) => ({
         productId: i.productId,
-        name: i.name,
         size: i.size,
-        price: i.price,
         quantity: i.quantity,
-        image: i.image,
       })),
     };
 
@@ -406,6 +421,13 @@ export default function CheckoutPage() {
 
               {!loadingShipping && !shippingError && shippingOptions.length > 0 && (
                 <div className="space-y-3">
+                  {freeShipping && (
+                    <div className="p-3 border border-green-300 bg-green-50">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-green-700">
+                        ✓ Envío gratis aplicado — elige tu paquetería preferida
+                      </p>
+                    </div>
+                  )}
                   {shippingOptions.map((opt) => {
                     const active = selectedRateId === opt.rateId;
                     return (
@@ -436,8 +458,19 @@ export default function CheckoutPage() {
                               : `${opt.daysMin}-${opt.daysMax} días`}
                           </p>
                         </div>
-                        <div className="text-sm font-black whitespace-nowrap">
-                          {formatPrice(opt.price)}
+                        <div className="text-sm font-black whitespace-nowrap flex flex-col items-end">
+                          {freeShipping ? (
+                            <>
+                              <span className={`text-[10px] line-through font-bold ${active ? "text-white/50" : "text-gray-400"}`}>
+                                {formatPrice(opt.price)}
+                              </span>
+                              <span className={active ? "text-green-300" : "text-green-600"}>
+                                GRATIS
+                              </span>
+                            </>
+                          ) : (
+                            formatPrice(opt.price)
+                          )}
                         </div>
                       </button>
                     );
@@ -445,7 +478,7 @@ export default function CheckoutPage() {
                 </div>
               )}
 
-              {!loadingShipping && !shippingError && shippingOptions.length === 0 && /^\d{4,5}$/.test(zipCode.trim()) && (
+              {!loadingShipping && !shippingError && shippingOptions.length === 0 && /^\d{5}$/.test(zipCode.trim()) && (
                 <div className="p-4 border border-gray-200 bg-white">
                   <p className="text-xs font-bold uppercase tracking-widest text-gray-500">
                     No hay opciones de envío disponibles para este código postal.
@@ -485,7 +518,7 @@ export default function CheckoutPage() {
             {/* Submit */}
             <Button
               type="submit"
-              disabled={loading || !acceptedTerms || !selectedRateId}
+              disabled={loading || !acceptedTerms || !selectedRateId || !quoteId}
               className="w-full h-16 rounded-none bg-black text-white hover:bg-gray-900 uppercase font-black tracking-widest transition-all hover:shadow-xl disabled:opacity-50 flex items-center justify-center gap-3"
             >
               {loading ? (
@@ -546,8 +579,12 @@ export default function CheckoutPage() {
                 <span className="flex items-center gap-1">
                   <Truck className="w-3 h-3" /> Envío
                 </span>
-                <span className="text-black">
-                  {selectedOption ? formatPrice(shipping) : "—"}
+                <span className={freeShipping ? "text-green-600" : "text-black"}>
+                  {selectedOption
+                    ? freeShipping
+                      ? "GRATIS"
+                      : formatPrice(shipping)
+                    : "—"}
                 </span>
               </div>
               {selectedOption && (

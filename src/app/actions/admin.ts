@@ -8,6 +8,8 @@ import { resend, SEND_FROM } from "@/lib/resend";
 import OrderShippedEmail from "@/components/emails/OrderShippedEmail";
 import OrderDeliveredEmail from "@/components/emails/OrderDeliveredEmail";
 import { stripe } from "@/lib/stripe";
+import { createShipment } from "@/lib/skydropx";
+import { requireAdminUser, logAudit } from "@/lib/admin-utils";
 
 async function verifyAdmin() {
   const supabase = await createClient();
@@ -181,20 +183,40 @@ export async function updateProductAction(prevState: any, formData: FormData) {
         }
       });
 
-      // Para actualizar variantes, una estrategia simple es borrar y recrear 
-      // (solo si no hay órdenes asociadas aún, de lo contrario habría que hacer upsert/delete selectivo)
-      // Por ahora para este MVP, haremos un borrado de las que no tengan stock 0 y recreación
-      await tx.variant.deleteMany({ where: { productId: id } });
-      
-      for (const v of variants) {
-        await tx.variant.create({
-          data: {
+      // Variantes: upsert por (productId, size, color). Las variantes que ya no
+      // están en el form NO se borran (romperían la FK contra OrderItem/CartItem)
+      // — se les pone stock=0 para que dejen de venderse.
+      const existing = await tx.variant.findMany({
+        where: { productId: id },
+        select: { id: true, size: true, color: true },
+      });
+      const incomingKeys = new Set(
+        variants.map((v: { size: string; color: string }) => `${v.size}|${v.color}`)
+      );
+
+      for (const v of variants as Array<{ size: string; color: string; stock: number }>) {
+        await tx.variant.upsert({
+          where: {
+            productId_size_color: { productId: id, size: v.size, color: v.color },
+          },
+          update: { stock: v.stock },
+          create: {
             productId: id,
             color: v.color,
             size: v.size,
             stock: v.stock,
-            sku: `${slug.toUpperCase()}-${v.size.toUpperCase()}-${v.color.toUpperCase().slice(0, 3)}-${Math.round(Math.random()*1000)}`
-          }
+            sku: `${slug.toUpperCase()}-${v.size.toUpperCase()}-${v.color.toUpperCase().slice(0, 3)}-${Math.round(Math.random() * 1000)}`,
+          },
+        });
+      }
+
+      const removedIds = existing
+        .filter((e) => !incomingKeys.has(`${e.size}|${e.color}`))
+        .map((e) => e.id);
+      if (removedIds.length > 0) {
+        await tx.variant.updateMany({
+          where: { id: { in: removedIds } },
+          data: { stock: 0 },
         });
       }
     });
@@ -284,6 +306,218 @@ export async function updateOrderStatusAction(orderId: string, newStatus: OrderS
   } catch (error: any) {
     console.error("Error actualizando estado del pedido:", error);
     return { error: "No se pudo actualizar el estado del pedido." };
+  }
+}
+
+/**
+ * Manually create the Skydropx shipment for an order stuck in PAID without
+ * a tracking number. Used as a recovery path when the Stripe webhook hand-off
+ * to Skydropx failed and Stripe's automatic retries already ran out.
+ *
+ * Idempotent: re-running on an order that already has skydropxShipmentId is a
+ * no-op. Same per-step guards as the webhook (skydropxShipmentId,
+ * shippedEmailSentAt) so this can be triggered manually or by a future cron.
+ */
+export async function createShipmentForOrderAction(orderId: string) {
+  if (!(await verifyAdmin())) return { error: "Acceso denegado." };
+
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { items: true, user: true },
+  });
+
+  if (!order) return { error: "Pedido no encontrado." };
+  if (order.skydropxShipmentId) {
+    return { error: "Esta orden ya tiene un rastreo generado." };
+  }
+  if (order.isPersonalDelivery) {
+    return { error: "Es entrega personal — no requiere rastreo." };
+  }
+  if (!order.skydropxRateId) {
+    return { error: "La orden no tiene un rateId de Skydropx asociado. Reembolsa y pídele al cliente que vuelva a comprar." };
+  }
+  if (order.status !== "PAID" && order.status !== "SHIPPED") {
+    return { error: `No puedes generar rastreo para una orden en estado ${order.status}.` };
+  }
+
+  const shippingAddr = await prisma.address.findUnique({
+    where: { id: order.addressId },
+  });
+  if (!shippingAddr) return { error: "No se encontró la dirección de envío." };
+
+  try {
+    const totalItems = order.items.reduce((sum, it) => sum + it.quantity, 0);
+    const shipment = await createShipment({
+      rateId: order.skydropxRateId,
+      orderNumber: order.orderNumber,
+      totalItems,
+      destination: {
+        name: shippingAddr.name,
+        street1: shippingAddr.address,
+        city: shippingAddr.city,
+        province: shippingAddr.state,
+        zip: shippingAddr.zipCode,
+        phone: shippingAddr.phone,
+        email: order.user?.email || "",
+      },
+    });
+
+    await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        status: "SHIPPED",
+        skydropxShipmentId: shipment.shipmentId,
+        trackingNumber: shipment.trackingNumber,
+        trackingUrl: shipment.trackingUrl,
+        shippingLabelUrl: shipment.labelUrl,
+        shippedAt: order.shippedAt ?? new Date(),
+      },
+    });
+
+    if (resend && order.user?.email && !order.shippedEmailSentAt) {
+      const { error: emailError } = await resend.emails.send({
+        from: SEND_FROM,
+        to: order.user.email,
+        subject: `📦 Tu pedido ${order.orderNumber} va en camino`,
+        react: OrderShippedEmail({
+          orderNumber: order.orderNumber,
+          customerName: order.user.name?.split(" ")[0] || "Cliente",
+          estimatedDelivery: "3-5 días hábiles",
+          carrier: order.carrier || undefined,
+          trackingNumber: shipment.trackingNumber || undefined,
+          trackingUrl: shipment.trackingUrl || undefined,
+        }),
+      });
+      if (emailError) {
+        console.error("Error API Resend (correo envío manual):", emailError);
+      } else {
+        await prisma.order.update({
+          where: { id: orderId },
+          data: { shippedEmailSentAt: new Date() },
+        });
+      }
+    }
+
+    revalidatePath("/admin/payments");
+    return { success: true, trackingNumber: shipment.trackingNumber };
+  } catch (error: any) {
+    const message = error?.message || "Error desconocido";
+    console.error(`Error generando rastreo Skydropx para ${order.orderNumber}:`, error);
+    return { error: `No se pudo generar el rastreo: ${message}` };
+  }
+}
+
+/**
+ * Marca una orden como enviada MANUALMENTE y dispara el correo al cliente.
+ * Para órdenes que el admin trabaja fuera de la automatización de Skydropx:
+ * entregas personales en NL y órdenes con envío gratis (subtotal >= $1499)
+ * donde el admin genera el rastreo por su cuenta con la paquetería que prefiera.
+ *
+ * Requiere carrier + trackingNumber. Idempotente a nivel de correo: 
+ * respeta `shippedEmailSentAt`.
+ */
+export async function markManualShippedAction(input: {
+  orderId: string;
+  carrier: string;
+  trackingNumber: string;
+}) {
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acceso denegado." };
+
+  const carrier = input.carrier.trim();
+  const trackingNumber = input.trackingNumber.trim();
+
+  if (!carrier) return { error: "Indica la paquetería." };
+  if (!trackingNumber) return { error: "Indica el número de rastreo." };
+
+  let trackingUrl: string | null = null;
+  const carrierLower = carrier.toLowerCase().replace(/\s/g, "");
+  
+  if (carrierLower.includes("dhl")) {
+    trackingUrl = `https://www.dhl.com/mx-es/home/rastreo.html?tracking_id=${trackingNumber}`;
+  } else if (carrierLower.includes("fedex")) {
+    trackingUrl = `https://www.fedex.com/apps/fedextrack/?action=track&trackingnumber=${trackingNumber}`;
+  } else if (carrierLower.includes("estafeta")) {
+    trackingUrl = `https://www.estafeta.com/Herramientas/Rastreo?guia=${trackingNumber}`;
+  } else if (carrierLower.includes("paquetexpress") || carrierLower.includes("paqueteexpress")) {
+    trackingUrl = `https://www.paquetexpress.com.mx/rastreo?guia=${trackingNumber}`;
+  } else if (carrierLower.includes("redpack")) {
+    trackingUrl = `https://www.redpack.com.mx/rastreo-de-envios/?guia=${trackingNumber}`;
+  } else if (carrierLower.includes("sendex")) {
+    trackingUrl = `https://www.sendex.mx/rastreo-de-envio?guia=${trackingNumber}`;
+  } else if (carrierLower.includes("jt") || carrierLower.includes("j&t")) {
+    trackingUrl = `https://www.jtexpress.mx/index/query/gzquery.html?bills=${trackingNumber}`;
+  } else if (carrierLower.includes("carssa")) {
+    trackingUrl = `https://www.carssa.com.mx/rastreo/?guia=${trackingNumber}`;
+  } else if (carrierLower.includes("99minutos")) {
+    trackingUrl = `https://tracking.99minutos.com/tracking/${trackingNumber}`;
+  }
+
+  const order = await prisma.order.findUnique({
+    where: { id: input.orderId },
+    include: { user: true },
+  });
+  if (!order) return { error: "Pedido no encontrado." };
+
+  if (!order.isFreeShipping && !order.isPersonalDelivery) {
+    return { error: "Esta orden tiene envío cobrado — se procesa automáticamente por Skydropx." };
+  }
+  if (order.status !== "PAID" && order.status !== "SHIPPED") {
+    return { error: `No puedes marcar como enviada una orden en estado ${order.status}.` };
+  }
+
+  try {
+    const wasAlreadyShipped = order.status === "SHIPPED";
+
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        status: "SHIPPED",
+        carrier,
+        trackingNumber,
+        trackingUrl,
+        shippedAt: order.shippedAt ?? new Date(),
+      },
+    });
+
+    if (resend && order.user?.email && !order.shippedEmailSentAt) {
+      const { error: emailError } = await resend.emails.send({
+        from: SEND_FROM,
+        to: order.user.email,
+        subject: `📦 Tu pedido ${order.orderNumber} va en camino`,
+        react: OrderShippedEmail({
+          orderNumber: order.orderNumber,
+          customerName: order.user.name?.split(" ")[0] || "Cliente",
+          estimatedDelivery: "3-5 días hábiles",
+          carrier,
+          trackingNumber,
+          trackingUrl: trackingUrl || undefined,
+        }),
+      });
+      if (emailError) {
+        console.error("Error API Resend (envío manual):", emailError);
+        // No borramos el cambio de estado — el admin puede reenviar el correo.
+      } else {
+        await prisma.order.update({
+          where: { id: order.id },
+          data: { shippedEmailSentAt: new Date() },
+        });
+      }
+    }
+
+    await logAudit({
+      actorId: admin.id,
+      action: wasAlreadyShipped ? "MANUAL_SHIP_UPDATE" : "MANUAL_SHIP",
+      entityType: "ORDER",
+      entityIds: [order.id],
+      metadata: { carrier, trackingNumber, trackingUrl },
+    });
+
+    revalidatePath("/admin/payments");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error marcando envío manual:", error);
+    return { error: error?.message || "No se pudo registrar el envío." };
   }
 }
 

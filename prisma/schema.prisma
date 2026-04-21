@@ -30,7 +30,6 @@ enum OrderStatus {
   DISPUTED
 }
 
-
 enum PaymentMethod {
   STRIPE
 }
@@ -54,48 +53,48 @@ model User {
 }
 
 model Category {
-  id        String    @id @default(uuid())
+  id        String   @id @default(uuid())
   name      String
-  slug      String    @unique
-  createdAt DateTime  @default(now())
+  slug      String   @unique
+  createdAt DateTime @default(now())
 
-  products  Product[]
+  products Product[]
 }
 
 model Team {
-  id        String    @id @default(uuid())
+  id        String   @id @default(uuid())
   name      String
-  slug      String    @unique
+  slug      String   @unique
   logo      String?
-  createdAt DateTime  @default(now())
+  createdAt DateTime @default(now())
 
-  products  Product[]
+  products Product[]
 }
 
 model Product {
-  id          String    @id @default(uuid())
-  name        String
-  slug        String    @unique
-  description String?
-  price       Decimal   @db.Decimal(10, 2)
+  id           String   @id @default(uuid())
+  name         String
+  slug         String   @unique
+  description  String?
+  price        Decimal  @db.Decimal(10, 2)
   comparePrice Decimal? @db.Decimal(10, 2)
-  images      String[]
-  isNew       Boolean   @default(false)
-  isFeatured  Boolean   @default(false)
-  isActive    Boolean   @default(true)
-  isDeleted   Boolean   @default(false)
+  images       String[]
+  isNew        Boolean  @default(false)
+  isFeatured   Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  isDeleted    Boolean  @default(false)
 
-  categoryId  String
-  category    Category  @relation(fields: [categoryId], references: [id])
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
 
-  teamId      String
-  team        Team      @relation(fields: [teamId], references: [id])
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id])
 
-  createdAt   DateTime  @default(now())
+  createdAt DateTime @default(now())
 
-  variants    Variant[]
+  variants     Variant[]
   wishlistedBy WishlistItem[]
-  reviews     Review[]
+  reviews      Review[]
 }
 
 model Review {
@@ -130,16 +129,18 @@ model WishlistItem {
 }
 
 model Variant {
-  id        String    @id @default(uuid())
+  id        String  @id @default(uuid())
   productId String
-  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   color     String
   size      String
-  stock     Int       @default(0)
-  sku       String    @unique
+  stock     Int     @default(0)
+  sku       String  @unique
 
   orderItems OrderItem[]
   cartItems  CartItem[]
+
+  @@unique([productId, size, color])
 }
 
 model Address {
@@ -155,6 +156,8 @@ model Address {
   zipCode   String
   isDefault Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  orders    Order[]
 }
 
 model Order {
@@ -163,38 +166,42 @@ model Order {
   userId        String
   user          User          @relation(fields: [userId], references: [id])
   addressId     String
+  address       Address       @relation(fields: [addressId], references: [id])
   status        OrderStatus   @default(PENDING)
   subtotal      Decimal       @db.Decimal(10, 2)
   shipping      Decimal       @db.Decimal(10, 2)
   total         Decimal       @db.Decimal(10, 2)
   paymentMethod PaymentMethod
   notes         String?
-  externalId    String?       // ID from Stripe or Mercado Pago
+  externalId    String? // ID from Stripe or Mercado Pago
   createdAt     DateTime      @default(now())
 
   // Shipping (Skydropx integration)
-  carrier             String?   // "Estafeta", "DHL", "Entrega Personal (NL)", etc.
-  skydropxRateId      String?   // rate_id selected at checkout, used to create shipment after payment
-  skydropxShipmentId  String?   // id returned by Skydropx once the shipment is created
-  trackingNumber      String?
-  trackingUrl         String?
-  shippingLabelUrl    String?   // PDF label URL
-  isPersonalDelivery  Boolean   @default(false)  // true when shipped in person (NL zone)
-  shippedAt           DateTime?
-  deliveredAt         DateTime?
+  carrier            String? // "Estafeta", "DHL", "Entrega Personal (NL)", etc.
+  skydropxRateId     String? // rate_id selected at checkout, used to create shipment after payment
+  skydropxShipmentId String? // id returned by Skydropx once the shipment is created
+  trackingNumber     String?
+  trackingUrl        String?
+  shippingLabelUrl   String? // PDF label URL
+  isPersonalDelivery Boolean   @default(false) // true when shipped in person (NL zone)
+  isFreeShipping     Boolean   @default(false) // true when subtotal >= threshold; admin generates label & emails tracking manually
+  shippedAt          DateTime?
+  deliveredAt        DateTime?
+  paymentEmailSentAt DateTime? // idempotency guard for the "payment confirmed" email
+  shippedEmailSentAt DateTime? // idempotency guard for the "in transit" email
 
-  items         OrderItem[]
+  items OrderItem[]
 }
 
 model OrderItem {
-  id        String   @id @default(uuid())
+  id        String  @id @default(uuid())
   orderId   String
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   variantId String
-  variant   Variant  @relation(fields: [variantId], references: [id])
-  price     Decimal  @db.Decimal(10, 2)
+  variant   Variant @relation(fields: [variantId], references: [id])
+  price     Decimal @db.Decimal(10, 2)
   quantity  Int
-  total     Decimal  @db.Decimal(10, 2)
+  total     Decimal @db.Decimal(10, 2)
 }
 
 model Cart {
@@ -206,11 +213,11 @@ model Cart {
 }
 
 model CartItem {
-  id        String   @id @default(uuid())
+  id        String  @id @default(uuid())
   cartId    String
-  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  cart      Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
   variantId String
-  variant   Variant  @relation(fields: [variantId], references: [id])
+  variant   Variant @relation(fields: [variantId], references: [id])
   quantity  Int
 
   @@unique([cartId, variantId])
@@ -220,6 +227,21 @@ model WebhookEvent {
   id        String   @id
   type      String
   createdAt DateTime @default(now())
+}
+
+// Snapshot of a Skydropx quotation. Persisted so the rates (and their rate_ids)
+// survive between the "cotizar" click and the final checkout submit. Without this
+// the server would have to re-quote (Skydropx returns fresh rate_ids each call,
+// so the client-selected rateId would never match).
+model ShippingQuote {
+  id         String   @id @default(uuid())
+  zipCode    String
+  totalItems Int
+  rates      Json // ShippingOption[] — same shape returned by quoteShipping()
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([expiresAt])
 }
 
 model AuditLog {

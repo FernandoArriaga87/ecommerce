@@ -7,7 +7,8 @@ export const checkoutSchema = z.object({
   address: z.string().min(5, "La dirección es obligatoria"),
   city: z.string().min(2, "La ciudad es obligatoria"),
   state: z.string().min(2, "El estado es obligatorio"),
-  zipCode: z.string().min(4, "Código postal inválido"),
+  zipCode: z.string().regex(/^\d{5}$/, "Código postal inválido"),
+  quoteId: z.string().uuid("Cotización inválida — vuelve a cotizar el envío"),
   shippingRateId: z.string().min(1, "Selecciona una opción de envío"),
   items: z.array(
     z.object({

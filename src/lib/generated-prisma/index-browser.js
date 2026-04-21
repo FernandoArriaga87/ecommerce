@@ -227,8 +227,11 @@ exports.Prisma.OrderScalarFieldEnum = {
   trackingUrl: 'trackingUrl',
   shippingLabelUrl: 'shippingLabelUrl',
   isPersonalDelivery: 'isPersonalDelivery',
+  isFreeShipping: 'isFreeShipping',
   shippedAt: 'shippedAt',
-  deliveredAt: 'deliveredAt'
+  deliveredAt: 'deliveredAt',
+  paymentEmailSentAt: 'paymentEmailSentAt',
+  shippedEmailSentAt: 'shippedEmailSentAt'
 };
 
 exports.Prisma.OrderItemScalarFieldEnum = {
@@ -259,6 +262,15 @@ exports.Prisma.WebhookEventScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.ShippingQuoteScalarFieldEnum = {
+  id: 'id',
+  zipCode: 'zipCode',
+  totalItems: 'totalItems',
+  rates: 'rates',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.AuditLogScalarFieldEnum = {
   id: 'id',
   actorId: 'actorId',
@@ -272,6 +284,10 @@ exports.Prisma.AuditLogScalarFieldEnum = {
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
+};
+
+exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
 };
 
 exports.Prisma.NullableJsonNullValueInput = {
@@ -333,6 +349,7 @@ exports.Prisma.ModelName = {
   Cart: 'Cart',
   CartItem: 'CartItem',
   WebhookEvent: 'WebhookEvent',
+  ShippingQuote: 'ShippingQuote',
   AuditLog: 'AuditLog'
 };
 

@@ -139,6 +139,8 @@ model Variant {
 
   orderItems OrderItem[]
   cartItems  CartItem[]
+
+  @@unique([productId, size, color])
 }
 
 model Address {
@@ -154,6 +156,8 @@ model Address {
   zipCode   String
   isDefault Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  orders Order[]
 }
 
 model Order {
@@ -162,6 +166,7 @@ model Order {
   userId        String
   user          User          @relation(fields: [userId], references: [id])
   addressId     String
+  address       Address       @relation(fields: [addressId], references: [id])
   status        OrderStatus   @default(PENDING)
   subtotal      Decimal       @db.Decimal(10, 2)
   shipping      Decimal       @db.Decimal(10, 2)
@@ -179,8 +184,11 @@ model Order {
   trackingUrl        String?
   shippingLabelUrl   String? // PDF label URL
   isPersonalDelivery Boolean   @default(false) // true when shipped in person (NL zone)
+  isFreeShipping     Boolean   @default(false) // true when subtotal >= threshold; admin generates label & emails tracking manually
   shippedAt          DateTime?
   deliveredAt        DateTime?
+  paymentEmailSentAt DateTime? // idempotency guard for the "payment confirmed" email
+  shippedEmailSentAt DateTime? // idempotency guard for the "in transit" email
 
   items OrderItem[]
 }
@@ -219,6 +227,21 @@ model WebhookEvent {
   id        String   @id
   type      String
   createdAt DateTime @default(now())
+}
+
+// Snapshot of a Skydropx quotation. Persisted so the rates (and their rate_ids)
+// survive between the "cotizar" click and the final checkout submit. Without this
+// the server would have to re-quote (Skydropx returns fresh rate_ids each call,
+// so the client-selected rateId would never match).
+model ShippingQuote {
+  id         String   @id @default(uuid())
+  zipCode    String
+  totalItems Int
+  rates      Json // ShippingOption[] — same shape returned by quoteShipping()
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([expiresAt])
 }
 
 model AuditLog {

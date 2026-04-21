@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { quoteShipping } from "@/lib/skydropx";
+import { quoteShipping, type ShippingOption } from "@/lib/skydropx";
+import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@/lib/generated-prisma";
+
+// Skydropx rate IDs are scoped to the quotation that produced them. We persist
+// the quote (with a 30 min TTL) and hand the client a quoteId to reference
+// at checkout — that way the server can re-validate the chosen rateId without
+// re-calling Skydropx (which would mint fresh, non-matching IDs).
+const QUOTE_TTL_MINUTES = 30;
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,21 +18,37 @@ export async function POST(req: NextRequest) {
     const address = String(body.address || "").trim();
     const totalItems = Number(body.totalItems || 1);
 
-    if (!/^\d{4,5}$/.test(zip)) {
+    if (!/^\d{5}$/.test(zip)) {
       return NextResponse.json({ error: "Código postal inválido" }, { status: 400 });
     }
     if (!Number.isFinite(totalItems) || totalItems < 1 || totalItems > 50) {
       return NextResponse.json({ error: "Cantidad inválida" }, { status: 400 });
     }
 
-    const options = await quoteShipping({ 
-      destinationZip: zip, 
-      destinationCity: city, 
-      destinationState: state, 
-      destinationAddress: address, 
-      totalItems 
+    const options: ShippingOption[] = await quoteShipping({
+      destinationZip: zip,
+      destinationCity: city,
+      destinationState: state,
+      destinationAddress: address,
+      totalItems,
     });
-    return NextResponse.json({ options });
+
+    if (options.length === 0) {
+      return NextResponse.json({ options: [], quoteId: null });
+    }
+
+    const expiresAt = new Date(Date.now() + QUOTE_TTL_MINUTES * 60 * 1000);
+    const quote = await prisma.shippingQuote.create({
+      data: {
+        zipCode: zip,
+        totalItems,
+        rates: options as unknown as Prisma.InputJsonValue,
+        expiresAt,
+      },
+      select: { id: true },
+    });
+
+    return NextResponse.json({ options, quoteId: quote.id });
   } catch (error: any) {
     console.error("Shipping quote error:", error);
     return NextResponse.json(
