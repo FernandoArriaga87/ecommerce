@@ -22,6 +22,19 @@ interface OrderShippedEmailProps {
   carrier?: string;
   trackingNumber?: string;
   trackingUrl?: string;
+  items?: Array<{
+    name: string;
+    size: string;
+    quantity: number;
+    price: string;
+  }>;
+  shippingAddress?: {
+    name: string;
+    address: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  };
 }
 
 export const OrderShippedEmail = ({
@@ -31,6 +44,16 @@ export const OrderShippedEmail = ({
   carrier,
   trackingNumber,
   trackingUrl,
+  items = [
+    { name: 'Jersey Barcelona 24/25', size: 'M', quantity: 1, price: '$700.00' },
+  ],
+  shippingAddress = {
+    name: 'Juan Pérez',
+    address: 'Av. Reforma 123, Col. Centro',
+    city: 'Ciudad de México',
+    state: 'CDMX',
+    zipCode: '06000',
+  },
 }: OrderShippedEmailProps) => {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
@@ -127,7 +150,57 @@ export const OrderShippedEmail = ({
               )}
             </Section>
 
-            <Section className="px-[32px] pt-[8px]">
+            {/* Items */}
+            {items && items.length > 0 && (
+              <>
+                <Hr className="border border-solid border-[#eaeaea] my-0 mx-[32px]" />
+                <Section className="px-[32px] pt-[24px]">
+                  <Text className="text-[10px] font-black tracking-[0.25em] uppercase text-[#999999] m-0 mb-[16px]">
+                    Productos enviados
+                  </Text>
+                  {items.map((item, i) => (
+                    <Row key={i} className="mb-[12px]">
+                      <Column>
+                        <Text className="text-[#111111] text-[14px] font-bold leading-[20px] m-0">
+                          {item.name}
+                        </Text>
+                        <Text className="text-[#999999] text-[12px] leading-[18px] m-0 mt-[2px]">
+                          Talla {item.size} · Cantidad: {item.quantity}
+                        </Text>
+                      </Column>
+                      <Column align="right">
+                        <Text className="text-[#111111] text-[14px] font-black leading-[20px] m-0">
+                          {item.price}
+                        </Text>
+                      </Column>
+                    </Row>
+                  ))}
+                </Section>
+              </>
+            )}
+
+            {/* Shipping Address */}
+            {shippingAddress && (
+              <>
+                <Hr className="border border-solid border-[#eaeaea] my-[20px] mx-[32px]" />
+                <Section className="px-[32px]">
+                  <Text className="text-[10px] font-black tracking-[0.25em] uppercase text-[#999999] m-0 mb-[8px]">
+                    Se envía a
+                  </Text>
+                  <Text className="text-[#111111] text-[14px] font-bold leading-[20px] m-0">
+                    {shippingAddress.name}
+                  </Text>
+                  <Text className="text-[#444444] text-[13px] leading-[20px] m-0 mt-[2px]">
+                    {shippingAddress.address}
+                  </Text>
+                  <Text className="text-[#444444] text-[13px] leading-[20px] m-0">
+                    {shippingAddress.city}, {shippingAddress.state} · C.P. {shippingAddress.zipCode}
+                  </Text>
+                </Section>
+              </>
+            )}
+
+            <Section className="px-[32px] pt-[24px]">
               <Text className="text-[#444444] text-[14px] leading-[24px]">
                 Puedes revisar el estado de tu pedido en cualquier momento desde tu panel de control o haciendo clic en el botón de abajo.
               </Text>

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminUser, logAudit } from "@/lib/admin-utils";
 import { resend, SEND_FROM } from "@/lib/resend";
 import OrderShippedEmail from "@/components/emails/OrderShippedEmail";
+import { formatPrice } from "@/lib/data";
 
 const MAX_BULK = 200;
 
@@ -71,7 +72,10 @@ export async function bulkOrderStatusAction(ids: string[], status: OrderBulkActi
 
   const orders = await prisma.order.findMany({
     where: { id: { in: targets }, status: { in: eligibleStatuses as never } },
-    include: { user: true },
+    include: {
+      user: true,
+      items: { include: { variant: { include: { product: true } } } },
+    },
   });
 
   if (orders.length === 0) {
@@ -101,6 +105,15 @@ export async function bulkOrderStatusAction(ids: string[], status: OrderBulkActi
       for (const order of orders) {
         if (!order.user?.email) continue;
         try {
+          const shipAddr = await prisma.address.findUnique({
+            where: { id: order.addressId },
+          });
+          const shippedItems = order.items.map((it) => ({
+            name: it.variant.product.name,
+            size: it.variant.size,
+            quantity: it.quantity,
+            price: formatPrice(Number(it.total)),
+          }));
           await resend.emails.send({
             from: SEND_FROM,
             to: order.user.email,
@@ -108,6 +121,17 @@ export async function bulkOrderStatusAction(ids: string[], status: OrderBulkActi
             react: OrderShippedEmail({
               orderNumber: order.orderNumber,
               customerName: order.user.name.split(" ")[0] || "Cliente",
+              carrier: order.carrier || undefined,
+              trackingNumber: order.trackingNumber || undefined,
+              trackingUrl: order.trackingUrl || undefined,
+              items: shippedItems,
+              shippingAddress: shipAddr ? {
+                name: shipAddr.name,
+                address: shipAddr.address,
+                city: shipAddr.city,
+                state: shipAddr.state,
+                zipCode: shipAddr.zipCode,
+              } : undefined,
             }),
           });
         } catch (emailErr) {

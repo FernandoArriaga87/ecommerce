@@ -98,7 +98,7 @@ export async function POST(req: Request) {
             name: item.variant.product.name,
             size: item.variant.size,
             quantity: item.quantity,
-            price: formatPrice(Number(item.price)),
+            price: formatPrice(Number(item.total)),
           }));
 
           const { error: sendError } = await resend.emails.send({
@@ -191,6 +191,15 @@ export async function POST(req: Request) {
         if (resend && order.user?.email &&
             order.skydropxShipmentId &&
             !order.shippedEmailSentAt) {
+          const shipAddr = await prisma.address.findUnique({
+            where: { id: order.addressId },
+          });
+          const shippedItems = order.items.map((item) => ({
+            name: item.variant.product.name,
+            size: item.variant.size,
+            quantity: item.quantity,
+            price: formatPrice(Number(item.total)),
+          }));
           const { error: shipEmailError } = await resend.emails.send({
             from: SEND_FROM,
             to: order.user.email,
@@ -202,6 +211,14 @@ export async function POST(req: Request) {
               carrier: order.carrier || undefined,
               trackingNumber: order.trackingNumber || undefined,
               trackingUrl: order.trackingUrl || undefined,
+              items: shippedItems,
+              shippingAddress: shipAddr ? {
+                name: shipAddr.name,
+                address: shipAddr.address,
+                city: shipAddr.city,
+                state: shipAddr.state,
+                zipCode: shipAddr.zipCode,
+              } : undefined,
             }),
           });
           if (shipEmailError) {

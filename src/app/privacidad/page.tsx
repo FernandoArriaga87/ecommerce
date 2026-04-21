@@ -45,7 +45,7 @@ export default function PrivacidadPage() {
           <li>Procesar y entregar tus pedidos.</li>
           <li>Gestionar tu cuenta y acceso a compras.</li>
           <li>Emitir comprobantes fiscales cuando los solicites.</li>
-          <li>Atender devoluciones, quejas y aclaraciones.</li>
+          <li>Atender quejas, aclaraciones y reposiciones por defecto o error de envío.</li>
           <li>Cumplir obligaciones legales y fiscales.</li>
         </ul>
         <p className="mt-3"><strong>Finalidades secundarias</strong> (requieren tu consentimiento):</p>

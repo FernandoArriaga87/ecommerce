@@ -10,6 +10,7 @@ import { formatPrice } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { WishlistHeart } from "@/components/wishlist-heart";
+import { BLUR_DATA_URL } from "@/lib/blur-placeholder";
 
 interface Product {
   id: string;
@@ -173,6 +174,8 @@ export function ClientHome({
             quality={85}
             priority
             fetchPriority="high"
+            placeholder="blur"
+            blurDataURL={BLUR_DATA_URL}
             className="object-cover object-center"
           />
           {/* Enhanced Gradient Overlay for readability: darker on the left where the text is */}
@@ -354,7 +357,7 @@ export function ClientHome({
               viewport={{ once: true, margin: "-100px" }}
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10"
             >
-              {products.map((product) => (
+              {products.map((product, idx) => (
                 <motion.div key={product.id} variants={itemVariants} className="relative">
                   <WishlistHeart productId={product.id} variant="overlay" />
                   <Link href={`/producto/${product.id}`} className="group block">
@@ -372,6 +375,9 @@ export function ClientHome({
                         alt={product.name}
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                        placeholder="blur"
+                        blurDataURL={BLUR_DATA_URL}
+                        loading={idx < 4 ? "eager" : "lazy"}
                         className="object-cover transition-transform duration-1000 ease-[0.23,1,0.32,1] group-hover:scale-110"
                       />
 

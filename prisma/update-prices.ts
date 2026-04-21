@@ -4,9 +4,9 @@ const prisma = new PrismaClient();
 
 async function main() {
   const res = await prisma.product.updateMany({
-    data: { price: 600, comparePrice: null },
+    data: { price: 700, comparePrice: null },
   });
-  console.log(`Precios actualizados: ${res.count} productos ahora cuestan $600.`);
+  console.log(`Precios actualizados: ${res.count} productos ahora cuestan $700.`);
 }
 
 main()

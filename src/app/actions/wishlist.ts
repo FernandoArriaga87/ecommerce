@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { checkActionRateLimit } from "@/lib/rate-limit-action";
 
 async function requireUserId(): Promise<string | null> {
   const supabase = await createClient();
@@ -11,6 +12,10 @@ async function requireUserId(): Promise<string | null> {
 }
 
 export async function toggleWishlistAction(productId: string) {
+  if (!(await checkActionRateLimit("write"))) {
+    return { error: "Demasiadas solicitudes. Intenta de nuevo en un minuto." };
+  }
+
   const userId = await requireUserId();
   if (!userId) return { error: "Debes iniciar sesión.", requiresAuth: true };
 

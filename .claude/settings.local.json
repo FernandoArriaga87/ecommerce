@@ -14,7 +14,9 @@
       "Bash(npx eslint *)",
       "Bash(node -e 'const fs=require\\(\"fs\"\\);const b=fs.readFileSync\\(\"src/lib/csv.ts\"\\);console.log\\(Array.from\\(b.slice\\(0,200\\)\\).map\\(x=>x.toString\\(16\\)\\).join\\(\" \"\\)\\)')",
       "Bash(node -e 'const fs=require\\(\"fs\"\\);const b=fs.readFileSync\\(\"src/lib/csv.ts\",\"utf8\"\\);const idx=b.indexOf\\(\"BOM = \"\\);console.log\\(JSON.stringify\\(b.slice\\(idx,idx+30\\)\\)\\);const m=b.match\\(/BOM = \\\\\"\\(.+?\\)\\\\\"/\\);if\\(m\\){console.log\\(\"BOM length:\",m[1].length,\"codes:\",[...m[1]].map\\(c=>c.charCodeAt\\(0\\).toString\\(16\\)\\).join\\(\" \"\\)\\)}')",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(grep -rn 'Prisma\\\\.sql\\\\|prisma\\\\.$queryRaw' src/)",
+      "Bash(grep -rn '$queryRaw\\\\|$executeRaw' src/)"
     ]
   }
 }

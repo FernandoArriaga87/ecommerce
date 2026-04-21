@@ -10,16 +10,10 @@ import OrderDeliveredEmail from "@/components/emails/OrderDeliveredEmail";
 import { stripe } from "@/lib/stripe";
 import { createShipment } from "@/lib/skydropx";
 import { requireAdminUser, logAudit } from "@/lib/admin-utils";
+import { formatPrice } from "@/lib/data";
 
-async function verifyAdmin() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return false;
-  const dbUser = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: { role: true }
-  });
-  return dbUser && dbUser.role === 'ADMIN';
+async function verifyAdmin(): Promise<boolean> {
+  return (await requireAdminUser()) !== null;
 }
 
 export async function createProductAction(prevState: any, formData: FormData) {
@@ -258,12 +252,24 @@ export async function updateOrderStatusAction(orderId: string, newStatus: OrderS
     const order = await prisma.order.update({
       where: { id: orderId },
       data: { status: newStatus, ...extraData },
-      include: { user: true }
+      include: {
+        user: true,
+        items: { include: { variant: { include: { product: true } } } },
+      },
     });
 
     // Si se marca como enviado y tenemos resend configurado
     if (newStatus === "SHIPPED" && resend && order.user?.email) {
       try {
+        const shipAddr = await prisma.address.findUnique({
+          where: { id: order.addressId },
+        });
+        const shippedItems = order.items.map((it) => ({
+          name: it.variant.product.name,
+          size: it.variant.size,
+          quantity: it.quantity,
+          price: formatPrice(Number(it.total)),
+        }));
         const { data, error: sendError } = await resend.emails.send({
           from: SEND_FROM,
           to: order.user.email,
@@ -274,6 +280,14 @@ export async function updateOrderStatusAction(orderId: string, newStatus: OrderS
             carrier: order.carrier || undefined,
             trackingNumber: order.trackingNumber || undefined,
             trackingUrl: order.trackingUrl || undefined,
+            items: shippedItems,
+            shippingAddress: shipAddr ? {
+              name: shipAddr.name,
+              address: shipAddr.address,
+              city: shipAddr.city,
+              state: shipAddr.state,
+              zipCode: shipAddr.zipCode,
+            } : undefined,
           }),
         });
         if (sendError) console.error("Error API Resend (envío en admin action):", sendError);
@@ -323,7 +337,10 @@ export async function createShipmentForOrderAction(orderId: string) {
 
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    include: { items: true, user: true },
+    include: {
+      items: { include: { variant: { include: { product: true } } } },
+      user: true,
+    },
   });
 
   if (!order) return { error: "Pedido no encontrado." };
@@ -375,6 +392,12 @@ export async function createShipmentForOrderAction(orderId: string) {
     });
 
     if (resend && order.user?.email && !order.shippedEmailSentAt) {
+      const shippedItems = order.items.map((it) => ({
+        name: it.variant.product.name,
+        size: it.variant.size,
+        quantity: it.quantity,
+        price: formatPrice(Number(it.total)),
+      }));
       const { error: emailError } = await resend.emails.send({
         from: SEND_FROM,
         to: order.user.email,
@@ -386,6 +409,14 @@ export async function createShipmentForOrderAction(orderId: string) {
           carrier: order.carrier || undefined,
           trackingNumber: shipment.trackingNumber || undefined,
           trackingUrl: shipment.trackingUrl || undefined,
+          items: shippedItems,
+          shippingAddress: {
+            name: shippingAddr.name,
+            address: shippingAddr.address,
+            city: shippingAddr.city,
+            state: shippingAddr.state,
+            zipCode: shippingAddr.zipCode,
+          },
         }),
       });
       if (emailError) {
@@ -455,7 +486,10 @@ export async function markManualShippedAction(input: {
 
   const order = await prisma.order.findUnique({
     where: { id: input.orderId },
-    include: { user: true },
+    include: {
+      user: true,
+      items: { include: { variant: { include: { product: true } } } },
+    },
   });
   if (!order) return { error: "Pedido no encontrado." };
 
@@ -481,6 +515,15 @@ export async function markManualShippedAction(input: {
     });
 
     if (resend && order.user?.email && !order.shippedEmailSentAt) {
+      const shipAddr = await prisma.address.findUnique({
+        where: { id: order.addressId },
+      });
+      const shippedItems = order.items.map((it) => ({
+        name: it.variant.product.name,
+        size: it.variant.size,
+        quantity: it.quantity,
+        price: formatPrice(Number(it.total)),
+      }));
       const { error: emailError } = await resend.emails.send({
         from: SEND_FROM,
         to: order.user.email,
@@ -492,6 +535,14 @@ export async function markManualShippedAction(input: {
           carrier,
           trackingNumber,
           trackingUrl: trackingUrl || undefined,
+          items: shippedItems,
+          shippingAddress: shipAddr ? {
+            name: shipAddr.name,
+            address: shipAddr.address,
+            city: shipAddr.city,
+            state: shipAddr.state,
+            zipCode: shipAddr.zipCode,
+          } : undefined,
         }),
       });
       if (emailError) {

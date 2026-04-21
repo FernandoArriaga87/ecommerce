@@ -27,14 +27,10 @@ export default function ContactoPage() {
             <a href="mailto:contacto@aurasport.mx" className="underline font-bold">contacto@aurasport.mx</a>
           </div>
           <div className="p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-            <span className="font-black uppercase tracking-widest text-xs">Devoluciones</span>
-            <a href="mailto:devoluciones@aurasport.mx" className="underline font-bold">devoluciones@aurasport.mx</a>
-          </div>
-          <div className="p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 bg-[#F7F7F7]">
             <span className="font-black uppercase tracking-widest text-xs">Privacidad (ARCO)</span>
             <a href="mailto:privacidad@aurasport.mx" className="underline font-bold">privacidad@aurasport.mx</a>
           </div>
-          <div className="p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+          <div className="p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 bg-[#F7F7F7]">
             <span className="font-black uppercase tracking-widest text-xs">Prensa y alianzas</span>
             <a href="mailto:prensa@aurasport.mx" className="underline font-bold">prensa@aurasport.mx</a>
           </div>
@@ -45,7 +41,7 @@ export default function ContactoPage() {
         <p>La respuesta llega más rápido si revisas primero:</p>
         <ul className="list-disc pl-6 space-y-1">
           <li><a href="/envios" className="underline font-bold">Tiempos y costos de envío</a>.</li>
-          <li><a href="/devoluciones" className="underline font-bold">Cómo devolver o cambiar</a>.</li>
+          <li><a href="/devoluciones" className="underline font-bold">Política de venta final</a> (no aceptamos devoluciones por gusto o talla).</li>
           <li>El estado de tu pedido en <a href="/orders" className="underline font-bold">Mis pedidos</a>.</li>
         </ul>
       </LegalSection>

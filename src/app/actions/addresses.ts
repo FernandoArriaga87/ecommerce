@@ -3,8 +3,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { checkActionRateLimit } from "@/lib/rate-limit-action";
 
 export async function updateAddressAction(formData: FormData) {
+  if (!(await checkActionRateLimit("write"))) {
+    return { error: "Demasiadas solicitudes. Intenta de nuevo en un minuto." };
+  }
+
   const addressId = formData.get("addressId") as string;
   const name = formData.get("name") as string;
   const phone = formData.get("phone") as string;
@@ -61,6 +66,10 @@ export async function updateAddressAction(formData: FormData) {
 }
 
 export async function deleteAddressAction(formData: FormData) {
+  if (!(await checkActionRateLimit("write"))) {
+    return { error: "Demasiadas solicitudes. Intenta de nuevo en un minuto." };
+  }
+
   const addressId = formData.get("addressId") as string;
 
   const supabase = await createClient();

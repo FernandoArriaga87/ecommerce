@@ -98,11 +98,15 @@ export default function TerminosPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="9. Devoluciones">
+      <LegalSection title="9. Devoluciones (venta final)">
         <p>
-          Tu derecho a devolver está regulado en nuestra
-          <a href="/devoluciones" className="underline font-bold"> Política de Devoluciones</a>,
-          alineada con la Ley Federal de Protección al Consumidor (LFPC).
+          Todos los productos del catálogo se venden con un descuento superior al
+          <strong> 50%</strong> sobre su precio de referencia, por lo que califican como
+          <strong> venta final</strong>. No aceptamos devoluciones ni cambios por gusto o
+          talla. Las únicas excepciones son producto defectuoso, error nuestro en el envío o
+          paquete dañado en tránsito, reportados dentro de las 48 horas posteriores a la
+          entrega. Consulta el detalle en nuestra
+          <a href="/devoluciones" className="underline font-bold"> Política de Devoluciones</a>.
         </p>
       </LegalSection>
 

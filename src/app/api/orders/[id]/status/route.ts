@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { resend, SEND_FROM } from "@/lib/resend";
 import OrderShippedEmail from "@/components/emails/OrderShippedEmail";
 import OrderDeliveredEmail from "@/components/emails/OrderDeliveredEmail";
+import { formatPrice } from "@/lib/data";
 
 // PATCH /api/orders/[id]/status
 // Body: { status: "SHIPPED" | "DELIVERED" }
@@ -45,7 +46,10 @@ export async function PATCH(
     // 4. Get order with user info
     const order = await prisma.order.findUnique({
       where: { id },
-      include: { user: true },
+      include: {
+        user: true,
+        items: { include: { variant: { include: { product: true } } } },
+      },
     });
 
     if (!order) {
@@ -77,6 +81,15 @@ export async function PATCH(
 
       try {
         if (status === "SHIPPED") {
+          const shipAddr = await prisma.address.findUnique({
+            where: { id: order.addressId },
+          });
+          const shippedItems = order.items.map((it) => ({
+            name: it.variant.product.name,
+            size: it.variant.size,
+            quantity: it.quantity,
+            price: formatPrice(Number(it.total)),
+          }));
           const { data, error: sendError } = await resend.emails.send({
             from: SEND_FROM,
             to: order.user.email,
@@ -84,6 +97,17 @@ export async function PATCH(
             react: OrderShippedEmail({
               orderNumber: order.orderNumber,
               customerName,
+              carrier: order.carrier || undefined,
+              trackingNumber: order.trackingNumber || undefined,
+              trackingUrl: order.trackingUrl || undefined,
+              items: shippedItems,
+              shippingAddress: shipAddr ? {
+                name: shipAddr.name,
+                address: shipAddr.address,
+                city: shipAddr.city,
+                state: shipAddr.state,
+                zipCode: shipAddr.zipCode,
+              } : undefined,
             }),
           });
           if (sendError) console.error("Error API Resend (envío):", sendError);

@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { checkActionRateLimit } from "@/lib/rate-limit-action";
 
 export type ProfileFormState = {
   error?: string;
@@ -11,6 +12,10 @@ export type ProfileFormState = {
 };
 
 export async function completeProfileAction(prevState: ProfileFormState, formData: FormData): Promise<ProfileFormState> {
+  if (!(await checkActionRateLimit("write"))) {
+    return { error: "Demasiadas solicitudes. Intenta de nuevo en un minuto." };
+  }
+
   const fullName = formData.get("fullName") as string;
   const phone = formData.get("phone") as string;
   const calle = formData.get("calle") as string;
@@ -100,6 +105,10 @@ export async function completeProfileAction(prevState: ProfileFormState, formDat
 }
 
 export async function updateProfileSettingsAction(prevState: ProfileFormState, formData: FormData): Promise<ProfileFormState> {
+  if (!(await checkActionRateLimit("write"))) {
+    return { error: "Demasiadas solicitudes. Intenta de nuevo en un minuto." };
+  }
+
   const name = formData.get("name") as string;
   const phone = formData.get("phone") as string;
 

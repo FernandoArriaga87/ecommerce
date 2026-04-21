@@ -33,6 +33,7 @@ export function CartDrawer() {
       <Button
         variant="ghost"
         size="icon"
+        aria-label="Abrir carrito"
         className="relative text-[#111111] hover:bg-[#111111]/5 transition-all p-2 rounded-full h-auto w-auto"
         onClick={() => setIsOpen(true)}
       >

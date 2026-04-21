@@ -10,6 +10,7 @@ import { useCart } from "@/lib/cart-context";
 import { useWishlist } from "@/lib/wishlist-context";
 import { motion, AnimatePresence } from "framer-motion";
 import { StarDisplay } from "@/components/star-rating";
+import { BLUR_DATA_URL } from "@/lib/blur-placeholder";
 
 type Variant = { id: string; size: string; color: string; stock: number; sku: string };
 type Product = {
@@ -113,6 +114,9 @@ export function ProductClientDisplay({
                 sizes="(max-width: 1024px) 100vw, 50vw"
                 className="object-cover"
                 priority
+                fetchPriority="high"
+                placeholder="blur"
+                blurDataURL={BLUR_DATA_URL}
               />
             </motion.div>
           </AnimatePresence>
@@ -129,7 +133,15 @@ export function ProductClientDisplay({
                   activeImage === img ? "border-[#111111] scale-95" : "border-transparent opacity-40 hover:opacity-100"
                 }`}
               >
-                <Image src={img} alt={`Vista ${idx + 1}`} fill className="object-cover" />
+                <Image
+                  src={img}
+                  alt={`Vista ${idx + 1}`}
+                  fill
+                  sizes="96px"
+                  placeholder="blur"
+                  blurDataURL={BLUR_DATA_URL}
+                  className="object-cover"
+                />
               </button>
             ))}
           </div>

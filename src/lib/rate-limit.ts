@@ -1,11 +1,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type RateLimitBucket = "checkout" | "api";
+export type RateLimitBucket = "checkout" | "api" | "auth" | "write";
 
 const CONFIG: Record<RateLimitBucket, { windowMs: number; max: number }> = {
   // Sensitive routes get stricter limits.
   checkout: { windowMs: 60_000, max: 5 },
   api: { windowMs: 60_000, max: 30 },
+  // Auth actions (login/register) — identical to checkout to brute-force.
+  auth: { windowMs: 60_000, max: 5 },
+  // Any user-driven write (reviews, wishlist, profile) — loose enough for
+  // normal UX, tight enough to prevent scripted abuse.
+  write: { windowMs: 60_000, max: 15 },
 };
 
 // Thin wrapper around the public.check_rate_limit RPC. See

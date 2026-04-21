@@ -3,19 +3,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-
-async function verifyAdmin(): Promise<boolean> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return false;
-  const dbUser = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: { role: true },
-  });
-  return !!dbUser && dbUser.role === "ADMIN";
-}
+import { requireAdminUser } from "@/lib/admin-utils";
+import { checkActionRateLimit } from "@/lib/rate-limit-action";
 
 export async function createReviewAction(formData: FormData) {
+  if (!(await checkActionRateLimit("write"))) {
+    return { error: "Demasiadas solicitudes. Intenta de nuevo en un minuto." };
+  }
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Debes iniciar sesión para reseñar." };
@@ -74,6 +69,10 @@ export async function createReviewAction(formData: FormData) {
 }
 
 export async function deleteOwnReviewAction(reviewId: string) {
+  if (!(await checkActionRateLimit("write"))) {
+    return { error: "Demasiadas solicitudes. Intenta de nuevo en un minuto." };
+  }
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Debes iniciar sesión." };
@@ -98,7 +97,8 @@ export async function deleteOwnReviewAction(reviewId: string) {
 }
 
 export async function adminToggleReviewVisibilityAction(reviewId: string) {
-  if (!(await verifyAdmin())) return { error: "Acceso denegado." };
+  const admin = await requireAdminUser();
+  if (!admin) return { error: "Acceso denegado." };
 
   try {
     const review = await prisma.review.findUnique({

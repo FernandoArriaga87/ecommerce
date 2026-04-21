@@ -13,6 +13,8 @@ npm run dev      # Start development server
 npm run build    # Production build
 npm run start    # Run production build locally
 npm run lint     # ESLint check
+npm run test:e2e         # Playwright e2e — boots `next dev` automatically (first run: `npx playwright install chromium`)
+npm run test:e2e:ui      # Playwright UI mode (interactive)
 npx prisma db push       # Apply schema.prisma changes to DB (no migration files — schema is source of truth)
 npx prisma generate      # Regenerate client (output: src/lib/generated-prisma)
 npx prisma studio        # Visual DB browser
@@ -22,7 +24,9 @@ Schema changes are applied with `db push`, not `migrate`. The `prisma/migrations
 
 After first setup — or after any change to `prisma/migrations/rate_limit_fn.sql` — paste that file into the Supabase SQL editor (or `psql "$DIRECT_URL" -f ...`). `db push` creates the `rate_limit_bucket` table from schema.prisma; the SQL file installs the `check_rate_limit` RPC + RLS that the middleware calls on every `/api/*` request.
 
-No test suite exists yet.
+Also run `prisma/migrations/product_search_vector.sql` once on first setup. It adds a GENERATED `search_vector tsvector` column + GIN index on `Product`, used by the home page's full-text search path (see `searchProducts` in `src/app/page.tsx`). The column is intentionally absent from `schema.prisma` because Prisma does not model generated tsvector columns — raw SQL (`$queryRaw`) is used exclusively to read it.
+
+E2E tests live in `e2e/` and run via Playwright (`playwright.config.ts` boots `next dev` for you — requires a DB with at least one active product). Coverage today is the guest golden path (browse → PDP → add to cart → persistence) and a `/checkout/success` render test that mocks `/api/orders/:id`. The `/checkout` form itself is auth-gated and not covered — add a logged-in fixture later if needed.
 
 ## Architecture
 

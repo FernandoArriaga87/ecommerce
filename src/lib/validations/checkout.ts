@@ -1,20 +1,20 @@
 import { z } from "zod";
 
 export const checkoutSchema = z.object({
-  name: z.string().min(3, "El nombre es demasiado corto"),
-  email: z.string().email("Email inválido"),
-  phone: z.string().min(10, "El teléfono debe tener al menos 10 dígitos"),
-  address: z.string().min(5, "La dirección es obligatoria"),
-  city: z.string().min(2, "La ciudad es obligatoria"),
-  state: z.string().min(2, "El estado es obligatorio"),
+  name: z.string().trim().min(3, "El nombre es demasiado corto").max(120, "Nombre demasiado largo"),
+  email: z.string().trim().email("Email inválido").max(254, "Email demasiado largo"),
+  phone: z.string().trim().min(10, "El teléfono debe tener al menos 10 dígitos").max(20, "Teléfono inválido"),
+  address: z.string().trim().min(5, "La dirección es obligatoria").max(200, "Dirección demasiado larga"),
+  city: z.string().trim().min(2, "La ciudad es obligatoria").max(80, "Ciudad demasiado larga"),
+  state: z.string().trim().min(2, "El estado es obligatorio").max(80, "Estado demasiado largo"),
   zipCode: z.string().regex(/^\d{5}$/, "Código postal inválido"),
   quoteId: z.string().uuid("Cotización inválida — vuelve a cotizar el envío"),
-  shippingRateId: z.string().min(1, "Selecciona una opción de envío"),
+  shippingRateId: z.string().min(1, "Selecciona una opción de envío").max(200),
   items: z.array(
     z.object({
       productId: z.string().uuid("ID de producto inválido"),
-      size: z.string().min(1, "La talla es obligatoria"),
-      quantity: z.number().int().positive("La cantidad debe ser mayor a 0"),
+      size: z.string().min(1, "La talla es obligatoria").max(10),
+      quantity: z.number().int().positive("La cantidad debe ser mayor a 0").max(99, "Cantidad máxima 99 por talla"),
     })
-  ).min(1, "El carrito está vacío"),
+  ).min(1, "El carrito está vacío").max(50, "Carrito demasiado grande"),
 });
