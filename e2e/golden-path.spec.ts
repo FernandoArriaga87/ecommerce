@@ -83,7 +83,8 @@ test.describe("Golden path", () => {
                   size: "M",
                   product: {
                     name: "Jersey de Prueba E2E",
-                    images: ["https://placehold.co/200x200/png"],
+                    // Local image to avoid next/image remotePatterns errors in tests.
+                    images: ["/brazilshirt.webp"],
                   },
                 },
               },

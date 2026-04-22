@@ -66,13 +66,31 @@ export default function CheckoutPage() {
   // any of those change after cotizar, the saved quoteId is no longer valid —
   // force the user to re-quote so the server-side validation passes.
   useEffect(() => {
-    if (quoteId) {
+    if (quoteId && selectedAddressId === null) {
       setQuoteId("");
       setShippingOptions([]);
       setSelectedRateId("");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zipCode, totalItems]);
+  }, [zipCode, totalItems, selectedAddressId]);
+
+  // Auto-fetch shipping quotes when a saved address is selected or preloaded
+  useEffect(() => {
+    if (qualifiesForFreeShipping(subtotal)) {
+      setQuoteId("free_shipping");
+      setSelectedRateId("free_shipping");
+      setShippingOptions([]);
+      return;
+    }
+
+    if (selectedAddressId && zipCode && city && state && address && totalItems > 0) {
+      const t = setTimeout(() => {
+        fetchQuotes();
+      }, 300);
+      return () => clearTimeout(t);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAddressId, subtotal]);
 
   useEffect(() => {
     async function initialize() {
@@ -182,15 +200,20 @@ export default function CheckoutPage() {
       return;
     }
 
-    const formData = new FormData(e.currentTarget);
+    // Los inputs del form solo se renderizan cuando selectedAddressId === null,
+    // así que no podemos depender de FormData. Leemos de los state vars que
+    // siempre se actualizan (tanto al elegir saved address como al teclear).
+    // El email viene de la sesión auth — el server-side check anti-spoofing
+    // (route.ts) lo valida contra authUser.email.
     const body = {
-      name: formData.get("name"),
-      email: formData.get("email"),
-      phone: formData.get("phone"),
-      address: formData.get("address"),
-      city: formData.get("city"),
-      state: formData.get("state"),
-      zipCode: formData.get("zipCode"),
+      name,
+      email: user?.email || profile?.email || "",
+      phone,
+      address,
+      city,
+      state,
+      zipCode,
+      addressId: selectedAddressId,
       quoteId,
       shippingRateId: selectedRateId,
       items: items.map((i) => ({
@@ -215,6 +238,11 @@ export default function CheckoutPage() {
       const data = await res.json();
 
       if (data.url) {
+        // Vaciamos el estado local del carrito antes de redirigir a Stripe.
+        // El servidor ya borró el Cart en BD dentro de la transacción de la
+        // orden, así esto solo refleja el cambio en la UI por si el usuario
+        // regresa con el botón "atrás" desde Stripe.
+        clearCart();
         window.location.href = data.url;
       } else if (data.code === "STOCK_ERROR" && data.stockErrors) {
         setStockErrors(data.stockErrors);
@@ -324,49 +352,6 @@ export default function CheckoutPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Contact */}
-            <div>
-              <h2 className="text-xs font-black uppercase tracking-widest mb-4 pb-2 border-b border-gray-200">
-                Datos de Contacto
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Nombre Completo</label>
-                  <Input
-                    name="name"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Juan Pérez"
-                    className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black"
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Correo Electrónico</label>
-                  <Input
-                    name="email"
-                    type="email"
-                    required
-                    defaultValue={profile?.email || user?.email || ""}
-                    placeholder="juan@email.com"
-                    className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black"
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5 md:col-span-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Teléfono</label>
-                  <Input
-                    name="phone"
-                    type="tel"
-                    required
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+52 555 123 4567"
-                    className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black"
-                  />
-                </div>
-              </div>
-            </div>
-
             {/* Shipping */}
             <div>
               <h2 className="text-xs font-black uppercase tracking-widest mb-4 pb-2 border-b border-gray-200">
@@ -447,55 +432,82 @@ export default function CheckoutPage() {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Dirección Completa</label>
-                  <Input
-                    name="address"
-                    required
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="Calle, Número, Colonia"
-                    className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black"
-                  />
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Ciudad</label>
-                    <Input
-                      name="city"
-                      required
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      placeholder="CDMX"
-                      className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black"
-                    />
+              {selectedAddressId === null && (
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Nombre de quien recibe</label>
+                      <Input
+                        name="name"
+                        required
+                        value={name}
+                        onChange={(e) => { setName(e.target.value); setSelectedAddressId(null); }}
+                        placeholder="Juan Pérez"
+                        className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Teléfono</label>
+                      <Input
+                        name="phone"
+                        type="tel"
+                        required
+                        value={phone}
+                        onChange={(e) => { setPhone(e.target.value); setSelectedAddressId(null); }}
+                        placeholder="+52 555 123 4567"
+                        className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black"
+                      />
+                    </div>
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Estado</label>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Dirección Completa</label>
                     <Input
-                      name="state"
+                      name="address"
                       required
-                      value={state}
-                      onChange={(e) => setState(e.target.value)}
-                      placeholder="Estado"
+                      value={address}
+                      onChange={(e) => { setAddress(e.target.value); setSelectedAddressId(null); }}
+                      placeholder="Calle, Número, Colonia"
                       className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black"
                     />
                   </div>
-                  <div className="flex flex-col gap-1.5 col-span-2 md:col-span-1">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Código Postal</label>
-                    <Input
-                      name="zipCode"
-                      required
-                      value={zipCode}
-                      onChange={(e) => setZipCode(e.target.value.replace(/\D/g, "").slice(0, 5))}
-                      placeholder="01000"
-                      inputMode="numeric"
-                      className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black"
-                    />
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Ciudad</label>
+                      <Input
+                        name="city"
+                        required
+                        value={city}
+                        onChange={(e) => { setCity(e.target.value); setSelectedAddressId(null); }}
+                        placeholder="CDMX"
+                        className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Estado</label>
+                      <Input
+                        name="state"
+                        required
+                        value={state}
+                        onChange={(e) => { setState(e.target.value); setSelectedAddressId(null); }}
+                        placeholder="Estado"
+                        className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5 col-span-2 md:col-span-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Código Postal</label>
+                      <Input
+                        name="zipCode"
+                        required
+                        value={zipCode}
+                        onChange={(e) => { setZipCode(e.target.value.replace(/\D/g, "").slice(0, 5)); setSelectedAddressId(null); }}
+                        placeholder="01000"
+                        inputMode="numeric"
+                        className="h-12 rounded-none border-gray-300 font-medium focus-visible:ring-black"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Shipping Options */}
@@ -504,106 +516,105 @@ export default function CheckoutPage() {
                 Opciones de Envío
               </h2>
 
-              <div className="flex flex-col gap-4">
-                <Button 
-                  type="button" 
-                  onClick={fetchQuotes} 
-                  disabled={loadingShipping || !zipCode || !city || !state || !address}
-                  className="w-full bg-black hover:bg-gray-800 text-white rounded-none h-12 text-xs font-bold uppercase tracking-widest"
-                >
-                  Confirmar Dirección y Cotizar Envío
-                </Button>
-
-                {shippingOptions.length === 0 && !loadingShipping && !shippingError && (
-                  <div className="p-4 border border-dashed border-gray-300 bg-white flex items-center gap-3">
-                    <Package className="h-5 w-5 text-gray-400" />
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                      Ingresa tu dirección completa y presiona el botón para ver las opciones de envío.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {loadingShipping && (
-                <div className="p-4 border border-gray-200 bg-white flex items-center gap-3">
-                  <Loader2 className="h-5 w-5 animate-spin text-black" />
-                  <p className="text-xs font-bold uppercase tracking-widest text-gray-600">
-                    Cotizando opciones de envío...
+              {freeShipping ? (
+                <div className="p-4 border border-green-300 bg-green-50">
+                  <p className="text-xs font-black uppercase tracking-widest text-green-700 mb-1">
+                    ✓ Envío Gratis Aplicado
+                  </p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-green-600/80">
+                    Tu pedido califica para envío gratuito. Se asignará la mejor paquetería automáticamente.
                   </p>
                 </div>
-              )}
+              ) : (
+                <>
+                  <div className="flex flex-col gap-4">
+                    {selectedAddressId === null && (
+                      <Button 
+                        type="button" 
+                        onClick={fetchQuotes} 
+                        disabled={loadingShipping || !zipCode || !city || !state || !address}
+                        className="w-full bg-black hover:bg-gray-800 text-white rounded-none h-12 text-xs font-bold uppercase tracking-widest"
+                      >
+                        Confirmar Dirección y Cotizar Envío
+                      </Button>
+                    )}
 
-              {!loadingShipping && shippingError && (
-                <div className="p-4 border border-red-200 bg-red-50">
-                  <p className="text-xs font-bold uppercase tracking-widest text-red-600">{shippingError}</p>
-                </div>
-              )}
+                    {shippingOptions.length === 0 && !loadingShipping && !shippingError && (
+                      <div className="p-4 border border-dashed border-gray-300 bg-white flex items-center gap-3">
+                        <Package className="h-5 w-5 text-gray-400" />
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                          {selectedAddressId 
+                            ? "Calculando opciones de envío para esta dirección..." 
+                            : "Ingresa tu dirección completa y presiona el botón para ver las opciones de envío."}
+                        </p>
+                      </div>
+                    )}
+                  </div>
 
-              {!loadingShipping && !shippingError && shippingOptions.length > 0 && (
-                <div className="space-y-3">
-                  {freeShipping && (
-                    <div className="p-3 border border-green-300 bg-green-50">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-green-700">
-                        ✓ Envío gratis aplicado — elige tu paquetería preferida
+                  {loadingShipping && (
+                    <div className="p-4 border border-gray-200 bg-white flex items-center gap-3 mt-4">
+                      <Loader2 className="h-5 w-5 animate-spin text-black" />
+                      <p className="text-xs font-bold uppercase tracking-widest text-gray-600">
+                        Cotizando opciones de envío...
                       </p>
                     </div>
                   )}
-                  {shippingOptions.map((opt) => {
-                    const active = selectedRateId === opt.rateId;
-                    return (
-                      <button
-                        type="button"
-                        key={opt.rateId}
-                        onClick={() => setSelectedRateId(opt.rateId)}
-                        className={`w-full text-left p-4 border transition-all flex items-center gap-4 ${
-                          active
-                            ? "border-black bg-black text-white"
-                            : "border-gray-200 bg-white hover:border-black"
-                        }`}
-                      >
-                        <div className={`h-4 w-4 rounded-full border-2 shrink-0 ${
-                          active ? "border-white bg-white" : "border-gray-400"
-                        }`}>
-                          {active && <div className="h-full w-full rounded-full bg-black scale-50" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-black uppercase tracking-wide truncate">
-                            {opt.carrier}
-                          </p>
-                          <p className={`text-[10px] font-bold uppercase tracking-widest mt-0.5 ${
-                            active ? "text-white/70" : "text-gray-500"
-                          }`}>
-                            {opt.serviceLevel} · {opt.daysMin === opt.daysMax
-                              ? `${opt.daysMin} día${opt.daysMin > 1 ? "s" : ""}`
-                              : `${opt.daysMin}-${opt.daysMax} días`}
-                          </p>
-                        </div>
-                        <div className="text-sm font-black whitespace-nowrap flex flex-col items-end">
-                          {freeShipping ? (
-                            <>
-                              <span className={`text-[10px] line-through font-bold ${active ? "text-white/50" : "text-gray-400"}`}>
-                                {formatPrice(opt.price)}
-                              </span>
-                              <span className={active ? "text-green-300" : "text-green-600"}>
-                                GRATIS
-                              </span>
-                            </>
-                          ) : (
-                            formatPrice(opt.price)
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
 
-              {!loadingShipping && !shippingError && shippingOptions.length === 0 && /^\d{5}$/.test(zipCode.trim()) && (
-                <div className="p-4 border border-gray-200 bg-white">
-                  <p className="text-xs font-bold uppercase tracking-widest text-gray-500">
-                    No hay opciones de envío disponibles para este código postal.
-                  </p>
-                </div>
+                  {!loadingShipping && shippingError && (
+                    <div className="p-4 border border-red-200 bg-red-50 mt-4">
+                      <p className="text-xs font-bold uppercase tracking-widest text-red-600">{shippingError}</p>
+                    </div>
+                  )}
+
+                  {!loadingShipping && !shippingError && shippingOptions.length > 0 && (
+                    <div className="space-y-3 mt-4">
+                      {shippingOptions.map((opt) => {
+                        const active = selectedRateId === opt.rateId;
+                        return (
+                          <button
+                            type="button"
+                            key={opt.rateId}
+                            onClick={() => setSelectedRateId(opt.rateId)}
+                            className={`w-full text-left p-4 border transition-all flex items-center gap-4 ${
+                              active
+                                ? "border-black bg-black text-white"
+                                : "border-gray-200 bg-white hover:border-black"
+                            }`}
+                          >
+                            <div className={`h-4 w-4 rounded-full border-2 shrink-0 ${
+                              active ? "border-white bg-white" : "border-gray-400"
+                            }`}>
+                              {active && <div className="h-full w-full rounded-full bg-black scale-50" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-black uppercase tracking-wide truncate">
+                                {opt.carrier}
+                              </p>
+                              <p className={`text-[10px] font-bold uppercase tracking-widest mt-0.5 ${
+                                active ? "text-white/70" : "text-gray-500"
+                              }`}>
+                                {opt.serviceLevel} · {opt.daysMin === opt.daysMax
+                                  ? `${opt.daysMin} día${opt.daysMin > 1 ? "s" : ""}`
+                                  : `${opt.daysMin}-${opt.daysMax} días`}
+                              </p>
+                            </div>
+                            <div className="text-sm font-black whitespace-nowrap flex flex-col items-end">
+                              {formatPrice(opt.price)}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {!loadingShipping && !shippingError && shippingOptions.length === 0 && /^\d{5}$/.test(zipCode.trim()) && selectedAddressId === null && (
+                    <div className="p-4 border border-gray-200 bg-white mt-4">
+                      <p className="text-xs font-bold uppercase tracking-widest text-gray-500">
+                        No hay opciones de envío disponibles para este código postal.
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 

@@ -49,15 +49,19 @@ export function Navbar() {
           </Link>
           <nav className="hidden lg:flex gap-8 text-[11px] font-bold uppercase tracking-[0.2em] text-[#111111]/50">
             {[
-              { name: "Liga MX", slug: "liga-mx" },
-              { name: "Europeos", slug: "europeos" },
-              { name: "Selecciones", slug: "selecciones" },
-              { name: "Retro", slug: "retro" },
-              { name: "Ofertas", slug: "ofertas" }
+              { name: "Catálogo", slug: "all" }
             ].map((item) => (
               <Link 
                 key={item.name} 
-                href={`/?category=${item.slug}`} 
+                href="#catalog" 
+                onClick={(e) => {
+                  const target = document.getElementById("catalog");
+                  if (target) {
+                    e.preventDefault();
+                    target.scrollIntoView({ behavior: "smooth" });
+                    window.history.pushState(null, "", "#catalog");
+                  }
+                }}
                 className="hover:text-[#111111] transition-colors relative group"
               >
                 {item.name}
@@ -69,31 +73,6 @@ export function Navbar() {
         
         {/* Right side: Actions */}
         <div className="flex items-center gap-6">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const formData = new FormData(e.currentTarget);
-              const query = String(formData.get("q") || "").trim();
-              if (query) {
-                const sp = new URLSearchParams();
-                sp.set("search", query);
-                router.push(`/?${sp.toString()}`);
-              } else {
-                router.push("/");
-              }
-            }}
-            className="hidden md:flex items-center bg-[#111111]/5 px-4 h-11 rounded-full border border-[#111111]/5 focus-within:bg-white focus-within:border-[#111111]/10 transition-all group"
-          >
-            <MagnifyingGlass size={18} className="text-[#111111]/30 group-focus-within:text-[#111111]" />
-            <input
-              name="q"
-              type="search"
-              placeholder="BUSCAR EQUIPO..."
-              aria-label="Buscar productos"
-              className="bg-transparent border-none outline-none text-[10px] font-bold tracking-widest px-3 w-32 focus:w-48 transition-all placeholder:text-[#111111]/20 text-[#111111]"
-            />
-          </form>
-          
           <div className="flex items-center gap-3">
             <Link
               href="/wishlist"

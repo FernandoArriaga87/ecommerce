@@ -8,7 +8,13 @@ export const checkoutSchema = z.object({
   city: z.string().trim().min(2, "La ciudad es obligatoria").max(80, "Ciudad demasiado larga"),
   state: z.string().trim().min(2, "El estado es obligatorio").max(80, "Estado demasiado largo"),
   zipCode: z.string().regex(/^\d{5}$/, "Código postal inválido"),
-  quoteId: z.string().uuid("Cotización inválida — vuelve a cotizar el envío"),
+  addressId: z.string().uuid("ID de dirección inválido").optional().nullable(),
+  // Acepta UUID de una cotización persistida o el sentinel "free_shipping"
+  // que el cliente envía cuando el subtotal califica para envío gratuito.
+  quoteId: z.union([
+    z.string().uuid(),
+    z.literal("free_shipping"),
+  ], { errorMap: () => ({ message: "Cotización inválida — vuelve a cotizar el envío" }) }),
   shippingRateId: z.string().min(1, "Selecciona una opción de envío").max(200),
   items: z.array(
     z.object({

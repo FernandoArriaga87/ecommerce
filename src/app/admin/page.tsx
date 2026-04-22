@@ -202,9 +202,6 @@ export default async function AdminDashboardPage() {
                         <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 bg-gray-100 px-2 py-0.5">
                           {variant.size}
                         </span>
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 bg-gray-100 px-2 py-0.5">
-                          {variant.color}
-                        </span>
                       </div>
                     </div>
                     <div className="text-right shrink-0">

@@ -90,14 +90,12 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
   const sizeOrder = ["XS", "S", "M", "L", "XL", "XXL"];
 
-  const colors = Array.from(new Set(dbProduct.variants.map(v => v.color)));
   const sizes = Array.from(new Set(dbProduct.variants.map(v => v.size)))
     .sort((a, b) => sizeOrder.indexOf(a) - sizeOrder.indexOf(b));
 
   const variants = dbProduct.variants.map(v => ({
     id: v.id,
     size: v.size,
-    color: v.color,
     stock: v.stock,
     sku: v.sku,
   }));
@@ -110,7 +108,6 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     images: dbProduct.images || [],
     badge: dbProduct.isFeatured ? "MÁS VENDIDO" : dbProduct.isNew ? "NUEVO" : undefined,
     sku: dbProduct.variants[0]?.sku.split('-').slice(0, -1).join('-') || "VAR-000",
-    colors,
     sizes,
     variants,
   };

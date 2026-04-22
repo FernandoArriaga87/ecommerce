@@ -34,7 +34,6 @@ export async function GET() {
     "Nuevo",
     "Destacado",
     "Talla",
-    "Color",
     "SKU",
     "Stock",
     "Creado",
@@ -64,7 +63,6 @@ export async function GET() {
         featured,
         "",
         "",
-        "",
         0,
         p.createdAt,
       ]);
@@ -83,7 +81,6 @@ export async function GET() {
         isNew,
         featured,
         v.size,
-        v.color,
         v.sku,
         v.stock,
         p.createdAt,

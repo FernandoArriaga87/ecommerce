@@ -187,7 +187,6 @@ exports.Prisma.WishlistItemScalarFieldEnum = {
 exports.Prisma.VariantScalarFieldEnum = {
   id: 'id',
   productId: 'productId',
-  color: 'color',
   size: 'size',
   stock: 'stock',
   sku: 'sku'

@@ -94,7 +94,13 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // ── 5. Protected route checks ──
-  const isProtected = PROTECTED_ROUTES.some((r) => pathname.startsWith(r));
+  // /checkout/success is the Stripe return URL. It must be reachable even if
+  // the session cookie didn't survive the external redirect round-trip; the
+  // page fetches order details via /api/orders/:id which has its own auth +
+  // ownership check, so nothing sensitive leaks here.
+  const isProtected =
+    PROTECTED_ROUTES.some((r) => pathname.startsWith(r)) &&
+    pathname !== "/checkout/success";
   const isAdmin = ADMIN_ROUTES.some((r) => pathname.startsWith(r));
   const isAuthRoute = AUTH_ROUTES.some((r) => pathname.startsWith(r));
 

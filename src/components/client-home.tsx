@@ -22,12 +22,11 @@ interface Product {
   slug: string;
 }
 
-type SortKey = "newest" | "price-asc" | "price-desc";
+type SortKey = "newest" | "featured";
 
 const SORT_LABELS: Record<SortKey, string> = {
-  "newest": "Más recientes",
-  "price-asc": "Precio: menor a mayor",
-  "price-desc": "Precio: mayor a menor",
+  "newest": "Nuevo",
+  "featured": "Más Vendido",
 };
 
 const FAKE_NAMES = [
@@ -127,7 +126,7 @@ export function ClientHome({
   }, []);
 
   const handleSortChange = (sort: SortKey) => {
-    router.push(buildHref({ category: activeCategory, sort, search: currentSearch, page: 1 }));
+    router.push(buildHref({ category: activeCategory, sort, search: currentSearch, page: 1 }) + "#catalog", { scroll: false });
   };
 
   const containerVariants: Variants = {
@@ -158,7 +157,7 @@ export function ClientHome({
   return (
     <div className="w-full bg-[#FAFAFA]">
       {/* Asymmetric Premium Hero */}
-      <section className="relative min-h-[90dvh] flex items-center overflow-hidden bg-[#FAFAFA]">
+      <section className="relative min-h-[75dvh] flex items-center overflow-hidden bg-[#FAFAFA]">
         {/* Background Image - Now covering everything */}
         <motion.div
           initial={{ scale: 1.05, opacity: 0 }}
@@ -207,38 +206,23 @@ export function ClientHome({
 
             <div className="flex flex-wrap gap-5">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button className="rounded-full bg-[#111111] text-white hover:bg-[#222222] px-10 h-16 text-sm font-bold uppercase tracking-widest shadow-2xl shadow-black/20 flex gap-3 group">
+                <Button 
+                  onClick={() => {
+                    const target = document.getElementById("catalog");
+                    if (target) {
+                      target.scrollIntoView({ behavior: "smooth" });
+                      window.history.pushState(null, "", "#catalog");
+                    }
+                  }}
+                  className="rounded-full bg-[#111111] text-white hover:bg-[#222222] px-10 h-16 text-sm font-bold uppercase tracking-widest shadow-2xl shadow-black/20 flex gap-3 group"
+                >
                   Explorar Equipos
                   <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </motion.div>
-
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button variant="outline" className="rounded-full border-[#111111]/10 bg-white/50 backdrop-blur-md text-[#111111] px-8 h-16 text-sm font-bold uppercase tracking-widest flex gap-3">
-                  <Play weight="fill" size={20} />
-                  Ver Trailer
                 </Button>
               </motion.div>
             </div>
           </motion.div>
         </div>
-
-        {/* Floating Aesthetic Badge */}
-        <motion.div
-          animate={{ y: [0, -20, 0] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-12 right-12 bg-white/10 backdrop-blur-2xl border border-white/20 p-6 rounded-[2rem] shadow-2xl hidden md:block z-30"
-        >
-          <div className="flex items-center gap-4">
-            <div className="bg-white/20 p-3 rounded-full">
-              <Sparkle weight="fill" className="text-white" size={24} />
-            </div>
-            <div className="text-white">
-              <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">Quality</p>
-              <p className="font-bold text-sm">Calidad Premium</p>
-            </div>
-          </div>
-        </motion.div>
       </section>
 
       {/* Trust Bar */}
@@ -266,7 +250,7 @@ export function ClientHome({
       </section>
 
       {/* Main Content */}
-      <div className="container mx-auto px-6 md:px-12 py-24">
+      <div id="catalog" className="container mx-auto px-6 md:px-12 py-24 scroll-mt-20">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">
           <motion.div
@@ -283,12 +267,12 @@ export function ClientHome({
             </p>
           </motion.div>
 
-          <div className="flex flex-col gap-4 md:items-end">
-            <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
-              {["all", "liga-mx", "europeos", "selecciones", "retro", "ofertas"].map((cat) => (
+          <div className="flex flex-col gap-4 md:items-end w-full md:w-auto">
+            <div className="flex flex-wrap gap-2 md:gap-4 pb-2">
+              {["all", "liga-mx", "europeos", "selecciones", "retro"].map((cat) => (
                 <Link
                   key={cat}
-                  href={buildHref({ category: cat, sort: currentSort, search: currentSearch, page: 1 })}
+                  href={buildHref({ category: cat, sort: currentSort, search: currentSearch, page: 1 }) + "#catalog"}
                   className={`px-8 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 border ${activeCategory === cat
                     ? "bg-[#111111] border-[#111111] text-white shadow-xl shadow-black/10"
                     : "bg-transparent border-[#111111]/10 text-[#111111]/40 hover:border-[#111111]/30 hover:text-[#111111]"
@@ -322,7 +306,8 @@ export function ClientHome({
             <span>Resultados para</span>
             <span className="bg-[#111111] text-white px-4 py-1.5 rounded-full">&ldquo;{currentSearch}&rdquo;</span>
             <Link
-              href={buildHref({ category: activeCategory, sort: currentSort, page: 1 })}
+              href={buildHref({ category: activeCategory, sort: currentSort, page: 1 }) + "#catalog"}
+              scroll={false}
               className="text-[#111111]/40 hover:text-[#111111] underline"
             >
               Limpiar
@@ -351,6 +336,7 @@ export function ClientHome({
           <>
             {/* Bento-Inspired Product Grid */}
             <motion.div
+              key={`${activeCategory}-${currentSort}-${currentSearch}-${currentPage}`}
               variants={containerVariants}
               initial="hidden"
               whileInView="visible"
@@ -433,7 +419,8 @@ export function ClientHome({
                         sort: currentSort,
                         search: currentSearch,
                         page: currentPage - 1,
-                      })}
+                      }) + "#catalog"}
+                      scroll={false}
                       className="flex items-center gap-2 px-5 h-11 rounded-full border border-[#111111]/10 text-[10px] font-bold uppercase tracking-widest text-[#111111] hover:bg-[#111111] hover:text-white transition-colors"
                     >
                       <CaretLeft size={14} weight="bold" />
@@ -457,7 +444,8 @@ export function ClientHome({
                         sort: currentSort,
                         search: currentSearch,
                         page: currentPage + 1,
-                      })}
+                      }) + "#catalog"}
+                      scroll={false}
                       className="flex items-center gap-2 px-5 h-11 rounded-full border border-[#111111]/10 text-[10px] font-bold uppercase tracking-widest text-[#111111] hover:bg-[#111111] hover:text-white transition-colors"
                     >
                       Siguiente

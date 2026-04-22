@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '../src/lib/generated-prisma'
 
 const prisma = new PrismaClient()
 
@@ -57,7 +57,6 @@ async function main() {
       isFeatured: true,
       categoryId: ligaMx.id,
       teamId: teams['tigres'].id,
-      colors: ['Amarillo', 'Azul'],
     },
     {
       name: 'Jersey Rayados Local 24/25',
@@ -68,7 +67,6 @@ async function main() {
       isFeatured: false,
       categoryId: ligaMx.id,
       teamId: teams['rayados'].id,
-      colors: ['Azul', 'Blanco'],
     },
     {
       name: 'Playera Club América Local 24/25',
@@ -79,7 +77,6 @@ async function main() {
       isFeatured: true,
       categoryId: ligaMx.id,
       teamId: teams['america'].id,
-      colors: ['Amarillo'],
     },
     {
       name: 'Jersey Chivas Local 24/25',
@@ -90,7 +87,6 @@ async function main() {
       isFeatured: true,
       categoryId: ligaMx.id,
       teamId: teams['chivas'].id,
-      colors: ['Rojo', 'Blanco'],
     },
     {
       name: 'Jersey Cruz Azul Local 23/24',
@@ -101,7 +97,6 @@ async function main() {
       isFeatured: false,
       categoryId: ligaMx.id,
       teamId: teams['cruz-azul'].id,
-      colors: ['Azul'],
     },
     {
       name: 'Playera Pumas UNAM Visita 24/25',
@@ -112,7 +107,6 @@ async function main() {
       isFeatured: false,
       categoryId: ligaMx.id,
       teamId: teams['pumas'].id,
-      colors: ['Oro'],
     },
     {
       name: 'Jersey Toluca Local 24/25',
@@ -123,7 +117,6 @@ async function main() {
       isFeatured: false,
       categoryId: ligaMx.id,
       teamId: teams['toluca'].id,
-      colors: ['Rojo'],
     },
     {
       name: 'Jersey Pachuca Tercera Equipación',
@@ -134,35 +127,30 @@ async function main() {
       isFeatured: false,
       categoryId: ligaMx.id,
       teamId: teams['pachuca'].id,
-      colors: ['Negro'],
     },
   ]
 
   const sizes = ['S', 'M', 'L', 'XL']
 
-  for (const pData of productsData) {
-    const { colors, ...productInput } = pData
+  for (const productInput of productsData) {
     const product = await prisma.product.create({
       data: productInput
     })
 
     let variantCount = 0;
-    for (const color of colors) {
-      for (const size of sizes) {
-        // Asignar un stock aleatorio entre 0 y 20 para ver alertas en el dashboard
-        const stock = Math.floor(Math.random() * 21); 
-        
-        await prisma.variant.create({
-          data: {
-            productId: product.id,
-            color,
-            size,
-            stock,
-            sku: `${product.slug.toUpperCase()}-${size}-${color.substring(0,3).toUpperCase()}-${Math.floor(Math.random() * 1000)}`
-          }
-        })
-        variantCount++;
-      }
+    for (const size of sizes) {
+      // Asignar un stock aleatorio entre 0 y 20 para ver alertas en el dashboard
+      const stock = Math.floor(Math.random() * 21);
+
+      await prisma.variant.create({
+        data: {
+          productId: product.id,
+          size,
+          stock,
+          sku: `${product.slug.toUpperCase()}-${size}-${Math.floor(Math.random() * 1000)}`
+        }
+      })
+      variantCount++;
     }
     console.log(`Producto creado: ${product.name} con ${variantCount} variantes.`)
   }

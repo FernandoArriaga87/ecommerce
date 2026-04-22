@@ -40,19 +40,17 @@ async function main() {
         for (const size of sizes) {
             await prisma.variant.upsert({
                 where: {
-                    productId_size_color: {
+                    productId_size: {
                         productId: product.id,
                         size: size,
-                        color: 'Blanco'
                     }
                 },
                 update: { stock: 100 },
                 create: {
                     productId: product.id,
                     size: size,
-                    color: 'Blanco',
                     stock: 100,
-                    sku: `MADRID-2425-${size}-BLA`
+                    sku: `MADRID-2425-${size}`
                 }
             });
         }

@@ -9509,7 +9509,6 @@ export namespace Prisma {
   export type VariantMinAggregateOutputType = {
     id: string | null
     productId: string | null
-    color: string | null
     size: string | null
     stock: number | null
     sku: string | null
@@ -9518,7 +9517,6 @@ export namespace Prisma {
   export type VariantMaxAggregateOutputType = {
     id: string | null
     productId: string | null
-    color: string | null
     size: string | null
     stock: number | null
     sku: string | null
@@ -9527,7 +9525,6 @@ export namespace Prisma {
   export type VariantCountAggregateOutputType = {
     id: number
     productId: number
-    color: number
     size: number
     stock: number
     sku: number
@@ -9546,7 +9543,6 @@ export namespace Prisma {
   export type VariantMinAggregateInputType = {
     id?: true
     productId?: true
-    color?: true
     size?: true
     stock?: true
     sku?: true
@@ -9555,7 +9551,6 @@ export namespace Prisma {
   export type VariantMaxAggregateInputType = {
     id?: true
     productId?: true
-    color?: true
     size?: true
     stock?: true
     sku?: true
@@ -9564,7 +9559,6 @@ export namespace Prisma {
   export type VariantCountAggregateInputType = {
     id?: true
     productId?: true
-    color?: true
     size?: true
     stock?: true
     sku?: true
@@ -9660,7 +9654,6 @@ export namespace Prisma {
   export type VariantGroupByOutputType = {
     id: string
     productId: string
-    color: string
     size: string
     stock: number
     sku: string
@@ -9688,7 +9681,6 @@ export namespace Prisma {
   export type VariantSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     productId?: boolean
-    color?: boolean
     size?: boolean
     stock?: boolean
     sku?: boolean
@@ -9701,7 +9693,6 @@ export namespace Prisma {
   export type VariantSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     productId?: boolean
-    color?: boolean
     size?: boolean
     stock?: boolean
     sku?: boolean
@@ -9711,7 +9702,6 @@ export namespace Prisma {
   export type VariantSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     productId?: boolean
-    color?: boolean
     size?: boolean
     stock?: boolean
     sku?: boolean
@@ -9721,13 +9711,12 @@ export namespace Prisma {
   export type VariantSelectScalar = {
     id?: boolean
     productId?: boolean
-    color?: boolean
     size?: boolean
     stock?: boolean
     sku?: boolean
   }
 
-  export type VariantOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "productId" | "color" | "size" | "stock" | "sku", ExtArgs["result"]["variant"]>
+  export type VariantOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "productId" | "size" | "stock" | "sku", ExtArgs["result"]["variant"]>
   export type VariantInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     product?: boolean | ProductDefaultArgs<ExtArgs>
     orderItems?: boolean | Variant$orderItemsArgs<ExtArgs>
@@ -9751,7 +9740,6 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: string
       productId: string
-      color: string
       size: string
       stock: number
       sku: string
@@ -10183,7 +10171,6 @@ export namespace Prisma {
   interface VariantFieldRefs {
     readonly id: FieldRef<"Variant", 'String'>
     readonly productId: FieldRef<"Variant", 'String'>
-    readonly color: FieldRef<"Variant", 'String'>
     readonly size: FieldRef<"Variant", 'String'>
     readonly stock: FieldRef<"Variant", 'Int'>
     readonly sku: FieldRef<"Variant", 'String'>
@@ -20654,7 +20641,6 @@ export namespace Prisma {
   export const VariantScalarFieldEnum: {
     id: 'id',
     productId: 'productId',
-    color: 'color',
     size: 'size',
     stock: 'stock',
     sku: 'sku'
@@ -21437,7 +21423,6 @@ export namespace Prisma {
     NOT?: VariantWhereInput | VariantWhereInput[]
     id?: StringFilter<"Variant"> | string
     productId?: StringFilter<"Variant"> | string
-    color?: StringFilter<"Variant"> | string
     size?: StringFilter<"Variant"> | string
     stock?: IntFilter<"Variant"> | number
     sku?: StringFilter<"Variant"> | string
@@ -21449,7 +21434,6 @@ export namespace Prisma {
   export type VariantOrderByWithRelationInput = {
     id?: SortOrder
     productId?: SortOrder
-    color?: SortOrder
     size?: SortOrder
     stock?: SortOrder
     sku?: SortOrder
@@ -21461,23 +21445,21 @@ export namespace Prisma {
   export type VariantWhereUniqueInput = Prisma.AtLeast<{
     id?: string
     sku?: string
-    productId_size_color?: VariantProductIdSizeColorCompoundUniqueInput
+    productId_size?: VariantProductIdSizeCompoundUniqueInput
     AND?: VariantWhereInput | VariantWhereInput[]
     OR?: VariantWhereInput[]
     NOT?: VariantWhereInput | VariantWhereInput[]
     productId?: StringFilter<"Variant"> | string
-    color?: StringFilter<"Variant"> | string
     size?: StringFilter<"Variant"> | string
     stock?: IntFilter<"Variant"> | number
     product?: XOR<ProductScalarRelationFilter, ProductWhereInput>
     orderItems?: OrderItemListRelationFilter
     cartItems?: CartItemListRelationFilter
-  }, "id" | "sku" | "productId_size_color">
+  }, "id" | "sku" | "productId_size">
 
   export type VariantOrderByWithAggregationInput = {
     id?: SortOrder
     productId?: SortOrder
-    color?: SortOrder
     size?: SortOrder
     stock?: SortOrder
     sku?: SortOrder
@@ -21494,7 +21476,6 @@ export namespace Prisma {
     NOT?: VariantScalarWhereWithAggregatesInput | VariantScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"Variant"> | string
     productId?: StringWithAggregatesFilter<"Variant"> | string
-    color?: StringWithAggregatesFilter<"Variant"> | string
     size?: StringWithAggregatesFilter<"Variant"> | string
     stock?: IntWithAggregatesFilter<"Variant"> | number
     sku?: StringWithAggregatesFilter<"Variant"> | string
@@ -22606,7 +22587,6 @@ export namespace Prisma {
 
   export type VariantCreateInput = {
     id?: string
-    color: string
     size: string
     stock?: number
     sku: string
@@ -22618,7 +22598,6 @@ export namespace Prisma {
   export type VariantUncheckedCreateInput = {
     id?: string
     productId: string
-    color: string
     size: string
     stock?: number
     sku: string
@@ -22628,7 +22607,6 @@ export namespace Prisma {
 
   export type VariantUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    color?: StringFieldUpdateOperationsInput | string
     size?: StringFieldUpdateOperationsInput | string
     stock?: IntFieldUpdateOperationsInput | number
     sku?: StringFieldUpdateOperationsInput | string
@@ -22640,7 +22618,6 @@ export namespace Prisma {
   export type VariantUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     productId?: StringFieldUpdateOperationsInput | string
-    color?: StringFieldUpdateOperationsInput | string
     size?: StringFieldUpdateOperationsInput | string
     stock?: IntFieldUpdateOperationsInput | number
     sku?: StringFieldUpdateOperationsInput | string
@@ -22651,7 +22628,6 @@ export namespace Prisma {
   export type VariantCreateManyInput = {
     id?: string
     productId: string
-    color: string
     size: string
     stock?: number
     sku: string
@@ -22659,7 +22635,6 @@ export namespace Prisma {
 
   export type VariantUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
-    color?: StringFieldUpdateOperationsInput | string
     size?: StringFieldUpdateOperationsInput | string
     stock?: IntFieldUpdateOperationsInput | number
     sku?: StringFieldUpdateOperationsInput | string
@@ -22668,7 +22643,6 @@ export namespace Prisma {
   export type VariantUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     productId?: StringFieldUpdateOperationsInput | string
-    color?: StringFieldUpdateOperationsInput | string
     size?: StringFieldUpdateOperationsInput | string
     stock?: IntFieldUpdateOperationsInput | number
     sku?: StringFieldUpdateOperationsInput | string
@@ -23897,16 +23871,14 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
-  export type VariantProductIdSizeColorCompoundUniqueInput = {
+  export type VariantProductIdSizeCompoundUniqueInput = {
     productId: string
     size: string
-    color: string
   }
 
   export type VariantCountOrderByAggregateInput = {
     id?: SortOrder
     productId?: SortOrder
-    color?: SortOrder
     size?: SortOrder
     stock?: SortOrder
     sku?: SortOrder
@@ -23919,7 +23891,6 @@ export namespace Prisma {
   export type VariantMaxOrderByAggregateInput = {
     id?: SortOrder
     productId?: SortOrder
-    color?: SortOrder
     size?: SortOrder
     stock?: SortOrder
     sku?: SortOrder
@@ -23928,7 +23899,6 @@ export namespace Prisma {
   export type VariantMinOrderByAggregateInput = {
     id?: SortOrder
     productId?: SortOrder
-    color?: SortOrder
     size?: SortOrder
     stock?: SortOrder
     sku?: SortOrder
@@ -26332,7 +26302,6 @@ export namespace Prisma {
 
   export type VariantCreateWithoutProductInput = {
     id?: string
-    color: string
     size: string
     stock?: number
     sku: string
@@ -26342,7 +26311,6 @@ export namespace Prisma {
 
   export type VariantUncheckedCreateWithoutProductInput = {
     id?: string
-    color: string
     size: string
     stock?: number
     sku: string
@@ -26490,7 +26458,6 @@ export namespace Prisma {
     NOT?: VariantScalarWhereInput | VariantScalarWhereInput[]
     id?: StringFilter<"Variant"> | string
     productId?: StringFilter<"Variant"> | string
-    color?: StringFilter<"Variant"> | string
     size?: StringFilter<"Variant"> | string
     stock?: IntFilter<"Variant"> | number
     sku?: StringFilter<"Variant"> | string
@@ -27481,7 +27448,6 @@ export namespace Prisma {
 
   export type VariantCreateWithoutOrderItemsInput = {
     id?: string
-    color: string
     size: string
     stock?: number
     sku: string
@@ -27492,7 +27458,6 @@ export namespace Prisma {
   export type VariantUncheckedCreateWithoutOrderItemsInput = {
     id?: string
     productId: string
-    color: string
     size: string
     stock?: number
     sku: string
@@ -27582,7 +27547,6 @@ export namespace Prisma {
 
   export type VariantUpdateWithoutOrderItemsInput = {
     id?: StringFieldUpdateOperationsInput | string
-    color?: StringFieldUpdateOperationsInput | string
     size?: StringFieldUpdateOperationsInput | string
     stock?: IntFieldUpdateOperationsInput | number
     sku?: StringFieldUpdateOperationsInput | string
@@ -27593,7 +27557,6 @@ export namespace Prisma {
   export type VariantUncheckedUpdateWithoutOrderItemsInput = {
     id?: StringFieldUpdateOperationsInput | string
     productId?: StringFieldUpdateOperationsInput | string
-    color?: StringFieldUpdateOperationsInput | string
     size?: StringFieldUpdateOperationsInput | string
     stock?: IntFieldUpdateOperationsInput | number
     sku?: StringFieldUpdateOperationsInput | string
@@ -27737,7 +27700,6 @@ export namespace Prisma {
 
   export type VariantCreateWithoutCartItemsInput = {
     id?: string
-    color: string
     size: string
     stock?: number
     sku: string
@@ -27748,7 +27710,6 @@ export namespace Prisma {
   export type VariantUncheckedCreateWithoutCartItemsInput = {
     id?: string
     productId: string
-    color: string
     size: string
     stock?: number
     sku: string
@@ -27796,7 +27757,6 @@ export namespace Prisma {
 
   export type VariantUpdateWithoutCartItemsInput = {
     id?: StringFieldUpdateOperationsInput | string
-    color?: StringFieldUpdateOperationsInput | string
     size?: StringFieldUpdateOperationsInput | string
     stock?: IntFieldUpdateOperationsInput | number
     sku?: StringFieldUpdateOperationsInput | string
@@ -27807,7 +27767,6 @@ export namespace Prisma {
   export type VariantUncheckedUpdateWithoutCartItemsInput = {
     id?: StringFieldUpdateOperationsInput | string
     productId?: StringFieldUpdateOperationsInput | string
-    color?: StringFieldUpdateOperationsInput | string
     size?: StringFieldUpdateOperationsInput | string
     stock?: IntFieldUpdateOperationsInput | number
     sku?: StringFieldUpdateOperationsInput | string
@@ -28304,7 +28263,6 @@ export namespace Prisma {
 
   export type VariantCreateManyProductInput = {
     id?: string
-    color: string
     size: string
     stock?: number
     sku: string
@@ -28330,7 +28288,6 @@ export namespace Prisma {
 
   export type VariantUpdateWithoutProductInput = {
     id?: StringFieldUpdateOperationsInput | string
-    color?: StringFieldUpdateOperationsInput | string
     size?: StringFieldUpdateOperationsInput | string
     stock?: IntFieldUpdateOperationsInput | number
     sku?: StringFieldUpdateOperationsInput | string
@@ -28340,7 +28297,6 @@ export namespace Prisma {
 
   export type VariantUncheckedUpdateWithoutProductInput = {
     id?: StringFieldUpdateOperationsInput | string
-    color?: StringFieldUpdateOperationsInput | string
     size?: StringFieldUpdateOperationsInput | string
     stock?: IntFieldUpdateOperationsInput | number
     sku?: StringFieldUpdateOperationsInput | string
@@ -28350,7 +28306,6 @@ export namespace Prisma {
 
   export type VariantUncheckedUpdateManyWithoutProductInput = {
     id?: StringFieldUpdateOperationsInput | string
-    color?: StringFieldUpdateOperationsInput | string
     size?: StringFieldUpdateOperationsInput | string
     stock?: IntFieldUpdateOperationsInput | number
     sku?: StringFieldUpdateOperationsInput | string

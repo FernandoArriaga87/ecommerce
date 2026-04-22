@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { StarDisplay } from "@/components/star-rating";
 import { BLUR_DATA_URL } from "@/lib/blur-placeholder";
 
-type Variant = { id: string; size: string; color: string; stock: number; sku: string };
+type Variant = { id: string; size: string; stock: number; sku: string };
 type Product = {
   id: string;
   name: string;
@@ -21,7 +21,6 @@ type Product = {
   images: string[];
   badge?: string;
   sku: string;
-  colors: string[];
   sizes: string[];
   variants: Variant[];
 };
@@ -51,9 +50,6 @@ export function ProductClientDisplay({
   const firstAvailable = product.variants.find((v) => v.stock > 0);
   const outOfStock = product.variants.every((v) => v.stock === 0);
 
-  const [selectedColor, setSelectedColor] = useState<string>(
-    firstAvailable?.color || product.colors[0] || ""
-  );
   const [selectedSize, setSelectedSize] = useState<string>(
     firstAvailable?.size || ""
   );
@@ -62,13 +58,14 @@ export function ProductClientDisplay({
   const images = product.images?.length > 0 ? product.images : ["/placeholder.jpg"];
   const [activeImage, setActiveImage] = useState<string>(images[0]);
 
-  const stockFor = (size: string, color: string) =>
-    product.variants.find((v) => v.size === size && v.color === color)?.stock ?? 0;
+  const stockFor = (size: string) =>
+    product.variants.find((v) => v.size === size)?.stock ?? 0;
 
   const selectedVariant = product.variants.find(
-    (v) => v.size === selectedSize && v.color === selectedColor
+    (v) => v.size === selectedSize && v.stock > 0
   );
-  const canAdd = !!selectedVariant && selectedVariant.stock > 0;
+  const selectedStock = selectedSize ? stockFor(selectedSize) : 0;
+  const canAdd = !!selectedVariant && selectedStock > 0;
 
   const handleAddToCart = () => {
     if (!canAdd) return;
@@ -201,42 +198,6 @@ export function ProductClientDisplay({
 
           <div className="h-[1px] w-full bg-[#111111]/5 mb-10" />
 
-          {/* Color Selector */}
-          {product.colors.length > 1 && (
-            <div className="mb-10">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#111111]">
-                  Color: <span className="text-[#111111]/50">{selectedColor}</span>
-                </h3>
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                {product.colors.map((color) => {
-                  const available = product.variants.some(
-                    (v) => v.color === color && v.stock > 0
-                  );
-                  const isActive = selectedColor === color;
-                  return (
-                    <button
-                      key={color}
-                      disabled={!available}
-                      onClick={() => setSelectedColor(color)}
-                      className={`px-5 h-12 flex items-center justify-center rounded-2xl border-2 font-black uppercase tracking-widest text-xs transition-all duration-300 ${
-                        !available
-                          ? "border-[#111111]/5 text-[#111111]/20 bg-[#FAFAFA] cursor-not-allowed line-through"
-                          : isActive
-                          ? "border-[#111111] bg-[#111111] text-white"
-                          : "border-[#111111]/10 text-[#111111]/60 bg-white hover:border-[#111111] hover:text-[#111111]"
-                      }`}
-                    >
-                      {color}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
           {/* Size Selector */}
           <div className="mb-12">
             <div className="flex justify-between items-center mb-6">
@@ -249,7 +210,7 @@ export function ProductClientDisplay({
 
             <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
               {product.sizes.map((size) => {
-                const stock = stockFor(size, selectedColor);
+                const stock = stockFor(size);
                 const outOfStock = stock === 0;
                 const isActive = selectedSize === size && !outOfStock;
 
@@ -277,9 +238,9 @@ export function ProductClientDisplay({
               })}
             </div>
 
-            {selectedVariant && selectedVariant.stock > 0 && selectedVariant.stock <= 5 && (
+            {canAdd && selectedStock <= 5 && (
               <p className="mt-4 text-[10px] font-black uppercase tracking-[0.2em] text-orange-600">
-                ¡Solo quedan {selectedVariant.stock}!
+                ¡Solo quedan {selectedStock}!
               </p>
             )}
           </div>

@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { createClient } from "@/lib/supabase/server";
 import { resend, SEND_FROM } from "@/lib/resend";
 import OrderShippedEmail from "@/components/emails/OrderShippedEmail";
 import OrderDeliveredEmail from "@/components/emails/OrderDeliveredEmail";
@@ -16,6 +15,30 @@ async function verifyAdmin(): Promise<boolean> {
   return (await requireAdminUser()) !== null;
 }
 
+// Images are uploaded client-side to Supabase Storage; the form posts only their
+// public URLs. We validate they point to our own `products` bucket so an attacker
+// can't inject arbitrary URLs (e.g. hotlinks or tracking pixels) into the DB.
+const PRODUCTS_BUCKET_PREFIX = (() => {
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  return base ? `${base}/storage/v1/object/public/products/` : null;
+})();
+
+function parseImageUrls(raw: string | null): string[] | null {
+  if (!raw) return null;
+  try {
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr) || arr.length === 0) return null;
+    if (arr.length > 10) return null;
+    for (const u of arr) {
+      if (typeof u !== "string") return null;
+      if (PRODUCTS_BUCKET_PREFIX && !u.startsWith(PRODUCTS_BUCKET_PREFIX)) return null;
+    }
+    return arr;
+  } catch {
+    return null;
+  }
+}
+
 export async function createProductAction(prevState: any, formData: FormData) {
   if (!(await verifyAdmin())) return { error: "Acceso denegado." };
 
@@ -24,50 +47,23 @@ export async function createProductAction(prevState: any, formData: FormData) {
   const price = formData.get("price") as string;
   const teamId = formData.get("teamId") as string;
   const categoryId = formData.get("categoryId") as string;
-  const imageFiles = formData.getAll("imageFiles") as File[];
   const isFeatured = formData.get("isFeatured") === "on";
   const isNew = formData.get("isNew") === "on";
   const variantsJson = formData.get("variantsJson") as string;
+  const imageUrlsJson = formData.get("imageUrlsJson") as string | null;
 
   if (!name || !slug || !price || !teamId || !categoryId || !variantsJson) {
     return { error: "Todos los campos principales son obligatorios." };
   }
 
+  const imageUrls = parseImageUrls(imageUrlsJson);
+  if (!imageUrls) {
+    return { error: "Debes subir al menos una imagen válida (hasta 10)." };
+  }
+
   const variants = JSON.parse(variantsJson);
   if (variants.length === 0) {
     return { error: "Debes agregar al menos una variante (talla/stock)." };
-  }
-
-  const imageUrls: string[] = [];
-
-  try {
-    const supabase = await createClient();
-    
-    for (const imageFile of imageFiles) {
-      if (imageFile.size === 0) continue;
-      
-      const fileExt = imageFile.name.split('.').pop();
-      const fileName = `${Date.now()}-${slug}-${Math.round(Math.random()*1000)}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('products')
-        .upload(fileName, imageFile, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (uploadError) {
-        console.error(uploadError);
-        return { error: "Fallo al subir imágenes." };
-      }
-
-      const { data } = supabase.storage.from('products').getPublicUrl(fileName);
-      imageUrls.push(data.publicUrl);
-    }
-
-  } catch (err) {
-    console.error("Storage upload err:", err);
-    return { error: "Error de conexión con el almacenamiento." };
   }
 
   try {
@@ -85,15 +81,13 @@ export async function createProductAction(prevState: any, formData: FormData) {
         }
       });
 
-      // Crear las variantes
       for (const v of variants) {
         await tx.variant.create({
           data: {
             productId: product.id,
-            color: v.color,
             size: v.size,
             stock: v.stock,
-            sku: `${slug.toUpperCase()}-${v.size.toUpperCase()}-${v.color.toUpperCase().slice(0, 3)}-${Math.round(Math.random()*1000)}`
+            sku: `${slug.toUpperCase()}-${v.size.toUpperCase()}-${Math.round(Math.random() * 1000)}`,
           }
         });
       }
@@ -128,47 +122,32 @@ export async function updateProductAction(prevState: any, formData: FormData) {
   const id = formData.get("id") as string;
   const name = formData.get("name") as string;
   const slug = formData.get("slug") as string;
-  const price = formData.get("price") as string;
   const teamId = formData.get("teamId") as string;
   const categoryId = formData.get("categoryId") as string;
   const isFeatured = formData.get("isFeatured") === "on";
   const isNew = formData.get("isNew") === "on";
   const variantsJson = formData.get("variantsJson") as string;
-  
-  const imageFiles = formData.getAll("imageFiles") as File[];
-  const existingImageUrl = formData.get("existingImageUrl") as string;
+  const imageUrlsJson = formData.get("imageUrlsJson") as string | null;
 
-  if (!id || !name || !slug || !price || !teamId || !categoryId || !variantsJson) {
+  if (!id || !name || !slug || !teamId || !categoryId || !variantsJson) {
     return { error: "Todos los campos obligatorios deben estar llenos." };
+  }
+
+  const finalImageUrls = parseImageUrls(imageUrlsJson);
+  if (!finalImageUrls) {
+    return { error: "Debes tener al menos una imagen válida (hasta 10)." };
   }
 
   const variants = JSON.parse(variantsJson);
 
-  let finalImageUrls: string[] = existingImageUrl ? [existingImageUrl] : [];
-
   try {
-    const supabase = await createClient();
-    
-    if (imageFiles.length > 0 && imageFiles[0].size > 0) {
-      finalImageUrls = [];
-      for (const imageFile of imageFiles) {
-        if (imageFile.size === 0) continue;
-        const fileExt = imageFile.name.split('.').pop();
-        const fileName = `${Date.now()}-${slug}-${Math.round(Math.random()*1000)}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage.from('products').upload(fileName, imageFile);
-        if (uploadError) return { error: "Fallo al subir nuevas imágenes." };
-        const { data } = supabase.storage.from('products').getPublicUrl(fileName);
-        finalImageUrls.push(data.publicUrl);
-      }
-    }
-
     await prisma.$transaction(async (tx) => {
       await tx.product.update({
         where: { id },
         data: {
           name,
           slug,
-          price: Number(price),
+          // El precio se omite aquí por seguridad para que sea inmutable
           teamId,
           categoryId,
           images: finalImageUrls,
@@ -177,35 +156,32 @@ export async function updateProductAction(prevState: any, formData: FormData) {
         }
       });
 
-      // Variantes: upsert por (productId, size, color). Las variantes que ya no
-      // están en el form NO se borran (romperían la FK contra OrderItem/CartItem)
-      // — se les pone stock=0 para que dejen de venderse.
+      // Variantes: upsert por (productId, size). Las variantes que ya no están
+      // en el form NO se borran (romperían la FK contra OrderItem/CartItem) —
+      // se les pone stock=0 para que dejen de venderse.
       const existing = await tx.variant.findMany({
         where: { productId: id },
-        select: { id: true, size: true, color: true },
+        select: { id: true, size: true },
       });
-      const incomingKeys = new Set(
-        variants.map((v: { size: string; color: string }) => `${v.size}|${v.color}`)
-      );
+      const incomingSizes = new Set(variants.map((v: { size: string }) => v.size));
 
-      for (const v of variants as Array<{ size: string; color: string; stock: number }>) {
+      for (const v of variants as Array<{ size: string; stock: number }>) {
         await tx.variant.upsert({
           where: {
-            productId_size_color: { productId: id, size: v.size, color: v.color },
+            productId_size: { productId: id, size: v.size },
           },
           update: { stock: v.stock },
           create: {
             productId: id,
-            color: v.color,
             size: v.size,
             stock: v.stock,
-            sku: `${slug.toUpperCase()}-${v.size.toUpperCase()}-${v.color.toUpperCase().slice(0, 3)}-${Math.round(Math.random() * 1000)}`,
+            sku: `${slug.toUpperCase()}-${v.size.toUpperCase()}-${Math.round(Math.random() * 1000)}`,
           },
         });
       }
 
       const removedIds = existing
-        .filter((e) => !incomingKeys.has(`${e.size}|${e.color}`))
+        .filter((e) => !incomingSizes.has(e.size))
         .map((e) => e.id);
       if (removedIds.length > 0) {
         await tx.variant.updateMany({

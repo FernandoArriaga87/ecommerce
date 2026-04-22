@@ -43,7 +43,6 @@ async function main() {
     name: "Jersey Rayados Local 25/26",
     teamId: rayadosTeam!.id,
     categoryId: ligaMx.id,
-    colors: ["Azul"],
     images: ["/brazilshirt.webp"],
     isNew: true,
     stock: 20,
@@ -60,7 +59,6 @@ async function main() {
     name: "Jersey México Local 2026",
     teamId: mexico.id,
     categoryId: ligaMx.id,
-    colors: ["Verde"],
     images: ["/brazilshirt.webp"],
     isNew: true,
     stock: 20,
@@ -145,7 +143,6 @@ async function upsertProductWithVariants(opts: {
   name: string;
   teamId: string;
   categoryId: string;
-  colors: string[];
   images: string[];
   isNew: boolean;
   stock: number;
@@ -175,23 +172,20 @@ async function upsertProductWithVariants(opts: {
     },
   });
 
-  for (const color of opts.colors) {
-    for (const size of SIZES) {
-      const sku = `${opts.slug.toUpperCase()}-${size}-${color.substring(0, 3).toUpperCase()}`;
-      await prisma.variant.upsert({
-        where: { productId_size_color: { productId: product.id, size, color } },
-        update: { stock: opts.stock },
-        create: {
-          productId: product.id,
-          color,
-          size,
-          stock: opts.stock,
-          sku,
-        },
-      });
-    }
+  for (const size of SIZES) {
+    const sku = `${opts.slug.toUpperCase()}-${size}`;
+    await prisma.variant.upsert({
+      where: { productId_size: { productId: product.id, size } },
+      update: { stock: opts.stock },
+      create: {
+        productId: product.id,
+        size,
+        stock: opts.stock,
+        sku,
+      },
+    });
   }
-  console.log(`  ✔ ${opts.name} — stock=${opts.stock}/size, ${opts.colors.length} color(es)`);
+  console.log(`  ✔ ${opts.name} — stock=${opts.stock}/size`);
 }
 
 async function renameTeamAndProduct(opts: {

@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { checkoutSchema } from "@/lib/validations/checkout";
 import type { ShippingOption } from "@/lib/skydropx";
 import { qualifiesForFreeShipping } from "@/lib/shipping";
-import { Decimal } from "@prisma/client/runtime/library";
+import { Decimal } from "@/lib/generated-prisma/runtime/library";
 
 /**
  * Canonical checkout endpoint.
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    const { name, email, phone, address, city, state, zipCode, quoteId, shippingRateId, items } = validation.data;
+    const { name, email, phone, address, city, state, zipCode, quoteId, shippingRateId, items, addressId } = validation.data;
 
     // ── 3. Security: email must match the session ──
     const sessionEmail = (authUser.email || "").trim().toLowerCase();
@@ -51,37 +51,40 @@ export async function POST(req: NextRequest) {
     }
 
     // ── 4. Validate shipping against the persisted quote ──
-    // We do NOT re-call Skydropx — its rate IDs are scoped to each quotation
-    // and would never match the one the client picked. Instead we trust the
-    // snapshot we stored when the user clicked "Cotizar" and just verify
-    // freshness, destination, and that the chosen rate exists in it.
     const totalQty = items.reduce((sum, it) => sum + it.quantity, 0);
-    const quote = await prisma.shippingQuote.findUnique({ where: { id: quoteId } });
-    if (!quote) {
-      return NextResponse.json(
-        { error: "Tu cotización de envío expiró. Vuelve a cotizar." },
-        { status: 400 }
-      );
-    }
-    if (quote.expiresAt < new Date()) {
-      return NextResponse.json(
-        { error: "Tu cotización de envío expiró. Vuelve a cotizar." },
-        { status: 400 }
-      );
-    }
-    if (quote.zipCode !== zipCode.trim() || quote.totalItems !== totalQty) {
-      return NextResponse.json(
-        { error: "Cambiaste el envío después de cotizar. Vuelve a cotizar para confirmar el precio." },
-        { status: 400 }
-      );
-    }
-    const storedRates = (quote.rates as unknown as ShippingOption[]) || [];
-    const chosenRate = storedRates.find((r) => r.rateId === shippingRateId);
-    if (!chosenRate) {
-      return NextResponse.json(
-        { error: "La opción de envío seleccionada ya no está disponible. Vuelve a cotizar." },
-        { status: 400 }
-      );
+    
+    let chosenRate: any = null;
+    const isFreeShippingRequest = quoteId === "free_shipping" && shippingRateId === "free_shipping";
+
+    if (!isFreeShippingRequest) {
+      const quote = await prisma.shippingQuote.findUnique({ where: { id: quoteId } });
+      if (!quote || quote.expiresAt < new Date()) {
+        return NextResponse.json(
+          { error: "Tu cotización de envío expiró. Vuelve a cotizar." },
+          { status: 400 }
+        );
+      }
+      if (quote.zipCode !== zipCode.trim() || quote.totalItems !== totalQty) {
+        return NextResponse.json(
+          { error: "Cambiaste el envío después de cotizar. Vuelve a cotizar para confirmar el precio." },
+          { status: 400 }
+        );
+      }
+      const storedRates = (quote.rates as unknown as ShippingOption[]) || [];
+      chosenRate = storedRates.find((r) => r.rateId === shippingRateId);
+      if (!chosenRate) {
+        return NextResponse.json(
+          { error: "La opción de envío seleccionada ya no está disponible. Vuelve a cotizar." },
+          { status: 400 }
+        );
+      }
+    } else {
+      chosenRate = {
+        rateId: "free_shipping",
+        carrier: "Envío Gratis",
+        price: 0,
+        isPersonalDelivery: false,
+      };
     }
 
     // ── 5. Stock reservation + order creation in a single SERIALIZABLE transaction ──
@@ -175,17 +178,31 @@ export async function POST(req: NextRequest) {
       // exact same name/phone/street/city/state/zip, reuse it. Otherwise the
       // Address table grows by one row per checkout and the user's address
       // book fills up with duplicates of the same place.
-      const existingAddr = await tx.address.findFirst({
-        where: {
-          userId: user.id,
-          name,
-          phone,
-          address,
-          city,
-          state,
-          zipCode,
-        },
-      });
+      let existingAddr = null;
+
+      if (addressId) {
+        existingAddr = await tx.address.findUnique({
+          where: { id: addressId }
+        });
+        // Security check: ensure the address actually belongs to the user
+        if (existingAddr && existingAddr.userId !== user.id) {
+          existingAddr = null;
+        }
+      }
+
+      if (!existingAddr) {
+        existingAddr = await tx.address.findFirst({
+          where: {
+            userId: user.id,
+            name,
+            phone,
+            address,
+            city,
+            state,
+            zipCode,
+          },
+        });
+      }
 
       const addr =
         existingAddr ??
@@ -201,6 +218,14 @@ export async function POST(req: NextRequest) {
             zipCode,
           },
         }));
+
+      // Vacía el carrito persistido del usuario en cuanto se reservó el stock.
+      // El carrito ya quedó "consumido" en la orden PENDING — si el usuario
+      // abandona Stripe, el webhook de expiración cancela la orden y restaura
+      // el stock, pero el carrito permanece vacío (tendrá que volver a armarlo).
+      await tx.cartItem.deleteMany({
+        where: { cart: { userId: user.id } },
+      });
 
       const orderNumber = `DS-${Date.now().toString(36).toUpperCase()}`;
       const order = await tx.order.create({

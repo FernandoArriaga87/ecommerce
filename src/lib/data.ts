@@ -5,7 +5,6 @@ export interface Product {
   price: number;
   image: string;
   badge?: string;
-  colors: string[];
   sizes: { label: string; stock: number }[];
   sku: string;
   slug: string;
@@ -19,7 +18,6 @@ export const products: Product[] = [
     price: 1899,
     image: "https://images.unsplash.com/photo-1577223625816-7546f13df25d?q=80&w=800&auto=format&fit=crop",
     badge: "Más vendido",
-    colors: ["Blanco"],
     sizes: [
       { label: "S", stock: 5 },
       { label: "M", stock: 12 },
@@ -36,7 +34,6 @@ export const products: Product[] = [
     price: 1799,
     image: "https://images.unsplash.com/photo-1544452179-883a992bc0c2?q=80&w=800&auto=format&fit=crop",
     badge: "Nuevo",
-    colors: ["Azul", "Negro"],
     sizes: [
       { label: "S", stock: 0 },
       { label: "M", stock: 8 },
@@ -52,7 +49,6 @@ export const products: Product[] = [
     team: "Nacional",
     price: 1999,
     image: "https://images.unsplash.com/photo-1552554769-cf2be34be108?q=80&w=800&auto=format&fit=crop",
-    colors: ["Verde"],
     sizes: [
       { label: "S", stock: 10 },
       { label: "M", stock: 0 },
@@ -67,7 +63,6 @@ export const products: Product[] = [
     team: "Barcelona",
     price: 1899,
     image: "https://images.unsplash.com/photo-1582046897931-1507ae8001be?q=80&w=800&auto=format&fit=crop",
-    colors: ["Azulgrana"],
     sizes: [
       { label: "S", stock: 2 },
       { label: "M", stock: 5 },
@@ -83,7 +78,6 @@ export const products: Product[] = [
     team: "Juventus",
     price: 1699,
     image: "https://images.unsplash.com/photo-1518063319789-7217e6706b04?q=80&w=800&auto=format&fit=crop",
-    colors: ["Rosa"],
     sizes: [
       { label: "S", stock: 0 },
       { label: "M", stock: 0 },
@@ -99,7 +93,6 @@ export const products: Product[] = [
     team: "Arsenal",
     price: 1799,
     image: "/brazilshirt.webp",
-    colors: ["Gris"],
     sizes: [
       { label: "S", stock: 4 },
       { label: "M", stock: 7 },

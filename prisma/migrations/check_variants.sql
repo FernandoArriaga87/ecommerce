@@ -1,4 +1,4 @@
-SELECT v."id", v."size", v."stock", v."color", p."name" as "productName"
+SELECT v."id", v."size", v."stock", p."name" as "productName"
 FROM "Variant" v
 JOIN "Product" p ON v."productId" = p."id"
 WHERE p."name" LIKE '%Madrid%'
