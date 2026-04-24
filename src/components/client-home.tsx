@@ -167,7 +167,7 @@ export function ClientHome({
         >
           <Image
             src="/ImgHerol.jpg"
-            alt="Aficionado con jersey deportivo inspirado en su equipo favorito"
+            alt="Persona con camisa deportiva importada de segunda mano"
             fill
             sizes="100vw"
             quality={85}
@@ -201,7 +201,7 @@ export function ClientHome({
             </h1>
 
             <p className="text-lg md:text-xl text-[#111111]/60 font-medium mb-12 leading-relaxed tracking-tight max-w-md">
-              Jerseys de aficionado inspirados en tus equipos favoritos. Calidad premium para vivir el juego en cada entrenamiento y cada grito de gol.
+              Camisas de segunda mano importadas. Calidad seleccionada para vivir el juego en cada entrenamiento y cada grito de gol.
             </p>
 
             <div className="flex flex-wrap gap-5">

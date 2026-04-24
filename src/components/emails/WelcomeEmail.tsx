@@ -46,7 +46,7 @@ export const WelcomeEmail = ({ userFirstname = 'Deportista' }: WelcomeEmailProps
               </Text>
 
               <Text className="text-[#444444] text-[15px] leading-[26px] mt-[12px]">
-                Gracias por unirte a AuraSport. Aquí encontrarás jerseys de aficionado inspirados en tus equipos favoritos, con calidad premium y envío rápido a toda la República.
+                Gracias por unirte a AuraSport. Aquí encontrarás camisas y prendas deportivas usadas importadas de tus equipos favoritos, con envío rápido a toda la República.
               </Text>
 
               <Text className="text-[#444444] text-[15px] leading-[26px] mt-[8px]">

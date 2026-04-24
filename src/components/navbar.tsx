@@ -53,13 +53,15 @@ export function Navbar() {
             ].map((item) => (
               <Link 
                 key={item.name} 
-                href="#catalog" 
+                href="/#catalog" 
                 onClick={(e) => {
-                  const target = document.getElementById("catalog");
-                  if (target) {
-                    e.preventDefault();
-                    target.scrollIntoView({ behavior: "smooth" });
-                    window.history.pushState(null, "", "#catalog");
+                  if (window.location.pathname === "/") {
+                    const target = document.getElementById("catalog");
+                    if (target) {
+                      e.preventDefault();
+                      target.scrollIntoView({ behavior: "smooth" });
+                      window.history.pushState(null, "", "/#catalog");
+                    }
                   }
                 }}
                 className="hover:text-[#111111] transition-colors relative group"

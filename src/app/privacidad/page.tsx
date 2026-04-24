@@ -3,113 +3,79 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Aviso de Privacidad | AuraSport",
-  description: "Cómo recopilamos, usamos y protegemos tus datos personales.",
+  description: "Cómo manejamos la información en nuestro sitio.",
 };
 
 export default function PrivacidadPage() {
   return (
     <LegalPageShell
       title="Aviso de Privacidad"
-      subtitle="Protección de datos personales"
-      lastUpdated="19 de abril de 2026"
+      subtitle="Transparencia y seguridad"
+      lastUpdated="23 de abril de 2026"
     >
-      <p className="text-sm bg-[#FFF8E1] border-l-4 border-amber-500 p-4 text-[#111111]/70">
-        <strong>Documento base.</strong> Antes de publicar esta tienda, reemplaza los datos del responsable
-        (nombre legal, domicilio, RFC, correo de contacto) y valida el contenido con un asesor legal.
-      </p>
-
-      <LegalSection title="1. Responsable del tratamiento">
+      <LegalSection title="1. Identidad del responsable">
         <p>
-          <strong>AuraSport</strong> (en adelante &quot;el Responsable&quot;), con domicilio en [Calle, Número, Colonia,
-          C.P., Ciudad, Estado, México], es responsable del tratamiento de los datos personales que
-          recabe a través de este sitio web, en los términos de la Ley Federal de Protección de Datos
-          Personales en Posesión de los Particulares (LFPDPPP) y su Reglamento.
+          <strong>AuraSport</strong>, con domicilio en Av. Constitución 1234, Local 5, Col. Centro, Monterrey, N.L., C.P. 64000, México, 
+          se compromete a mantener la confidencialidad y seguridad de la información de sus clientes, 
+          aplicando las medidas necesarias para garantizar una experiencia de navegación y compra segura.
         </p>
-        <p>Para cualquier duda relacionada con este aviso, escribe a: <strong>privacidad@aurasport.mx</strong></p>
-      </LegalSection>
-
-      <LegalSection title="2. Datos personales que recabamos">
-        <p>Cuando creas una cuenta o realizas una compra, podemos recabar:</p>
-        <ul className="list-disc pl-6 space-y-1">
-          <li><strong>Identificación:</strong> nombre completo, correo electrónico, teléfono.</li>
-          <li><strong>Dirección de envío:</strong> calle, número, colonia, C.P., ciudad, estado.</li>
-          <li><strong>Datos de pago:</strong> procesados directamente por Stripe; no almacenamos el número completo de tu tarjeta en nuestros servidores.</li>
-          <li><strong>Datos de navegación:</strong> dirección IP, tipo de navegador, páginas visitadas, mediante cookies (ver nuestra <a href="/cookies" className="underline font-bold">Política de Cookies</a>).</li>
-        </ul>
-        <p>No recabamos datos personales sensibles.</p>
-      </LegalSection>
-
-      <LegalSection title="3. Finalidades del tratamiento">
-        <p><strong>Finalidades primarias</strong> (necesarias para la relación comercial):</p>
-        <ul className="list-disc pl-6 space-y-1">
-          <li>Procesar y entregar tus pedidos.</li>
-          <li>Gestionar tu cuenta y acceso a compras.</li>
-          <li>Emitir comprobantes fiscales cuando los solicites.</li>
-          <li>Atender quejas, aclaraciones y reposiciones por defecto o error de envío.</li>
-          <li>Cumplir obligaciones legales y fiscales.</li>
-        </ul>
-        <p className="mt-3"><strong>Finalidades secundarias</strong> (requieren tu consentimiento):</p>
-        <ul className="list-disc pl-6 space-y-1">
-          <li>Envío de promociones y boletines comerciales.</li>
-          <li>Análisis estadístico para mejorar nuestros productos y el sitio.</li>
-        </ul>
-        <p>Puedes negarte en cualquier momento enviando un correo a <strong>privacidad@aurasport.mx</strong>.</p>
-      </LegalSection>
-
-      <LegalSection title="4. Transferencias de datos">
-        <p>Tus datos pueden ser compartidos con los siguientes terceros, estrictamente para operar el servicio:</p>
-        <ul className="list-disc pl-6 space-y-1">
-          <li><strong>Stripe</strong> (procesamiento de pagos) — sujeto a su propia política de privacidad.</li>
-          <li><strong>Supabase</strong> (autenticación e infraestructura).</li>
-          <li><strong>Resend</strong> (envío de correos transaccionales).</li>
-          <li><strong>Paqueterías</strong> autorizadas para entregar tu pedido.</li>
-          <li>Autoridades competentes cuando exista requerimiento legal.</li>
-        </ul>
-        <p>No vendemos tus datos personales a terceros.</p>
-      </LegalSection>
-
-      <LegalSection title="5. Derechos ARCO">
-        <p>
-          Tienes derecho a <strong>Acceder, Rectificar, Cancelar u Oponerte</strong> al tratamiento de tus datos
-          (derechos ARCO). También puedes revocar tu consentimiento. Para ejercerlos, envía a
-          <strong> privacidad@aurasport.mx</strong> una solicitud que incluya:
-        </p>
-        <ul className="list-disc pl-6 space-y-1">
-          <li>Tu nombre completo y correo de contacto.</li>
-          <li>Documento oficial que acredite tu identidad.</li>
-          <li>Descripción clara del derecho que quieres ejercer y sobre qué datos.</li>
-        </ul>
-        <p>Responderemos en un plazo máximo de 20 días hábiles.</p>
-      </LegalSection>
-
-      <LegalSection title="6. Conservación y seguridad">
-        <p>
-          Conservamos tus datos durante el tiempo necesario para cumplir las finalidades descritas y las
-          obligaciones legales aplicables (por ejemplo, 5 años para información fiscal). Aplicamos medidas
-          técnicas y administrativas razonables para proteger tu información: cifrado en tránsito (HTTPS),
-          acceso restringido, auditoría de procesos y copias de seguridad.
+        <p className="mt-2">
+          Para cualquier consulta relacionada con este aviso, puedes contactarnos en: <strong>contacto@aurasportmx.com</strong>
         </p>
       </LegalSection>
 
-      <LegalSection title="7. Uso de cookies">
+      <LegalSection title="2. Información en nuestro sitio">
         <p>
-          Este sitio utiliza cookies propias y de terceros. Consulta nuestra
-          <a href="/cookies" className="underline font-bold"> Política de Cookies</a> para más detalles.
+          Al navegar por nuestra tienda y realizar una compra, el sistema requiere procesar ciertos detalles básicos 
+          para asegurar que los pedidos lleguen a su destino correctamente, como el lugar de entrega y un correo de contacto 
+          para enviar las actualizaciones del envío.
+        </p>
+        <p className="mt-2">
+          <strong>No solicitamos, no recopilamos ni almacenamos datos personales sensibles.</strong> 
+          No requerimos información de identificación oficial, estado civil, ni datos biométricos. 
+          Mantenemos la recolección de información al mínimo indispensable requerido únicamente para fines de logística y envío.
         </p>
       </LegalSection>
 
-      <LegalSection title="8. Cambios al aviso">
+      <LegalSection title="3. Seguridad de los pagos">
         <p>
-          Este aviso puede actualizarse. La fecha de la última versión aparece al inicio del documento.
-          Publicaremos los cambios en esta misma página.
+          La seguridad de tus transacciones es una prioridad. Todos los pagos realizados en nuestra plataforma 
+          son procesados de forma externa a través de pasarelas de pago certificadas (como Stripe). 
+        </p>
+        <p className="mt-2">
+          AuraSport <strong>nunca almacena, procesa ni tiene acceso a los números completos de tu tarjeta de crédito o débito</strong>, 
+          ni a los códigos de seguridad (CVV). Todo el proceso de pago ocurre en un entorno encriptado bajo los más altos 
+          estándares de seguridad bancaria (PCI-DSS).
         </p>
       </LegalSection>
 
-      <LegalSection title="9. INAI">
+      <LegalSection title="4. Uso de la información">
+        <p>Los detalles proporcionados durante la compra se utilizan exclusivamente para:</p>
+        <ul className="list-disc pl-6 space-y-2 mt-2 mb-2">
+          <li>Coordinar el despacho y envío del paquete a la dirección indicada.</li>
+          <li>Enviar correos electrónicos automáticos sobre el estado del pedido (confirmación, envío y entrega).</li>
+          <li>Brindar soporte técnico o asistencia en caso de que existan dudas con el pedido.</li>
+        </ul>
         <p>
-          Si consideras que tu derecho a la protección de datos personales ha sido vulnerado, puedes
-          presentar una denuncia ante el Instituto Nacional de Transparencia, Acceso a la Información
-          y Protección de Datos Personales (INAI): <a href="https://home.inai.org.mx" className="underline font-bold">home.inai.org.mx</a>.
+          <strong>En AuraSport nunca venderemos, rentaremos ni compartiremos tu información con terceros con fines publicitarios.</strong> 
+          Solo compartimos la dirección de destino con las paqueterías estrictamente para lograr la entrega del paquete.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="5. Cookies y navegación">
+        <p>
+          Nuestro sitio web puede utilizar herramientas analíticas estándar (cookies) que nos ayudan a entender 
+          de forma anónima y agregada cómo los visitantes navegan por nuestro catálogo, cuáles son los artículos 
+          más populares y cómo podemos mejorar la velocidad y diseño de nuestra página. Estas herramientas no rastrean 
+          tu identidad personal.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="6. Modificaciones">
+        <p>
+          Este aviso de privacidad puede ser actualizado en el futuro para adaptarse a mejoras en nuestra plataforma 
+          o a nuevas disposiciones legales. Cualquier cambio será publicado en esta misma sección para mantener una total 
+          transparencia con nuestros clientes.
         </p>
       </LegalSection>
     </LegalPageShell>

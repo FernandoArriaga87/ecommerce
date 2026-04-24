@@ -14,7 +14,7 @@ export const checkoutSchema = z.object({
   quoteId: z.union([
     z.string().uuid(),
     z.literal("free_shipping"),
-  ], { errorMap: () => ({ message: "Cotización inválida — vuelve a cotizar el envío" }) }),
+  ], { message: "Cotización inválida — vuelve a cotizar el envío" }),
   shippingRateId: z.string().min(1, "Selecciona una opción de envío").max(200),
   items: z.array(
     z.object({

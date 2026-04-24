@@ -318,9 +318,9 @@ export function ProductClientDisplay({
                   <ArrowClockwise weight="bold" size={24} className="text-[#111111]" />
                 </div>
                 <div>
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] mb-2">Producto para aficionados</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] mb-2">Pieza Única Importada</h4>
                   <p className="text-sm text-[#111111]/50 font-medium">
-                    Réplica inspirada en el diseño oficial. No está afiliada, licenciada ni respaldada por el club, la liga ni sus patrocinadores.
+                    Prenda de segunda mano importada. Cada pieza es única y seleccionada de Estados Unidos.
                   </p>
                 </div>
               </div>

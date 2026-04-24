@@ -24,17 +24,17 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "AuraSport — Jerseys de Aficionado",
+    default: "AuraSport — Ropa Deportiva Usada Importada",
     template: "%s | AuraSport",
   },
   description:
-    "Jerseys de aficionado inspirados en tus equipos favoritos. Calidad premium y envío seguro a toda la República Mexicana. Réplicas no oficiales.",
+    "Camisas y prendas deportivas usadas importadas. Piezas únicas importadas de Estados Unidos con envío seguro a toda la República Mexicana.",
   applicationName: "AuraSport",
   keywords: [
     "jerseys",
     "playeras de fútbol",
-    "aficionado",
-    "réplica",
+    "usado",
+    "vintage",
     "Liga MX",
     "selección mexicana",
     "tienda deportiva",
@@ -50,15 +50,15 @@ export const metadata: Metadata = {
     locale: "es_MX",
     url: SITE_URL,
     siteName: "AuraSport",
-    title: "AuraSport — Jerseys de Aficionado",
+    title: "AuraSport — Ropa Deportiva Usada Importada",
     description:
-      "Jerseys de aficionado inspirados en tus equipos favoritos. Envío seguro a toda la República.",
+      "Ropa deportiva usada importada. Envío seguro a toda la República.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "AuraSport — Jerseys de Aficionado",
+    title: "AuraSport — Ropa Deportiva Usada Importada",
     description:
-      "Jerseys de aficionado inspirados en tus equipos favoritos. Envío seguro a toda la República.",
+      "Ropa deportiva usada importada. Envío seguro a toda la República.",
   },
   robots: {
     index: true,
@@ -99,7 +99,7 @@ export default function RootLayout({
                 <div>
                   <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-white mb-5">Comprar</h3>
                   <ul className="space-y-3 text-sm">
-                    <li><Link href="/" className="hover:text-white transition-colors">Catálogo</Link></li>
+                    <li><Link href="/#catalog" className="hover:text-white transition-colors">Catálogo</Link></li>
                     <li><Link href="/?search=" className="hover:text-white transition-colors">Buscar</Link></li>
                     <li><Link href="/wishlist" className="hover:text-white transition-colors">Favoritos</Link></li>
                     <li><Link href="/orders" className="hover:text-white transition-colors">Mis pedidos</Link></li>
@@ -124,10 +124,10 @@ export default function RootLayout({
                 <div>
                   <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-white mb-5">AuraSport</h3>
                   <p className="text-sm text-white/50 leading-relaxed">
-                    Jerseys de aficionado para vivir el juego. Envío seguro a toda la república.
+                    Camisas y ropa deportiva usada importada. Selección vintage e importada. Envío seguro a toda la república.
                   </p>
                   <p className="text-[10px] text-white/30 leading-relaxed mt-4 uppercase tracking-widest">
-                    Réplicas no oficiales, sin afiliación a clubes, ligas ni patrocinadores.
+                    Prendas únicas importadas. Promovemos la moda circular y sustentable.
                   </p>
                 </div>
               </div>
@@ -147,4 +147,6 @@ export default function RootLayout({
     </html>
   );
 }
+
+
 

@@ -21,7 +21,7 @@ const REVIEW_TEXTS: Array<{ rating: number; title: string; body: string }> = [
   { rating: 4, title: "Todo bien", body: "La atención al cliente respondió rápido cuando tuve duda de la talla. Me orientaron sin problema. El producto muy bien." },
   { rating: 5, title: "Calidad sorprendente", body: "Honestamente no esperaba tanto por este precio. La costura, los colores, el escudo, todo impecable. Ya se las recomendé a mis amigos." },
   { rating: 5, title: "Cumple al 100%", body: "Muy contento con la compra. Llegó en el tiempo prometido, buena calidad de tela y el logo bien definido. Pulgar arriba." },
-  { rating: 5, title: "Como la oficial", body: "A simple vista no distingues entre esta y la oficial. Para aficionados que quieren apoyar al equipo sin gastar una fortuna, esta es la opción." },
+  { rating: 5, title: "100% recomendado", body: "A simple vista notas la gran calidad. Para quienes quieren apoyar al equipo con una camisa de época sin gastar una fortuna, esta es la opción." },
   { rating: 4, title: "Buena pero ojo con la talla", body: "El producto es bueno, la tela y los colores están bien. Solo recomiendo pedir una talla menos si eres delgado, me quedó un poco grande." },
 ];
 

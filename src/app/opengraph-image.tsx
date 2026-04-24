@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "AuraSport — Jerseys de Aficionado";
+export const alt = "AuraSport — Prendas Deportivas Usadas Importadas";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -59,7 +59,7 @@ export default async function Image() {
               color: "transparent",
             }}
           >
-            Aficionado
+            Ropa Vintage
           </div>
         </div>
 

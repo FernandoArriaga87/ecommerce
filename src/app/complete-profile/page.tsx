@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, Suspense } from "react";
 import { completeProfileAction, ProfileFormState } from "@/app/actions/profile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSearchParams, useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
-export default function CompleteProfilePage() {
+function CompleteProfileForm() {
   const initialState: ProfileFormState = { error: "", success: false, returnUrl: "" };
   const [state, formAction, pending] = useActionState(completeProfileAction, initialState);
   const searchParams = useSearchParams();
@@ -100,5 +101,19 @@ export default function CompleteProfilePage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function CompleteProfilePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center min-h-[50vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-black" />
+        </div>
+      }
+    >
+      <CompleteProfileForm />
+    </Suspense>
   );
 }

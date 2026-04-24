@@ -103,24 +103,23 @@ export const OrderShippedEmail = ({
 
             {/* Delivery Info */}
             <Section className="mx-[32px] mt-[24px] mb-[24px] bg-[#f8f8f8] rounded-[12px] px-[24px] py-[24px]">
-              <Row>
-                <Column>
-                  <Text className="text-[10px] font-black tracking-[0.2em] uppercase text-[#999999] m-0">
-                    Entrega estimada
-                  </Text>
-                  <Text className="text-[#111111] text-[15px] font-black leading-[24px] m-0 mt-[4px]">
-                    {estimatedDelivery}
-                  </Text>
-                </Column>
-                <Column align="right">
-                  <Text className="text-[10px] font-black tracking-[0.2em] uppercase text-[#999999] m-0">
-                    Paquetería
-                  </Text>
-                  <Text className="text-[#3b82f6] text-[15px] font-black leading-[24px] m-0 mt-[4px]">
-                    {carrier || '📦 Por confirmar'}
-                  </Text>
-                </Column>
-              </Row>
+              <Section className="mb-[16px]">
+                <Text className="text-[10px] font-black tracking-[0.2em] uppercase text-[#999999] m-0">
+                  Paquetería
+                </Text>
+                <Text className="text-[#3b82f6] text-[15px] font-black leading-[24px] m-0 mt-[4px]">
+                  {carrier || '📦 Por confirmar'}
+                </Text>
+              </Section>
+
+              <Section>
+                <Text className="text-[10px] font-black tracking-[0.2em] uppercase text-[#999999] m-0">
+                  Entrega estimada
+                </Text>
+                <Text className="text-[#111111] text-[15px] font-black leading-[24px] m-0 mt-[4px]">
+                  {estimatedDelivery}
+                </Text>
+              </Section>
 
               {trackingNumber && (
                 <Section className="mt-[20px] pt-[20px] border-t border-solid border-[#eeeeee]">

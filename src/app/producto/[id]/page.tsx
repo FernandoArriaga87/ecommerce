@@ -29,10 +29,10 @@ export async function generateMetadata(
     return { title: "Producto no encontrado" };
   }
 
-  const title = `${product.name} — Jersey de Aficionado ${product.team.name}`;
+  const title = `${product.name} — Ropa Usada Importada ${product.team.name}`;
   const description =
     product.description?.slice(0, 160) ||
-    `Jersey de aficionado inspirado en ${product.team.name}. Calidad premium, envío a todo México. Réplica no oficial.`;
+    `Camisa de segunda mano importada de ${product.team.name}. Pieza única. Envío a todo México.`;
 
   const ogImage = product.images?.[0];
 
@@ -119,8 +119,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
-    description: dbProduct.description || `Jersey de aficionado inspirado en ${product.team}.`,
-    image: product.images,
+    description: dbProduct.description || `Prenda usada importada de ${product.team}.`,    image: product.images,
     sku: product.sku,
     brand: { "@type": "Brand", name: "AuraSport" },
     offers: {

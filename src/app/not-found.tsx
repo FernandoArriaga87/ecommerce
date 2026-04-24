@@ -17,7 +17,7 @@ export default function NotFound() {
         </h2>
 
         <p className="text-[#111111]/50 font-medium max-w-md mx-auto mb-12">
-          La página que buscas no existe o fue retirada del catálogo. Vuelve al inicio y encuentra tu jersey de aficionado.
+          La página que buscas no existe o fue retirada del catálogo. Vuelve al inicio y encuentra tu camisa deportiva ideal.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">

@@ -628,8 +628,7 @@ export default function CheckoutPage() {
                 required
               />
               <span className="text-xs text-gray-700 leading-relaxed">
-                Entiendo que estos jerseys son <strong>réplicas de aficionado</strong> no oficiales,
-                sin afiliación a los clubes, ligas o patrocinadores cuyos diseños inspiran las prendas.
+                Entiendo que estas prendas son <strong>camisas y prendas usadas</strong> de segunda mano importadas.
                 He leído y acepto los{" "}
                 <Link href="/terminos" className="underline font-bold hover:text-black" target="_blank">
                   Términos
