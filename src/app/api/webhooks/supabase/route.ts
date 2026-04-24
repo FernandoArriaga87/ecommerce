@@ -54,7 +54,7 @@ export async function POST(req: Request) {
           if (sendError) {
             console.error("Error API Resend (correo de bienvenida):", sendError);
           } else {
-            console.log(`Correo de bienvenida enviado con éxito a: ${email}`, data);
+            console.log(`Correo de bienvenida enviado. user=${id} resendId=${data?.id ?? "?"}`);
           }
         } catch (emailError) {
           console.error("Excepción enviando correo de bienvenida:", emailError);

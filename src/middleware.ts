@@ -28,17 +28,20 @@ export async function middleware(request: NextRequest) {
 
   // 'unsafe-eval' is only needed in dev for React refresh / Next.js HMR.
   // 'strict-dynamic' lets nonced scripts propagate trust to their imports.
+  // https://challenges.cloudflare.com is whitelisted for Cloudflare Turnstile
+  // (captcha en login/register). strict-dynamic ignora host-lists para scripts,
+  // pero el iframe del widget necesita frame-src explícito.
   const cspHeader = `
     default-src 'self';
-    script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""} https://js.stripe.com;
+    script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""} https://js.stripe.com https://challenges.cloudflare.com;
     style-src 'self' 'unsafe-inline';
     img-src 'self' blob: data: https://images.unsplash.com https://plus.unsplash.com https://*.supabase.co;
     font-src 'self' data:;
     object-src 'none';
     base-uri 'self';
     form-action 'self';
-    frame-src 'self' https://js.stripe.com https://hooks.stripe.com;
-    connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co;
+    frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://challenges.cloudflare.com;
+    connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co https://challenges.cloudflare.com;
     upgrade-insecure-requests;
   `.replace(/\s{2,}/g, " ").trim();
 

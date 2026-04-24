@@ -108,7 +108,7 @@ export async function PATCH(
             }),
           });
           if (sendError) console.error("Error API Resend (envío):", sendError);
-          else console.log(`📧 Email de envío enviado con éxito para orden: ${order.orderNumber}`, data);
+          else console.log(`📧 Email de envío enviado. order=${order.id} resendId=${data?.id ?? "?"}`);
         }
 
         if (status === "DELIVERED") {
@@ -122,7 +122,7 @@ export async function PATCH(
             }),
           });
           if (sendError) console.error("Error API Resend (entrega):", sendError);
-          else console.log(`📧 Email de entrega enviado con éxito para orden: ${order.orderNumber}`, data);
+          else console.log(`📧 Email de entrega enviado. order=${order.id} resendId=${data?.id ?? "?"}`);
         }
       } catch (emailError) {
         console.error("Excepción enviando email de estado:", emailError);

@@ -93,8 +93,11 @@ export async function createProductAction(prevState: any, formData: FormData) {
       }
     });
   } catch (error: any) {
-    console.error("Prisma error:", error);
-    return { error: `Error en Base de datos: ${error.message}` };
+    console.error("[createProductAction] DB error:", error);
+    if (error?.code === "P2002") {
+      return { error: "Ese slug ya está en uso. Elige otro." };
+    }
+    return { error: "No se pudo crear el producto. Revisa los datos e intenta de nuevo." };
   }
 
   revalidatePath("/", "layout");
@@ -543,8 +546,8 @@ export async function markManualShippedAction(input: {
     revalidatePath("/admin/payments");
     return { success: true };
   } catch (error: any) {
-    console.error("Error marcando envío manual:", error);
-    return { error: error?.message || "No se pudo registrar el envío." };
+    console.error("[markManualShippedAction] error:", error);
+    return { error: "No se pudo registrar el envío. Revisa los datos e intenta de nuevo." };
   }
 }
 
