@@ -46,3 +46,6 @@ next-env.d.ts
 
 # prisma generated client (regenerated per platform via postinstall)
 /src/lib/generated-prisma
+
+# Claude Code local settings
+.claude/
