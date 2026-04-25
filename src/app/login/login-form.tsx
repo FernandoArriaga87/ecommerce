@@ -8,19 +8,29 @@ import { loginAction } from "@/app/actions/auth";
 import { createClient } from "@/lib/supabase/client";
 import { useSearchParams } from "next/navigation";
 import { TurnstileWidget } from "@/components/turnstile-widget";
+import { getSiteUrl } from "@/lib/site-url";
 
 const supabase = createClient();
+
+const ERROR_MESSAGES: Record<string, string> = {
+  link_expired: "El enlace expiró o ya fue usado. Solicita uno nuevo.",
+  missing_code: "Enlace inválido. Solicita uno nuevo.",
+  auth_callback_failed: "Hubo un problema al iniciar tu sesión. Intenta de nuevo.",
+  access_denied: "Acceso denegado. Solicita un nuevo enlace.",
+};
 
 export function LoginForm() {
   const [state, formAction, pending] = useActionState(loginAction, { error: "" });
   const searchParams = useSearchParams();
   const returnUrl = searchParams.get("returnUrl") || "/profile";
+  const urlError = searchParams.get("error");
+  const urlErrorMessage = urlError ? ERROR_MESSAGES[urlError] || "Error al procesar tu solicitud." : null;
 
   const handleGoogleLogin = async () => {
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?returnUrl=${encodeURIComponent(returnUrl)}`,
+        redirectTo: `${getSiteUrl()}/auth/callback?next=${encodeURIComponent(returnUrl)}`,
       },
     });
   };
@@ -48,9 +58,9 @@ export function LoginForm() {
 
       <form action={formAction} className="flex flex-col gap-5">
         <input type="hidden" name="returnUrl" value={returnUrl} />
-        {state?.error && (
+        {(state?.error || urlErrorMessage) && (
           <div className="bg-red-50 text-red-600 p-3 text-xs font-bold uppercase tracking-widest text-center border-l-4 border-red-600">
-            {state.error}
+            {state?.error || urlErrorMessage}
           </div>
         )}
 
@@ -61,7 +71,7 @@ export function LoginForm() {
         <div className="flex flex-col gap-2">
           <div className="flex justify-between">
             <label className="text-xs font-bold uppercase tracking-widest text-gray-600">Contraseña</label>
-            <Link href="#" className="text-xs font-bold uppercase tracking-widest text-black underline">¿Olvidaste tu contraseña?</Link>
+            <Link href="/forgot-password" className="text-xs font-bold uppercase tracking-widest text-black underline">¿Olvidaste tu contraseña?</Link>
           </div>
           <Input name="password" type="password" placeholder="••••••••" required className="h-12 rounded-none border-gray-300 focus-visible:ring-black focus-visible:border-black font-medium" />
         </div>

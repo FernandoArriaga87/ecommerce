@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { checkActionRateLimit } from "@/lib/rate-limit-action";
 import { verifyTurnstileToken } from "@/lib/turnstile";
+import { getSiteUrl } from "@/lib/site-url";
 
 async function getClientIp(): Promise<string> {
   return (
@@ -87,19 +88,26 @@ export async function registerAction(prevState: any, formData: FormData) {
   const pwError = validatePassword(password);
   if (pwError) return { error: pwError };
 
+  const returnUrl = (formData.get("returnUrl") as string) || "/profile";
+
   const supabase = await createClient();
+
+  // PKCE: emailRedirectTo must point at the canonical /auth/callback origin
+  // registered in the Supabase dashboard. The `next` param is what the
+  // callback uses after exchangeCodeForSession to land the user in the right
+  // place (here: /complete-profile, since this is a brand new account).
+  const emailRedirectTo = `${getSiteUrl()}/auth/callback?next=${encodeURIComponent(
+    `/complete-profile?returnUrl=${encodeURIComponent(returnUrl)}`
+  )}`;
 
   const { error: authError } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: {
-        name,
-      },
+      data: { name },
+      emailRedirectTo,
     },
   });
-
-  const returnUrl = formData.get("returnUrl") as string || "/profile";
 
   if (authError) {
     // Generic message to avoid account enumeration via error text
@@ -120,4 +128,79 @@ export async function logoutAction() {
   await supabase.auth.signOut();
   revalidatePath("/", "layout");
   redirect("/login");
+}
+
+// ───────────── Password recovery ─────────────
+
+export async function requestPasswordResetAction(prevState: any, formData: FormData) {
+  if (!(await checkActionRateLimit("auth"))) {
+    return { error: "Demasiados intentos. Intenta de nuevo en un minuto." };
+  }
+
+  const captchaToken = (formData.get("cf-turnstile-response") as string) || null;
+  const captchaOk = await verifyTurnstileToken(captchaToken, await getClientIp());
+  if (!captchaOk) {
+    return { error: "Verificación de seguridad fallida. Recarga la página e intenta de nuevo." };
+  }
+
+  const email = formData.get("email") as string;
+  if (!email) {
+    return { error: "El correo es obligatorio." };
+  }
+
+  const supabase = await createClient();
+
+  const redirectTo = `${getSiteUrl()}/auth/callback?next=${encodeURIComponent("/reset-password")}`;
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo,
+  });
+
+  if (error) {
+    // Log internally but never leak whether the email exists or not.
+    console.error("[requestPasswordResetAction] supabase error:", error.message);
+  }
+
+  // Always return success to avoid account enumeration.
+  return {
+    success: "Si el correo está registrado, te enviamos un enlace para restablecer tu contraseña. Revisa tu bandeja de entrada y la carpeta de spam.",
+  };
+}
+
+export async function updatePasswordAction(prevState: any, formData: FormData) {
+  if (!(await checkActionRateLimit("auth"))) {
+    return { error: "Demasiados intentos. Intenta de nuevo en un minuto." };
+  }
+
+  const password = formData.get("password") as string;
+  const confirmPassword = formData.get("confirmPassword") as string;
+
+  if (!password || !confirmPassword) {
+    return { error: "Ambos campos son obligatorios." };
+  }
+  if (password !== confirmPassword) {
+    return { error: "Las contraseñas no coinciden." };
+  }
+
+  const pwError = validatePassword(password);
+  if (pwError) return { error: pwError };
+
+  const supabase = await createClient();
+
+  // The recovery link landed in /auth/callback which already established a
+  // session via exchangeCodeForSession. updateUser uses that session.
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Tu sesión expiró. Solicita un nuevo enlace de recuperación." };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password });
+
+  if (error) {
+    console.error("[updatePasswordAction] supabase error:", error.message);
+    return { error: "No pudimos actualizar tu contraseña. Intenta de nuevo." };
+  }
+
+  revalidatePath("/", "layout");
+  redirect("/profile?password_updated=1");
 }

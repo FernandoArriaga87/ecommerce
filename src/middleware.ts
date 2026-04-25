@@ -9,6 +9,7 @@ const PROTECTED_ROUTES = [
   "/orders",
   "/checkout",
   "/complete-profile",
+  "/reset-password",
 ];
 
 // Routes that require ADMIN role (checked after auth)

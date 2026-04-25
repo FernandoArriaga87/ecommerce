@@ -7,6 +7,7 @@ import { registerAction } from "@/app/actions/auth";
 import { createClient } from "@/lib/supabase/client";
 import { useSearchParams } from "next/navigation";
 import { TurnstileWidget } from "@/components/turnstile-widget";
+import { getSiteUrl } from "@/lib/site-url";
 
 const supabase = createClient();
 
@@ -19,7 +20,7 @@ export function RegisterForm() {
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?returnUrl=${encodeURIComponent(returnUrl)}`,
+        redirectTo: `${getSiteUrl()}/auth/callback?next=${encodeURIComponent(returnUrl)}`,
       },
     });
   };
