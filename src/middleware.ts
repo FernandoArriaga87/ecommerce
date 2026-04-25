@@ -42,6 +42,8 @@ export async function middleware(request: NextRequest) {
     base-uri 'self';
     form-action 'self';
     frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://challenges.cloudflare.com;
+    child-src 'self' https://challenges.cloudflare.com;
+    worker-src 'self' blob:;
     connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co https://challenges.cloudflare.com;
     upgrade-insecure-requests;
   `.replace(/\s{2,}/g, " ").trim();
