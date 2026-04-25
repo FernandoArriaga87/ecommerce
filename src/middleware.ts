@@ -28,12 +28,15 @@ export async function middleware(request: NextRequest) {
   const isDev = process.env.NODE_ENV !== "production";
 
   // 'unsafe-eval' is only needed in dev for React refresh / Next.js HMR.
-  // Host allowlist is used (no 'strict-dynamic') because Cloudflare Turnstile
-  // renders into about:srcdoc iframes whose inline scripts can't carry our
-  // nonce. Keeping the nonce on top covers our own scripts (Next.js chunks).
+  // 'unsafe-inline' is needed because Cloudflare Turnstile renders into
+  // about:srcdoc iframes that inherit this CSP and contain inline scripts
+  // we can't nonce. Per CSP3, 'unsafe-inline' is ignored when a nonce is
+  // present — so we drop the nonce from script-src entirely and rely on
+  // host-allowlist + 'self' for our own scripts. The x-nonce header is
+  // still forwarded for legacy callers but no longer enforced via CSP.
   const cspHeader = `
     default-src 'self';
-    script-src 'self' 'nonce-${nonce}'${isDev ? " 'unsafe-eval'" : ""} https://js.stripe.com https://challenges.cloudflare.com;
+    script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://js.stripe.com https://challenges.cloudflare.com;
     style-src 'self' 'unsafe-inline';
     img-src 'self' blob: data: https://images.unsplash.com https://plus.unsplash.com https://*.supabase.co;
     font-src 'self' data:;

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useActionState } from "react";
@@ -69,10 +68,7 @@ export function LoginForm() {
           <Input name="email" type="email" placeholder="tucorreo@ejemplo.com" required className="h-12 rounded-none border-gray-300 focus-visible:ring-black focus-visible:border-black font-medium" />
         </div>
         <div className="flex flex-col gap-2">
-          <div className="flex justify-between">
-            <label className="text-xs font-bold uppercase tracking-widest text-gray-600">Contraseña</label>
-            <Link href="/forgot-password" className="text-xs font-bold uppercase tracking-widest text-black underline">¿Olvidaste tu contraseña?</Link>
-          </div>
+          <label className="text-xs font-bold uppercase tracking-widest text-gray-600">Contraseña</label>
           <Input name="password" type="password" placeholder="••••••••" required className="h-12 rounded-none border-gray-300 focus-visible:ring-black focus-visible:border-black font-medium" />
         </div>
 

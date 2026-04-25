@@ -5,14 +5,13 @@ import { TurnstileScript } from "@/components/turnstile-script";
 
 // Belt-and-suspenders: middleware already gates /reset-password behind auth,
 // but if someone hits this URL without coming through the email callback,
-// bounce them to /forgot-password rather than rendering a form that would
-// fail on submit.
+// bounce them to /login rather than rendering a form that would fail on submit.
 export default async function ResetPasswordPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/forgot-password?error=link_expired");
+    redirect("/login?error=link_expired");
   }
 
   return (

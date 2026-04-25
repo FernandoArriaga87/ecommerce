@@ -7,9 +7,9 @@ import { useEffect, useRef } from "react";
 //
 // Why explicit render instead of the data-attribute auto-scan:
 //   api.js runs its DOM scan ONCE on initial load. Under Next.js client-side
-//   navigation (e.g. /login → /forgot-password via <Link>), there is no second
-//   load — the script is already there, sees no new elements to scan, and the
-//   newly-mounted .cf-turnstile div stays empty. Submitting that form returns
+//   navigation between auth pages, there is no second load — the script is
+//   already there, sees no new elements to scan, and the newly-mounted
+//   .cf-turnstile div stays empty. Submitting that form returns
 //   "Verificación de seguridad fallida" because no `cf-turnstile-response`
 //   hidden input was ever injected.
 //
