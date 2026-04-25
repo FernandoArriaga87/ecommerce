@@ -20,7 +20,8 @@
       "Bash(echo \"EXIT=$?\")",
       "Bash(npx playwright *)",
       "Bash(curl -s http://localhost:3000/)",
-      "Bash(npx tsx *)"
+      "Bash(npx tsx *)",
+      "Bash(git -C \"C:/Users/Fernando Arriaga/Desktop/ecommerce\" rm -r --cached src/lib/generated-prisma)"
     ]
   }
 }
