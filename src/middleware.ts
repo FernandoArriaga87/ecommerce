@@ -28,13 +28,12 @@ export async function middleware(request: NextRequest) {
   const isDev = process.env.NODE_ENV !== "production";
 
   // 'unsafe-eval' is only needed in dev for React refresh / Next.js HMR.
-  // 'strict-dynamic' lets nonced scripts propagate trust to their imports.
-  // https://challenges.cloudflare.com is whitelisted for Cloudflare Turnstile
-  // (captcha en login/register). strict-dynamic ignora host-lists para scripts,
-  // pero el iframe del widget necesita frame-src explícito.
+  // Host allowlist is used (no 'strict-dynamic') because Cloudflare Turnstile
+  // renders into about:srcdoc iframes whose inline scripts can't carry our
+  // nonce. Keeping the nonce on top covers our own scripts (Next.js chunks).
   const cspHeader = `
     default-src 'self';
-    script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""} https://js.stripe.com https://challenges.cloudflare.com;
+    script-src 'self' 'nonce-${nonce}'${isDev ? " 'unsafe-eval'" : ""} https://js.stripe.com https://challenges.cloudflare.com;
     style-src 'self' 'unsafe-inline';
     img-src 'self' blob: data: https://images.unsplash.com https://plus.unsplash.com https://*.supabase.co;
     font-src 'self' data:;
